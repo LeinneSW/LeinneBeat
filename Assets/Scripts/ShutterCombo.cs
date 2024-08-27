@@ -20,7 +20,7 @@ public class ShutterCombo : MonoBehaviour
 
     public IEnumerator StartShutterAnimation()
     {
-        if (!GameManager.Instance.BackgroundMusic.isPlaying)
+        while (!GameManager.Instance.BackgroundMusic.isPlaying)
         {
             // 시작 전까진 셔터는 움직이지 않는다
             yield return null;
@@ -34,7 +34,7 @@ public class ShutterCombo : MonoBehaviour
             position.y = up ? (percent + animation - 130 + amplitude) : -(percent + animation + 830 + amplitude);
             transform.position = position;
             yield return null;
-        } 
+        }
 
         // TODO: 곡이 종료되면 셔터가 닫힘
     }
