@@ -52,14 +52,14 @@ public class HoldArrow : MonoBehaviour
         var goalPosition = marker.gameObject.transform.position;
         while (elapsedTime < duration)
         {
-            yield return null;
+            elapsedTime += Time.deltaTime;
             if (elapsedTime < 0.17f)
             {
                 startPosition += (SetScale(Vector3.Lerp(originalScale, targetScale, Mathf.Min(0.15f, elapsedTime) / 0.15f))) / 2;
             }
             transform.position = Vector3.Lerp(startPosition, goalPosition, elapsedTime / duration);
             lineRenderer.SetPosition(0, transform.position);
-            elapsedTime += Time.deltaTime;
+            yield return null;
         }
         marker.OnRelease();
     }
@@ -76,11 +76,11 @@ public class HoldArrow : MonoBehaviour
         var originalScale = rectTransform.localScale;
         while (elapsedTime < 0.15f)
         {
-            yield return null;
             elapsedTime += Time.deltaTime;
             color.a = Mathf.Clamp01(elapsedTime / 0.15f);
             material.color = color;
             SetScale(Vector3.Lerp(originalScale, targetScale, elapsedTime / 0.15f));
+            yield return null;
         }
         color.a = 1;
         material.color = color;
