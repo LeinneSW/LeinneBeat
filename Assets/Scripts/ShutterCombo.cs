@@ -4,8 +4,8 @@ using System.Collections;
 public class ShutterCombo : MonoBehaviour
 {
     private bool up;
-    private readonly float amplitude = 8f;  // 오르내리는 높이의 반경
-    private readonly float frequency = 3.5f;  // 주기 (초당 오르내림 횟수)
+    private readonly float amplitude = 12f;  // 오르내리는 높이의 반경
+    private readonly float frequency = 3f;  // 주기 (초당 오르내림 횟수)
 
     private void Start()
     {
@@ -36,6 +36,15 @@ public class ShutterCombo : MonoBehaviour
             yield return null;
         }
 
-        // TODO: 곡이 종료되면 셔터가 닫힘
+        var moveTime = 0f;
+        var startPos = transform.position;
+        var endPos = transform.position;
+        endPos.y = up ? -130 : -830;
+        while (moveTime < .8f)
+        {
+            moveTime += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPos, endPos, moveTime / .8f);
+            yield return null;
+        }
     }
 }
