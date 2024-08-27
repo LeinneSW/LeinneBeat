@@ -15,9 +15,9 @@ public class GameManager : MonoBehaviour
     public const string SCENE_MUSIC_SELECT = "MusicSelect";
     public const string SCENE_IN_GAME = "InGame";
 
-    private Chart currentChart = null;
     private readonly List<Chart> chartList = new();
 
+    private Coroutine previewCoroutine = null;
     private readonly List<int> scores = new() { 0, 0, 0, 0 };
     private readonly Dictionary<string, float> musicOffsetList = new();
 
@@ -31,13 +31,14 @@ public class GameManager : MonoBehaviour
     public float StartTime { get; private set; } = -1;
     public bool AutoMode { get; private set; } = false;
     public AudioSource BackgroundMusic { get; private set; }
+    public Chart SelectedChart { get; private set; } = null;
 
     public int Combo { get; private set; } = 0;
     public int ShutterPoint { get; private set; } = 0;
 
     public int Score
     {
-        get => 90_000 * (10 * scores[0] + 7 * scores[1] + 4 * scores[2] + scores[3]) / currentChart.NoteCount;
+        get => 90_000 * (10 * scores[0] + 7 * scores[1] + 4 * scores[2] + scores[3]) / SelectedChart.NoteCount;
     }
     public int ShutterScore
     {
@@ -57,7 +58,6 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        SceneManager.sceneLoaded += OnSceneLoaded;
         StartCoroutine(LoadGameData());
 
         BackgroundMusic = gameObject.AddComponent<AudioSource>();
@@ -66,6 +66,16 @@ public class GameManager : MonoBehaviour
 
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Screen.SetResolution(Screen.height * 10 / 16, Screen.height, true);
+
+        if (SceneManager.GetActiveScene().name == SCENE_IN_GAME)
+        {
+            SceneManager.LoadScene(SCENE_MUSIC_SELECT);
+        }
+    }
+
+    private void Start()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     public void AddScore(int judge)
@@ -81,38 +91,38 @@ public class GameManager : MonoBehaviour
 
         if (judge < 2)
         {
-            ShutterPoint += Mathf.FloorToInt(2048f / Mathf.Min(1024, currentChart.NoteCount));
+            ShutterPoint += Mathf.FloorToInt(2048f / Mathf.Min(1024, SelectedChart.NoteCount));
         }
         else if (judge == 2)
         {
-            ShutterPoint += Mathf.FloorToInt(1024f / Mathf.Min(1024, currentChart.NoteCount));
+            ShutterPoint += Mathf.FloorToInt(1024f / Mathf.Min(1024, SelectedChart.NoteCount));
         }
         else
         {
-            ShutterPoint -= Mathf.FloorToInt(8192f / Mathf.Min(1024, currentChart.NoteCount));
+            ShutterPoint -= Mathf.FloorToInt(8192f / Mathf.Min(1024, SelectedChart.NoteCount));
         }
         ShutterPoint = Mathf.Max(Mathf.Min(1024, ShutterPoint), 0);
     }
 
     public void AddMusicOffset(float offset)
     {
-        if (currentChart == null)
+        if (SelectedChart == null)
         {
             return;
         }
-        SetMusicOffset(musicOffsetList[currentChart.Name] + offset);
+        SetMusicOffset(musicOffsetList[SelectedChart.Name] + offset);
     }
 
     public void SetMusicOffset(float offset)
     {
-        if (currentChart == null)
+        if (SelectedChart == null)
         {
             return;
         }
-        musicOffsetList[currentChart.Name] = offset;
+        musicOffsetList[SelectedChart.Name] = offset;
         var offsetText = GameObject.Find("MusicOffset");
         var text = offsetText.GetComponent<InputField>();
-        text.text = "" + musicOffsetList[currentChart.Name];
+        text.text = "" + musicOffsetList[SelectedChart.Name];
     }
 
     public float GetMusicOffset(string name)
@@ -132,12 +142,6 @@ public class GameManager : MonoBehaviour
                 CreateSelectMusicUI();
                 break;
             case SCENE_IN_GAME:
-                if (currentChart == null)
-                {
-                    SceneManager.LoadScene(SCENE_MUSIC_SELECT);
-                    return;
-                }
-
                 Combo = 0;
                 ShutterPoint = 0;
                 for (int i = 0; i < 4; ++i)
@@ -146,7 +150,7 @@ public class GameManager : MonoBehaviour
                 }
                 var offsetText = GameObject.Find("MusicOffset");
                 var text = offsetText.GetComponent<InputField>();
-                text.text = "" + currentChart.StartOffset;
+                text.text = "" + SelectedChart.StartOffset;
                 text.onValueChanged.AddListener((value) =>
                 {
                     if (float.TryParse(value, out var offset))
@@ -167,7 +171,7 @@ public class GameManager : MonoBehaviour
                 }
                 var titleText = GameObject.Find("MusicTitle");
                 var title = titleText.GetComponent<Text>();
-                title.text = currentChart.Name;
+                title.text = SelectedChart.Name;
 
                 var autoButton = GameObject.Find("AutoButton").GetComponent<Button>();
                 autoButton.onClick.AddListener(() => {
@@ -183,9 +187,10 @@ public class GameManager : MonoBehaviour
         var content = GameObject.Find("ChartScroll").transform.GetChild(0).GetChild(0).GetComponent<RectTransform>();
         for (int i = 0; i < chartList.Count; ++i)
         {
-            Debug.Log($"{chartList[i].Name} 버튼 추가");
             AddChartButton(content, chartList[i]);
         }
+        SelectChart(chartList[0]);
+        GameObject.Find("StartGameButton").GetComponent<Button>().onClick.AddListener(() => PlayChart());
     }
 
     string RemoveLastExtension(string path)
@@ -196,11 +201,8 @@ public class GameManager : MonoBehaviour
     private void AddChartButton(RectTransform content, Chart chart)
     {
         var button = Instantiate(buttonPrefab, content);
-        button.GetComponent<Button>().onClick.AddListener(() => PlayChart(chart));
+        button.GetComponent<Button>().onClick.AddListener(() => SelectChart(chart));
         button.GetComponentInChildren<Text>().text = $"{chart.Name}({chart.Difficulty})";
-
-        /*float contentHeight = chartList.Count * (buttonPrefab.GetComponent<RectTransform>().rect.height + 15);
-        content.sizeDelta = new Vector2(content.sizeDelta.x, contentHeight);*/
     }
 
     private IEnumerator LoadGameData()
@@ -271,23 +273,76 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void PlayChart(Chart chart)
+    public void SelectChart(Chart chart)
     {
+        if (previewCoroutine != null)
+        {
+            StopCoroutine(previewCoroutine);
+        }
+
+        SelectedChart = chart;
+        previewCoroutine = StartCoroutine(PlayMusicPreview());
+    }
+
+    public IEnumerator PlayMusicPreview()
+    {
+        var chart = SelectedChart;
+        BackgroundMusic.clip = chart.bgmClip;
+        while (SelectedChart == chart)
+        {
+            BackgroundMusic.time = 30f;
+            BackgroundMusic.volume = 0;
+            BackgroundMusic.Play();
+            
+            // 1.5초 페이드 인
+            while (BackgroundMusic.volume < .35f)
+            {
+                BackgroundMusic.volume += .35f * Time.deltaTime / 1.5f;
+                yield return null;
+            }
+            BackgroundMusic.volume = .35f;
+
+            // 10초 동안 재생
+            yield return new WaitForSeconds(15);
+
+            // 1.5초 페이드 아웃
+            var startVolume = BackgroundMusic.volume;
+            while (BackgroundMusic.volume > 0)
+            {
+                BackgroundMusic.volume -= startVolume * Time.deltaTime / 1.5f;
+                yield return null;
+            }
+            BackgroundMusic.Stop();
+            yield return new WaitForSeconds(1);
+        }
+    }
+
+    public void PlayChart()
+    {
+        if (SelectedChart == null)
+        {
+            return;
+        }
         SceneManager.LoadScene(SCENE_IN_GAME);
-        currentChart = chart;
         StartCoroutine(StartGame());
     }
 
     private void PlayBGM()
     {
         // TODO: 볼륨 조절 노브 추가
-        BackgroundMusic.clip = currentChart.bgmClip;
+        BackgroundMusic.clip = SelectedChart.bgmClip;
         BackgroundMusic.volume = 0.35f;
         BackgroundMusic.Play();
     }
 
     private IEnumerator StartGame()
     {
+        if (previewCoroutine != null)
+        {
+            StopCoroutine(previewCoroutine);
+            yield return null;
+        }
+
         BackgroundMusic.Stop();
         yield return new WaitForSeconds(.35f);
         var comboText = GameObject.Find("Combo").GetComponent<Text>(); // TODO: Hack this code
@@ -302,23 +357,23 @@ public class GameManager : MonoBehaviour
         comboText.text = "";
         comboText.fontSize = 300;
 
-        if (currentChart.StartOffset < 0)
+        if (SelectedChart.StartOffset < 0)
         {
             PlayBGM();
-            yield return new WaitForSeconds(-currentChart.StartOffset);
+            yield return new WaitForSeconds(-SelectedChart.StartOffset);
         }
         else
         {
-            Invoke(nameof(PlayBGM), currentChart.StartOffset);
+            Invoke(nameof(PlayBGM), SelectedChart.StartOffset);
         }
 
         StartTime = Time.time;
-        foreach (var note in currentChart.AllNotes)
+        foreach (var note in SelectedChart.AllNotes)
         {
             StartCoroutine(ShowMarker(note));
         }
 
-        foreach (var time in currentChart.clapTimings)
+        foreach (var time in SelectedChart.clapTimings)
         {
             StartCoroutine(PlayClapForAuto((float)time));
         }
@@ -348,7 +403,7 @@ public class GameManager : MonoBehaviour
         StartTime = -1;
         BackgroundMusic.Stop();
         StopAllCoroutines();
-        _ = ModifyMusicOffset(currentChart.Name, currentChart.StartOffset);
+        _ = ModifyMusicOffset(SelectedChart.Name, SelectedChart.StartOffset);
         SceneManager.LoadScene(SCENE_MUSIC_SELECT);
     }
 
