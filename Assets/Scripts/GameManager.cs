@@ -17,12 +17,10 @@ public class GameManager : MonoBehaviour
 
     private Chart currentChart = null;
     private readonly List<Chart> chartList = new();
-    private readonly Dictionary<string, float> musicOffsetList = new();
+    private SemaphoreSlim chartSemaphore = new SemaphoreSlim(1, 1); // 최대 하나의 작업만 접근 허용
 
-    private readonly List<int> scores = new()
-    {
-        0, 0, 0, 0
-    };
+    private readonly List<int> scores = new() { 0, 0, 0, 0 };
+    private readonly Dictionary<string, float> musicOffsetList = new();
 
     public Font textFont;
     public AudioSource goEffect;
@@ -175,7 +173,7 @@ public class GameManager : MonoBehaviour
                 var autoButton = GameObject.Find("AutoButton").GetComponent<Button>();
                 autoButton.onClick.AddListener(() => {
                     AutoMode = !AutoMode;
-                    autoButton.transform.GetChild(0).GetComponent<Text>().text = "현재: " + (AutoMode ? "On" : "Off");
+                    autoButton.GetComponentInChildren<Text>().text = "현재: " + (AutoMode ? "On" : "Off");
                 });
                 break;
         }
@@ -183,137 +181,114 @@ public class GameManager : MonoBehaviour
 
     private void CreateSelectMusicUI()
     {
-        var content = GameObject.Find("ChartScroll").transform.GetChild(0).GetChild(0).GetComponent<RectTransform>();
-        //Vector2 position = new(0, 1000);
+        var content = GameObject.Find("ChartScroll").transform.GetComponentInChildren<RectTransform>();
         for (int i = 0; i < chartList.Count; ++i)
         {
-            var button = Instantiate(buttonPrefab, content);
-            var chart = chartList[i];
-            button.GetComponent<Button>().onClick.AddListener(() => PlayChart(chart));
-            button.GetComponentInChildren<Text>().text = $"{chart.Name}({chart.Difficulty})";
-
-            //CreateUIButton(content, $"{chart.Name}({chart.Difficulty})", position, i);
-            //position -= new Vector2(0, 150);
+            AddChartButton(content, chartList[i]);
         }
         float contentHeight = chartList.Count * (buttonPrefab.GetComponent<RectTransform>().rect.height + 15);
         content.sizeDelta = new Vector2(content.sizeDelta.x, contentHeight);
     }
 
-    void CreateUIButton(GameObject canvas, string buttonText, Vector2 position, int index)
+    string RemoveLastExtension(string path)
     {
-        // Button 게임오브젝트 생성
-        GameObject buttonObject = new("Button");
-        buttonObject.transform.SetParent(canvas.transform);
-
-        // RectTransform 설정
-        RectTransform rectTransform = buttonObject.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(1000, 140); // 버튼 크기 설정
-        rectTransform.anchoredPosition = position;
-
-        // Button 컴포넌트 추가
-        Button button = buttonObject.AddComponent<Button>();
-
-        // Button 이미지 설정
-        Image image = buttonObject.AddComponent<Image>();
-        image.color = Color.white; // 버튼 색상 설정
-
-        // 텍스트 생성 및 설정
-        GameObject textObject = new("Text");
-        textObject.transform.SetParent(buttonObject.transform);
-
-        Text text = textObject.AddComponent<Text>();
-        text.text = buttonText;
-        text.font = textFont;
-        text.fontSize = 50;
-        text.alignment = TextAnchor.MiddleCenter;
-        text.color = Color.black;
-
-        // 텍스트의 RectTransform 설정
-        RectTransform textRectTransform = textObject.GetComponent<RectTransform>();
-        textRectTransform.sizeDelta = rectTransform.sizeDelta;
-        textRectTransform.anchoredPosition = Vector2.zero;
-
-        // 버튼 클릭 이벤트 추가
-        //button.onClick.AddListener(() => PlayChart(index));
+        return Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path));
     }
 
-    string RemoveLastExtension(string filePath)
+    public async Task AddChart(Chart chart)
     {
-        int lastDotIndex = filePath.LastIndexOf('.');
-        // 마지막 '.' 이후에 확장자가 있는지 확인 (경로의 마지막 부분인지)
-        if (lastDotIndex >= 0 && lastDotIndex > filePath.LastIndexOf(Path.DirectorySeparatorChar))
+        await chartSemaphore.WaitAsync(); // 비동기적으로 락을 요청
+        try
         {
-            return filePath[..lastDotIndex];
+            chartList.Add(chart);
+            if (SceneManager.GetActiveScene().name == SCENE_MUSIC_SELECT)
+            {
+                AddChartButton(chart);
+            }
         }
-        return filePath;
+        finally
+        {
+            chartSemaphore.Release(); // 락 해제
+        }
     }
 
-    IEnumerator LoadGameData()
+    private void AddChartButton(RectTransform content, Chart chart)
+    {
+        var button = Instantiate(buttonPrefab, content);
+        button.GetComponent<Button>().onClick.AddListener(() => PlayChart(chart));
+        button.GetComponentInChildren<Text>().text = $"{chart.Name}({chart.Difficulty})";
+
+        /*float contentHeight = chartList.Count * (buttonPrefab.GetComponent<RectTransform>().rect.height + 15);
+        content.sizeDelta = new Vector2(content.sizeDelta.x, contentHeight);*/
+    }
+
+    private IEnumerator LoadGameData()
     {
         var path = Path.Combine(Application.dataPath, "Songs", "sync.txt");
         if (File.Exists(path))
         {
-            string[] lines = File.ReadAllLines(path);
-            foreach (string line in lines)
+            Task<string[]> loadLinesTask = Task.Run(() => File.ReadAllLines(path));
+            yield return new WaitUntil(() => loadLinesTask.IsCompleted);
+            foreach (string line in loadLinesTask.Result)
             {
                 var split = line.Trim().Split(":");
-                if(split.Length < 2)
-                {
-                    continue;
-                }
-                if (float.TryParse(split[1].Trim(), out float value))
+                if (split.Length > 1 && float.TryParse(split[1].Trim(), out float value))
                 {
                     musicOffsetList[split[0].Trim()] = value;
                 }
             }
         }
 
-        string[] files = Directory.GetFiles(Path.Combine(Application.dataPath, "Songs"), "*.mp3");
-        foreach (var musicPath in files)
+        Task<string[]> filesTaskList = Task.Run(() => Directory.GetFiles(Path.Combine(Application.dataPath, "Songs"), "*.mp3"));
+        yield return new WaitUntil(() => filesTaskList.IsCompleted);
+
+        List<Task> loadTasks = new();
+        foreach (var musicPath in filesTaskList.Result)
         {
-            using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, AudioType.MPEG);
-            yield return www.SendWebRequest();
-
-            var musicName = Path.GetFileNameWithoutExtension(musicPath);
-            if (www.result != UnityWebRequest.Result.Success)
+            loadTasks.Add(Task.Run(async () =>
             {
-                Debug.Log("알 수 없는 오류가 발생했습니다. musicPath: " + musicName);
-                continue;
-            }
+                var musicName = Path.GetFileNameWithoutExtension(musicPath);
+                using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, AudioType.MPEG);
+                await www.SendWebRequest();
 
-            var removeExt = RemoveLastExtension(musicPath);
-            var difficultyList = new List<string>()
-            {
-                "basic", "advanced", "extreme"
-            };
-
-            var charts = new List<Chart>();
-            foreach (var difficulty in difficultyList)
-            {
-                var filePath = $"{removeExt}_{difficulty}.txt";
-                if (!File.Exists(filePath))
+                if (www.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.Log($"채보파일이 존재하지 않습니다. 파일명: {musicName}_{difficulty}");
-                    continue;
+                    Debug.Log($"음악 파일을 불러오지 못했습니다. 이름: {musicName}, 경로: {musicPath}");
+                    return;
                 }
 
-                var chart = Chart.Parse(musicName, difficulty, filePath);
-                if (chart == null)
+                var removeExt = RemoveLastExtension(musicPath);
+                var difficultyList = new List<string> { "basic", "advanced", "extreme" };
+
+                foreach (var difficulty in difficultyList)
                 {
-                    Debug.Log($"채보파일이 잘못되었습니다. 파일명: {musicName}_{difficulty}");
+                    var filePath = $"{removeExt}_{difficulty}.txt";
+                    if (!File.Exists(filePath))
+                    {
+                        //Debug.Log($"채보파일이 존재하지 않습니다. 파일명: {musicName}_{difficulty}");
+                        continue;
+                    }
+
+                    var chart = Chart.Parse(musicName, difficulty, filePath);
+                    if (chart == null)
+                    {
+                        Debug.Log($"잘못된 채보입니다. 파일명: {musicName}_{difficulty}");
+                    }
+                    else
+                    {
+                        var _ = chart.StartOffset; // TODO: remove HACK
+                        chart.bgmClip = DownloadHandlerAudioClip.GetContent(www);
+                        AddChart(chart);
+                    }
                 }
-                else
-                {
-                    var _ = chart.StartOffset; // TODO: remove HACK
-                    chart.bgmClip = DownloadHandlerAudioClip.GetContent(www);
-                    chartList.Add(chart);
-                }
-            }
+            }));
         }
-        if (SceneManager.GetActiveScene().name == SCENE_MUSIC_SELECT)
+
+        // TODO: 대기해야하는지 확인해봐야함
+        /*foreach (var task in loadTasks)
         {
-            CreateSelectMusicUI();
-        }
+            yield return new WaitUntil(() => task.IsCompleted);
+        }*/
     }
 
     public void PlayChart(Chart chart)
@@ -325,8 +300,9 @@ public class GameManager : MonoBehaviour
 
     private void PlayBGM()
     {
+        // TODO: 볼륨 조절 노브 추가
         BackgroundMusic.clip = currentChart.bgmClip;
-        BackgroundMusic.volume = 0.3f;
+        BackgroundMusic.volume = 0.35f;
         BackgroundMusic.Play();
     }
 
@@ -334,14 +310,14 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(.35f);
         var comboText = GameObject.Find("Combo").GetComponent<Text>(); // TODO: Hack this code
-        comboText.fontSize = 150;
+        comboText.fontSize = 160;
         readyEffect.Play();
         comboText.text = "Ready";
         yield return new WaitForSeconds(1.8f);
 
         goEffect.Play();
         comboText.text = "Go";
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(1.1f);
         comboText.text = "";
         comboText.fontSize = 300;
 
