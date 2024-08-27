@@ -189,7 +189,7 @@ public class MarkerManager : MonoBehaviour
             }
         }
 
-        if (touched.Count < 1 && Input.GetMouseButton(0))
+        if (Input.touchCount < 1 && Input.GetMouseButton(0))
         {
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePosition += new Vector2(800, -320);
