@@ -4,7 +4,7 @@ using System.Collections;
 public class ShutterCombo : MonoBehaviour
 {
     private bool up;
-    private readonly float amplitude = 12f;  // 오르내리는 높이의 반경
+    private readonly float amplitude = 12f; // 오르내리는 높이의 반경
     private readonly float frequency = 3f;  // 주기 (초당 오르내림 횟수)
 
     private void Start()
@@ -20,14 +20,17 @@ public class ShutterCombo : MonoBehaviour
 
     public IEnumerator StartShutterAnimation()
     {
-        while (!GameManager.Instance.BackgroundMusic.isPlaying)
+        // 시작 전까진 셔터는 움직이지 않는다
+        while (GameManager.Instance.StartTime <= 0)
         {
-            // 시작 전까진 셔터는 움직이지 않는다
             yield return null;
         }
 
-        while (GameManager.Instance.BackgroundMusic.isPlaying)
+        var chart = GameManager.Instance.SelectedChart;
+        var remainTime = chart.bgmClip.length + Mathf.Max(0, chart.StartOffset);
+        while (remainTime > 0)
         {
+            remainTime -= Time.deltaTime;
             var position = transform.position;
             var percent = GameManager.Instance.ShutterPoint * (800 + amplitude) / 1024;
             var animation = Mathf.Sin(Time.time * frequency * 2 * Mathf.PI) * amplitude;
