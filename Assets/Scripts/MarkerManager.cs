@@ -188,18 +188,19 @@ public class MarkerManager : MonoBehaviour
                 }
             }
         }
-        /*Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePosition += new Vector2(800, -320);
-        mousePosition /= 400;
-        var row2 = Mathf.FloorToInt(-mousePosition.y);
-        var column2 = Mathf.FloorToInt(mousePosition.x);
-        if (0 <= row2 && row2 < 4 && 0 <= column2 && column2 < 4)
+
+        if (touched.Count < 1 && Input.GetMouseButton(0))
         {
-            if (Input.GetMouseButton(0))
+            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePosition += new Vector2(800, -320);
+            mousePosition /= 400;
+            var row = Mathf.FloorToInt(-mousePosition.y);
+            var column = Mathf.FloorToInt(mousePosition.x);
+            if (0 <= row && row < 4 && 0 <= column && column < 4)
             {
-                touched.Add(column2 + row2 * 4);
+                touched.Add(column + row * 4);
             }
-        }*/
+        }
 
         for (int row = 0; row < 4; ++row)
         {
