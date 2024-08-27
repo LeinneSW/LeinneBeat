@@ -184,13 +184,14 @@ public class GameManager : MonoBehaviour
 
     private void CreateSelectMusicUI()
     {
+        GameObject.Find("StartGameButton").GetComponent<Button>().onClick.AddListener(() => PlayChart());
         var content = GameObject.Find("ChartScroll").transform.GetChild(0).GetChild(0).GetComponent<RectTransform>();
         for (int i = 0; i < chartList.Count; ++i)
         {
             AddChartButton(content, chartList[i]);
         }
-        SelectChart(chartList[0]);
-        GameObject.Find("StartGameButton").GetComponent<Button>().onClick.AddListener(() => PlayChart());
+        // 곡을 선택하여 무조건 재생되게함
+        SelectChart(SelectedChart ?? chartList[0]);
     }
 
     string RemoveLastExtension(string path)
