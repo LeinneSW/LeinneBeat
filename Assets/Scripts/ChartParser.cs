@@ -13,25 +13,24 @@ public class ChartParser : MonoBehaviour
 
 public class Chart
 {
-    private static readonly Regex NOTE_REGEX = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶA-ZＡ-Ｚ]{1,4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶA-ZＡ-Ｚ]{1,4}\|.+(\|)?))$", RegexOptions.Compiled);
+    private static readonly Regex NOTE_REGEX = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}\|.+(\|)?))$", RegexOptions.Compiled);
 
     public string Name { get; private set; }
     public string Difficulty { get; private set; }
     public string FilePath { get; private set; }
     public bool IsLong { get; private set; } = false;
 
-    /** 음악이 시작되는 시간 */
+    /**
+    * 음악이 시작되는 시간 
+    * 값이 작아지면: 노래가 빨리재생됨(노래가 느릴때 이쪽으로)
+    * 값이 커지면: 노래가 늦게재생됨(노래가 빠를때 이쪽으로)
+    */
     public float StartOffset
     {
         get => GameManager.Instance.GetMusicOffset(Name);
     }
 
-    //값이 작아지면: 노래가 빨리재생됨(노래가 느릴때 이쪽으로)
-    //값이 커지면: 노래가 늦게재생됨(노래가 빠를때 이쪽으로)
     public AudioClip bgmClip;
-    // quaver 1.315
-    // megal: 0.278
-    // Eira -1.64333
 
     public int NoteCount { get; private set; } = 0;
 
@@ -65,7 +64,7 @@ public class Chart
 
     private static bool TryParseDoubleInText(string text, out double result)
     {
-        var match = System.Text.RegularExpressions.Regex.Match(text, @"-?\d+(\.\d+)?");
+        var match = Regex.Match(text, @"-?\d+(\.\d+)?");
         return double.TryParse(match.Success ? match.Value : "", out result);
     }
 
@@ -94,12 +93,7 @@ public class Chart
                 continue;
             }
 
-            /*if (line.StartsWith("Sync:") && TryParseDoubleInText(line, out double syncOffset))
-            {
-                chart.startOffset = (float) syncOffset;
-            }
-            else */
-            if ((line.StartsWith("BPM:") || line.StartsWith("t=")) && TryParseDoubleInText(line, out double bpmValue))
+            if ((line.StartsWith("bpm:", StringComparison.InvariantCultureIgnoreCase) || line.StartsWith("t=")) && TryParseDoubleInText(line, out double bpmValue))
             {
                 if (chart.bpmList.Count > 0 && Mathf.Abs((float)(chart.bpmList[^1] - bpmValue)) <= float.Epsilon)
                 {
@@ -135,11 +129,6 @@ public class Chart
                             break;
                         }
 
-                        if (noteAndTiming.Length < 4)
-                        {
-                            measure.AddNotePositionText(noteAndTiming[..^1]);
-                            continue;
-                        }
                         string gridPart = noteAndTiming[..4];
                         measure.AddNotePositionText(gridPart);
 
@@ -183,10 +172,10 @@ public class Chart
         {
             var noteList = gridNoteList[index];
             var lastNote = noteList[^1];
-            /*if (Math.Abs(newNote.StartTime - lastNote.StartTime) <= (23 + 16) / 30f && !lastNote.IsLong)
+            if (!lastNote.IsLong && newNote.StartTime - lastNote.StartTime < (23 + 16) / 30f)
             {
-                Debug.Log($"{Name}: 이건 솔직히 롱노트여야하지않냐?.");
-            }*/
+                Debug.Log($"[{Name}] 충돌날 수 있는 노트 발견됨. 마디: {newNote.MeasureIndex}, Row: {newNote.Row}, Col: {newNote.Column}");
+            }
 
             if (lastNote.IsLong && double.IsNaN(lastNote.FinishTime))
             {
@@ -242,8 +231,6 @@ public class Note
 
 public class Measure
 {
-    public static readonly string NOTE_CHAR = "口□①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳┼｜┃━―∨∧^>＞＜<Ｖ";
-
     public List<string> noteTimingStringList = new();
     public List<List<string>> notePositionStringList = new()
     {
@@ -258,12 +245,12 @@ public class Measure
 
     public Measure(int measureIndex, int beatIndex, Chart chart)
     {
-        MeasureIndex = measureIndex;
-        BeatIndex = beatIndex;
         this.chart = chart;
+        BeatIndex = beatIndex;
+        MeasureIndex = measureIndex;
     }
 
-    private double CalculateRealtimeForBeat(int index)
+    public double ConvertBeatToTime(int beatNumber)
     {
         var resultBeat = 0.0;
         int beforeBeatIndex = 1;
@@ -273,7 +260,7 @@ public class Measure
             resultBeat += (item.Key - beforeBeatIndex + 1) * 60 / item.Value; // 변속 전까지의 길이
             beforeBeatIndex = item.Key + 1;
         }
-        resultBeat += (index - beforeBeatIndex) * 60 / currentBpm; // 현재 박자의 실제 시작 시간
+        resultBeat += (beatNumber - beforeBeatIndex) * 60 / currentBpm; // 현재 박자의 실제 시작 시간
         return resultBeat;
     }
 
@@ -316,7 +303,7 @@ public class Measure
             for (int xIndex = 0; xIndex < timings.Length; ++xIndex)
             {
                 //int currentBeat = 60 / (currentBpm * timings.Length); // 현재 박자의 길이, 16분음표 등등
-                timingMap[timings[xIndex]] = CalculateRealtimeForBeat(BeatIndex + yIndex - 1) + xIndex * 60 / (currentBpm * timings.Length);
+                timingMap[timings[xIndex]] = ConvertBeatToTime(BeatIndex + yIndex - 1) + xIndex * 60 / (currentBpm * timings.Length);
             }
         }
         //Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
