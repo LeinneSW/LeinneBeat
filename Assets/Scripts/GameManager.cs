@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,13 +11,12 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; } = null;
-    
+
     public const string SCENE_MUSIC_SELECT = "MusicSelect";
     public const string SCENE_IN_GAME = "InGame";
 
     private Chart currentChart = null;
     private readonly List<Chart> chartList = new();
-    private SemaphoreSlim chartSemaphore = new SemaphoreSlim(1, 1); // 최대 하나의 작업만 접근 허용
 
     private readonly List<int> scores = new() { 0, 0, 0, 0 };
     private readonly Dictionary<string, float> musicOffsetList = new();
@@ -71,7 +70,7 @@ public class GameManager : MonoBehaviour
 
     public void AddScore(int judge)
     {
-        if(judge < 4)
+        if (judge < 4)
         {
             ++scores[judge];
             GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
@@ -181,35 +180,17 @@ public class GameManager : MonoBehaviour
 
     private void CreateSelectMusicUI()
     {
-        var content = GameObject.Find("ChartScroll").transform.GetComponentInChildren<RectTransform>();
+        var content = GameObject.Find("ChartScroll").transform.GetChild(0).GetChild(0).GetComponent<RectTransform>();
         for (int i = 0; i < chartList.Count; ++i)
         {
+            Debug.Log($"{chartList[i].Name} 버튼 추가");
             AddChartButton(content, chartList[i]);
         }
-        float contentHeight = chartList.Count * (buttonPrefab.GetComponent<RectTransform>().rect.height + 15);
-        content.sizeDelta = new Vector2(content.sizeDelta.x, contentHeight);
     }
 
     string RemoveLastExtension(string path)
     {
         return Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path));
-    }
-
-    public async Task AddChart(Chart chart)
-    {
-        await chartSemaphore.WaitAsync(); // 비동기적으로 락을 요청
-        try
-        {
-            chartList.Add(chart);
-            if (SceneManager.GetActiveScene().name == SCENE_MUSIC_SELECT)
-            {
-                AddChartButton(chart);
-            }
-        }
-        finally
-        {
-            chartSemaphore.Release(); // 락 해제
-        }
     }
 
     private void AddChartButton(RectTransform content, Chart chart)
@@ -227,68 +208,67 @@ public class GameManager : MonoBehaviour
         var path = Path.Combine(Application.dataPath, "Songs", "sync.txt");
         if (File.Exists(path))
         {
-            Task<string[]> loadLinesTask = Task.Run(() => File.ReadAllLines(path));
-            yield return new WaitUntil(() => loadLinesTask.IsCompleted);
-            foreach (string line in loadLinesTask.Result)
+            string[] lines = File.ReadAllLines(path);
+            foreach (string line in lines)
             {
                 var split = line.Trim().Split(":");
-                if (split.Length > 1 && float.TryParse(split[1].Trim(), out float value))
+                if (split.Length < 2)
+                {
+                    continue;
+                }
+                if (float.TryParse(split[1].Trim(), out float value))
                 {
                     musicOffsetList[split[0].Trim()] = value;
                 }
             }
         }
 
-        Task<string[]> filesTaskList = Task.Run(() => Directory.GetFiles(Path.Combine(Application.dataPath, "Songs"), "*.mp3"));
-        yield return new WaitUntil(() => filesTaskList.IsCompleted);
-
-        List<Task> loadTasks = new();
-        foreach (var musicPath in filesTaskList.Result)
+        string[] files = Directory.GetFiles(Path.Combine(Application.dataPath, "Songs"), "*.mp3");
+        foreach (var musicPath in files)
         {
-            loadTasks.Add(Task.Run(async () =>
+            using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, AudioType.MPEG);
+            yield return www.SendWebRequest();
+
+            var musicName = Path.GetFileNameWithoutExtension(musicPath);
+            if (www.result != UnityWebRequest.Result.Success)
             {
-                var musicName = Path.GetFileNameWithoutExtension(musicPath);
-                using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, AudioType.MPEG);
-                await www.SendWebRequest();
+                Debug.Log("알 수 없는 오류가 발생했습니다. musicPath: " + musicName);
+                continue;
+            }
 
-                if (www.result != UnityWebRequest.Result.Success)
+            var removeExt = RemoveLastExtension(musicPath);
+            var difficultyList = new List<string>()
+            {
+                "basic", "advanced", "extreme"
+            };
+
+            var charts = new List<Chart>();
+            foreach (var difficulty in difficultyList)
+            {
+                var filePath = $"{removeExt}_{difficulty}.txt";
+                if (!File.Exists(filePath))
                 {
-                    Debug.Log($"음악 파일을 불러오지 못했습니다. 이름: {musicName}, 경로: {musicPath}");
-                    return;
+                    //Debug.Log($"채보파일이 존재하지 않습니다. 파일명: {musicName}_{difficulty}");
+                    continue;
                 }
 
-                var removeExt = RemoveLastExtension(musicPath);
-                var difficultyList = new List<string> { "basic", "advanced", "extreme" };
-
-                foreach (var difficulty in difficultyList)
+                var chart = Chart.Parse(musicName, difficulty, filePath);
+                if (chart == null)
                 {
-                    var filePath = $"{removeExt}_{difficulty}.txt";
-                    if (!File.Exists(filePath))
-                    {
-                        //Debug.Log($"채보파일이 존재하지 않습니다. 파일명: {musicName}_{difficulty}");
-                        continue;
-                    }
-
-                    var chart = Chart.Parse(musicName, difficulty, filePath);
-                    if (chart == null)
-                    {
-                        Debug.Log($"잘못된 채보입니다. 파일명: {musicName}_{difficulty}");
-                    }
-                    else
-                    {
-                        var _ = chart.StartOffset; // TODO: remove HACK
-                        chart.bgmClip = DownloadHandlerAudioClip.GetContent(www);
-                        AddChart(chart);
-                    }
+                    Debug.Log($"채보파일이 잘못되었습니다. 파일명: {musicName}_{difficulty}");
                 }
-            }));
+                else
+                {
+                    _ = chart.StartOffset; // TODO: remove HACK
+                    chart.bgmClip = DownloadHandlerAudioClip.GetContent(www);
+                    chartList.Add(chart);
+                }
+            }
         }
-
-        // TODO: 대기해야하는지 확인해봐야함
-        /*foreach (var task in loadTasks)
+        if (SceneManager.GetActiveScene().name == SCENE_MUSIC_SELECT)
         {
-            yield return new WaitUntil(() => task.IsCompleted);
-        }*/
+            CreateSelectMusicUI();
+        }
     }
 
     public void PlayChart(Chart chart)
@@ -308,6 +288,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator StartGame()
     {
+        BackgroundMusic.Stop();
         yield return new WaitForSeconds(.35f);
         var comboText = GameObject.Find("Combo").GetComponent<Text>(); // TODO: Hack this code
         comboText.fontSize = 160;
