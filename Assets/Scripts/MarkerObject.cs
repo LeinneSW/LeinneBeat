@@ -148,23 +148,22 @@ public class MarkerObject : MonoBehaviour
     {
         // TODO: 롱노트의 판정 산정 방식은 다르게 측정되어야함
         var judge = STATE_POOR;
-        var judgeTime = Math.Max(0, (FinishTime + 29 / 60d - Time.time) * 1000); // + 빠르게침
-        var judgeAbs = Math.Abs(judgeTime);
-        if (judgeAbs <= 41.667f)
+        var judgeTime = Math.Min(0, (FinishTime + 29 / 60d - Time.time) * 1000); // + 빠르게침, - 판정은 없음
+        //var maxTime = FinishTime - StartTime;
+        if (judgeTime <= 41.667f)
         {
             judge = STATE_PREFECT;
         }
-        else if (judgeAbs <= 83.334f)
+        else if (judgeTime <= 83.334f)
         {
             judge = STATE_GREAT;
         }
-        else if (judgeAbs <= 166.667f)
+        else if (judgeTime <= 166.667f)
         {
             judge = STATE_GOOD;
         }
         CreateJudgeEffect(judge);
         GameManager.Instance.AddScore(judge - 1);
-        MarkerManager.Instance.ShowJudgeTime(note.Row, note.Column, judgeTime);
 
         Destroy(gameObject);
         Destroy(arrowObject.gameObject);
