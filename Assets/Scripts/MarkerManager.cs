@@ -133,7 +133,7 @@ public class MarkerManager : MonoBehaviour
         var list = markers[row * 4 + column];
         for (int i = list.Count - 1; i >= 0; --i)
         {
-            if(list[i] == null)
+            if (list[i] == null)
             {
                 list.RemoveAt(i);
             }
