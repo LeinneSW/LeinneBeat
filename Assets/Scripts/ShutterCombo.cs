@@ -1,29 +1,41 @@
 using UnityEngine;
+using System.Collections;
 
 public class ShutterCombo : MonoBehaviour
 {
     private bool up;
-    private readonly float amplitude = 8f;  // ¿À¸£³»¸®´Â ³ôÀÌÀÇ ¹İ°æ
-    private readonly float frequency = 3.2f;  // ÁÖ±â (ÃÊ´ç ¿À¸£³»¸² È½¼ö)
+    private readonly float amplitude = 8f;  // ì˜¤ë¥´ë‚´ë¦¬ëŠ” ë†’ì´ì˜ ë°˜ê²½
+    private readonly float frequency = 3.5f;  // ì£¼ê¸° (ì´ˆë‹¹ ì˜¤ë¥´ë‚´ë¦¼ íšŸìˆ˜)
 
-    void Start()
+    private void Start()
     {
         up = gameObject.name.Contains("Up");
+        StartCoroutine(StartShutterAnimation());
     }
 
-    void Update()
+    private void OnDestroy()
     {
-        var position = transform.position;
-        var percent = GameManager.Instance.ShutterPoint * 810 / 1024;
-        var animation = Mathf.Sin(Time.time * frequency * 2 * Mathf.PI) * amplitude;
-        if (up)
+        StopAllCoroutines();
+    }
+
+    public IEnumerator StartShutterAnimation()
+    {
+        if (!GameManager.Instance.BackgroundMusic.isPlaying)
         {
-            position.y = -130 + amplitude + percent + animation;
+            // ì‹œì‘ ì „ê¹Œì§„ ì…”í„°ëŠ” ì›€ì§ì´ì§€ ì•ŠëŠ”ë‹¤
+            yield return null;
         }
-        else
+
+        while (GameManager.Instance.BackgroundMusic.isPlaying)
         {
-            position.y = -830 - amplitude - percent - animation;
-        }
-        transform.position = position;
+            var position = transform.position;
+            var percent = GameManager.Instance.ShutterPoint * (800 + amplitude) / 1024;
+            var animation = Mathf.Sin(Time.time * frequency * 2 * Mathf.PI) * amplitude;
+            position.y = up ? (percent + animation - 130 + amplitude) : -(percent + animation + 830 + amplitude);
+            transform.position = position;
+            yield return null;
+        } 
+
+        // TODO: ê³¡ì´ ì¢…ë£Œë˜ë©´ ì…”í„°ê°€ ë‹«í˜
     }
 }

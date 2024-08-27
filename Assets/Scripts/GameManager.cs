@@ -16,10 +16,8 @@ public class GameManager : MonoBehaviour
     public const string SCENE_IN_GAME = "InGame";
 
     private Chart currentChart = null;
-    private AudioSource bgmSource;
     private readonly List<Chart> chartList = new();
     private readonly Dictionary<string, float> musicOffsetList = new();
-
 
     private readonly List<int> scores = new()
     {
@@ -32,15 +30,17 @@ public class GameManager : MonoBehaviour
     public AudioSource resultEffect;
     public GameObject buttonPrefab;
 
-    public float StartTime { get; private set; } = -1;
-    public bool AutoMode { get; set; } = false;
     public float ClapVolume { get; set; } = 0f;
+    public float StartTime { get; private set; } = -1;
+    public bool AutoMode { get; private set; } = false;
+    public AudioSource BackgroundMusic { get; private set; }
 
     public int Combo { get; private set; } = 0;
     public int ShutterPoint { get; private set; } = 0;
+
     public int Score
     {
-        get => Mathf.FloorToInt(0.9f * Mathf.Floor(1000000 * (scores[0] + 0.7f * scores[1] + 0.4f * scores[2] + 0.1f * scores[3]) / currentChart.NoteCount));
+        get => 90_000 * (10 * scores[0] + 7 * scores[1] + 4 * scores[2] + scores[3]) / currentChart.NoteCount;
     }
     public int ShutterScore
     {
@@ -63,9 +63,9 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
         StartCoroutine(LoadGameData());
 
-        bgmSource = gameObject.AddComponent<AudioSource>();
-        bgmSource.loop = false;
-        bgmSource.volume = 0;
+        BackgroundMusic = gameObject.AddComponent<AudioSource>();
+        BackgroundMusic.loop = false;
+        BackgroundMusic.volume = 0;
 
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Screen.SetResolution(Screen.height * 10 / 16, Screen.height, true);
@@ -76,11 +76,11 @@ public class GameManager : MonoBehaviour
         if(judge < 4)
         {
             ++scores[judge];
-            GameObject.Find("Score").GetComponent<Text>().text = Score + "";
+            GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
         }
 
         Combo = judge < 3 ? Combo + 1 : 0;
-        GameObject.Find("Combo").GetComponent<Text>().text = Combo > 4 ? Combo + "" : "";
+        GameObject.Find("Combo").GetComponent<Text>().text = Combo > 4 ? $"{Combo}" : "";
 
         if (judge < 2)
         {
@@ -325,9 +325,9 @@ public class GameManager : MonoBehaviour
 
     private void PlayBGM()
     {
-        bgmSource.clip = currentChart.bgmClip;
-        bgmSource.volume = 0.3f;
-        bgmSource.Play();
+        BackgroundMusic.clip = currentChart.bgmClip;
+        BackgroundMusic.volume = 0.3f;
+        BackgroundMusic.Play();
     }
 
     private IEnumerator StartGame()
@@ -367,7 +367,7 @@ public class GameManager : MonoBehaviour
         }
 
         yield return new WaitForSeconds(5f);
-        while (bgmSource.isPlaying)
+        while (BackgroundMusic.isPlaying)
         {
             yield return null;
         }
@@ -389,7 +389,7 @@ public class GameManager : MonoBehaviour
     private void FinishGame()
     {
         StartTime = -1;
-        bgmSource.Stop();
+        BackgroundMusic.Stop();
         StopAllCoroutines();
         _ = ModifyMusicOffset(currentChart.Name, currentChart.StartOffset);
         SceneManager.LoadScene(SCENE_MUSIC_SELECT);
