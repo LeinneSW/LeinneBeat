@@ -161,6 +161,11 @@ public class Chart
 
     public void AddNote(Note newNote)
     {
+        if (newNote.IsLong)
+        {
+            IsLong = true;
+        }
+
         int index = newNote.Row * 4 + newNote.Column;
         if (!gridNoteList.ContainsKey(index))
         {
