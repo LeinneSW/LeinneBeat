@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -172,10 +170,10 @@ public class Chart
         {
             var noteList = gridNoteList[index];
             var lastNote = noteList[^1];
-            if (!lastNote.IsLong && newNote.StartTime - lastNote.StartTime < (23 + 16) / 30f)
+            /*if (!lastNote.IsLong && newNote.StartTime - lastNote.StartTime < (23 + 16) / 30f)
             {
                 Debug.Log($"[{Name}] 충돌날 수 있는 노트 발견됨. 마디: {newNote.MeasureIndex}, Row: {newNote.Row}, Col: {newNote.Column}");
-            }
+            }*/
 
             if (lastNote.IsLong && double.IsNaN(lastNote.FinishTime))
             {
