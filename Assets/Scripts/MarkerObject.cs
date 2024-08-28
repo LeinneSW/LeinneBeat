@@ -42,7 +42,7 @@ public class MarkerObject : MonoBehaviour
 
     private void CreateArrow()
     {
-        if (double.IsNaN(note.FinishTime))
+        if (note.FinishTime <= 0)
         {
             return;
         }
@@ -192,7 +192,7 @@ public class MarkerObject : MonoBehaviour
     {
         if (GameManager.Instance.AutoMode)
         {
-            if (Time.time >= StartTime + 0.483f)
+            if (Time.time >= StartTime + 0.481f)
             {
                 OnTouch();
             }

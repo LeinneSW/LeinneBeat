@@ -4,19 +4,49 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class ChartParser : MonoBehaviour
+public enum Difficulty
 {
+    BASIC,
+    ADVANCED,
+    EXTREME
 }
 
-public class Chart
+public class MusicParser : MonoBehaviour
 {
-    private static readonly Regex NOTE_REGEX = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}\|.+(\|)?))$", RegexOptions.Compiled);
+    public static bool TryParse(AudioClip clip, string dirPath, out Music music)
+    {
+        var musicName = Path.GetFileName(dirPath);
+        music = new(clip, musicName);
+        _ = music.StartOffset; // TODO: remove HACK
+        foreach (var difficulty in Enum.GetValues(typeof(Difficulty)))
+        {
+            var diffStr = difficulty.ToString().ToLower();
+            var filePath = Path.Combine(dirPath, $"{diffStr}.txt");
+            if (!File.Exists(filePath))
+            {
+                //Debug.Log($"{musicName}의 {diffStr}채보가 발견되지 않았습니다.");
+                continue;
+            }
 
-    public string Name { get; private set; }
-    public string Difficulty { get; private set; }
-    public string FilePath { get; private set; }
-    public bool IsLong { get; private set; } = false;
+            var chart = Chart.Parse(filePath, 0, (Difficulty) difficulty);
+            if (chart == null)
+            {
+                Debug.Log($"{musicName}의 {diffStr}채보가 잘못되었습니다.");
+            }
+            else
+            {
+                music.AddChart(chart);
+            }
+        }
+        return music.AvailableDifficulty.Count > 0;
+    }
+}
+
+public class Music{
+    public readonly string name;
+    public readonly AudioClip clip;
 
     /**
     * 음악이 시작되는 시간 
@@ -25,26 +55,61 @@ public class Chart
     */
     public float StartOffset
     {
-        get => GameManager.Instance.GetMusicOffset(Name);
+        get => GameManager.Instance.GetMusicOffset(name);
     }
 
-    public AudioClip bgmClip;
+    public List<Difficulty> AvailableDifficulty
+    {
+        get => chartList.Keys.ToList();
+    }
 
-    public int NoteCount { get; private set; } = 0;
+    private readonly Dictionary<Difficulty, Chart> chartList = new();
 
-    /** 모든 박자가 들어가는 배열 */
-    public readonly SortedSet<double> clapTimings = new();
+    public Music(AudioClip clip, string name)
+    {
+        this.name = name;
+        this.clip = clip;
+    }
 
+    public void AddChart(Chart chart)
+    {
+        if (!chartList.ContainsKey(chart.difficulty))
+        {
+            chartList[chart.difficulty] = chart;
+        }
+    }
+
+    public Chart GetChart(Difficulty difficulty)
+    {
+        if (!chartList.ContainsKey(difficulty))
+        {
+            return null;
+        }
+        return chartList[difficulty];
+    }
+
+    public bool CanPlay(Difficulty difficulty)
+    {
+        return chartList.ContainsKey(difficulty);
+    }
+}
+
+public class Chart
+{
+    public static readonly Regex NOTE_REGEX = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}\|.+(\|)?))$", RegexOptions.Compiled);
+
+    public readonly double level;
+    public readonly Difficulty difficulty;
     /** 곡의 BPM 목록 */
     public readonly List<double> bpmList = new();
+    /** 모든 박자가 들어가는 배열 */
+    public readonly SortedSet<double> clapTimings = new();
     /** BPM이 변경되는 마디 목록 [변경되는마디] = 기존BPM 형태로 저장 */
     public readonly Dictionary<int, double> changeBpmMeasureList = new();
 
-    /** 모든 노트가 들어가는 배열 [row * 4 + column] = List<Note> 형태 */
-    private readonly Dictionary<int, List<Note>> gridNoteList = new();
-
-    private List<Note> _allNotes = null;
-    public List<Note> AllNotes
+    public int NoteCount { get; private set; } = 0;
+    public bool IsLong { get; private set; } = false;
+    public List<Note> NoteList
     {
         get
         {
@@ -53,11 +118,15 @@ public class Chart
         }
     }
 
-    private Chart(string name, string difficulty, string filePath)
+    /** 모든 노트의 출현 순서별 정렬 */
+    private List<Note> _allNotes = null;
+    /** 그리드 별 노트 배열 [row * 4 + column] = List<Note> */
+    private readonly Dictionary<int, List<Note>> gridNoteList = new();
+
+    private Chart(double level, Difficulty difficulty)
     {
-        Name = name;
-        FilePath = filePath;
-        Difficulty = difficulty;
+        this.level = level;
+        this.difficulty = difficulty;
     }
 
     private static bool TryParseDoubleInText(string text, out double result)
@@ -77,13 +146,13 @@ public class Chart
         return NOTE_REGEX.IsMatch(text);
     }
 
-    public static Chart Parse(string musicName, string difficulty, string filePath)
+    public static Chart Parse(string filePath, double level, Difficulty difficulty)
     {
         string[] lines = File.ReadAllLines(filePath);
-        Chart chart = new(musicName, difficulty, filePath);
+        Chart chart = new(level, difficulty);
         int beatIndex = 1;
         int measureIndex = 1;
-        for (int i = 1; i < lines.Length; ++i)
+        for (int i = 0; i < lines.Length; ++i)
         {
             var line = RemoveComment(lines[i]);
             if (line.Length < 1)
@@ -91,25 +160,25 @@ public class Chart
                 continue;
             }
 
-            if ((line.StartsWith("bpm:", StringComparison.InvariantCultureIgnoreCase) || line.StartsWith("t=")) && TryParseDoubleInText(line, out double bpmValue))
+            var lineLower = line.ToLower();
+            if ((lineLower.StartsWith("bpm:") || lineLower.StartsWith("t=")) && TryParseDoubleInText(line, out double bpmValue))
             {
-                if (chart.bpmList.Count > 0 && Mathf.Abs((float)(chart.bpmList[^1] - bpmValue)) <= float.Epsilon)
+                if (chart.bpmList.Count < 1 || Math.Abs(chart.bpmList[^1] - bpmValue) > 0.01)
                 {
-                    continue;
+                    if (chart.bpmList.Count > 0)
+                    {
+                        //Debug.Log("[BPM 변경] 기존: " + chart.bpmList[^1] + ", 변경: " + bpmValue + ", bpm이 변경되는 마디: " + measureIndex);
+                        chart.changeBpmMeasureList.Add(beatIndex, chart.bpmList[^1]);
+                    }
+                    chart.bpmList.Add(bpmValue);
+                    //Debug.Log("BPM SETTING: " + bpmValue);
                 }
-                if (chart.bpmList.Count > 0)
-                {
-                    //Debug.Log("[BPM 변경] 기존: " + chart.bpmList[^1] + ", 변경: " + bpmValue + ", bpm이 변경되는 마디: " + measureIndex);
-                    chart.changeBpmMeasureList.Add(beatIndex, chart.bpmList[^1]);
-                }
-                chart.bpmList.Add(bpmValue);
-                //Debug.Log("BPM SETTING: " + bpmValue);
             }
-            else if (int.TryParse(line, out int _))
+            else if (IsNoteText(line))
             {
                 try
                 {
-                    int j = 0;
+                    int j = -1;
                     var measure = new Measure(measureIndex++, beatIndex, chart);
                     //Debug.Log($"------------- 마디의 시작: {beatIndex} --------------------");
                     while (lines.Length > i + ++j)
@@ -175,12 +244,12 @@ public class Chart
         {
             var noteList = gridNoteList[index];
             var lastNote = noteList[^1];
-            /*if (!lastNote.IsLong && newNote.StartTime - lastNote.StartTime < (23 + 16) / 30f)
+            /*if (!lastNote.IsLong && newNote.StartTime - lastNote.StartTime < 23 / 30f)
             {
                 Debug.Log($"[{Name}] 충돌날 수 있는 노트 발견됨. 마디: {newNote.MeasureIndex}, Row: {newNote.Row}, Col: {newNote.Column}");
             }*/
 
-            if (lastNote.IsLong && double.IsNaN(lastNote.FinishTime))
+            if (lastNote.IsLong && lastNote.FinishTime <= 0)
             {
                 lastNote.FinishTime = newNote.StartTime;
             }
@@ -203,10 +272,6 @@ public class Note
         get => MarkerManager.Instance.ConvertPosition(Row, Column);
     }
 
-    public bool IsLong
-    {
-        get => BarRow != -1 && BarColumn != -1;
-    }
     public int BarRow { get; private set; } = -1;
     public int BarColumn { get; private set; } = -1;
     public Vector2 BarPosition
@@ -214,8 +279,10 @@ public class Note
         get => MarkerManager.Instance.ConvertPosition(BarRow, BarColumn);
     }
 
+    public bool IsLong { get => BarRow != -1 && BarColumn != -1; }
+
     public double StartTime { get; private set; }
-    public double FinishTime { get; set; } = double.NaN; // 롱노트의 끝 판정
+    public double FinishTime { get; set; } = 0; // 롱노트의 끝 판정
     public int MeasureIndex { get; private set; }
 
     public Note(int measureIndex, int row, int column, double startTime)
@@ -287,14 +354,14 @@ public class Measure
             noteMap[index] = new();
         }
 
-        int index = noteMap[index].FindIndex(note => note.StartTime > newNote.StartTime);
-        if (index == -1)
+        var newIndex = noteMap[index].FindIndex(note => note.StartTime > newNote.StartTime);
+        if (newIndex == -1)
         {
             noteMap[index].Add(newNote);
         }
         else
         {
-            noteMap[index].Insert(index, newNote);
+            noteMap[index].Insert(newIndex, newNote);
         }
     }
 

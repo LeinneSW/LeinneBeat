@@ -26,8 +26,8 @@ public class ShutterCombo : MonoBehaviour
             yield return null;
         }
 
-        var chart = GameManager.Instance.SelectedChart;
-        var remainTime = chart.bgmClip.length + Mathf.Max(0, chart.StartOffset);
+        var music = GameManager.Instance.SelectedMusic;
+        var remainTime = music.clip.length + Mathf.Max(0, music.StartOffset);
         while (remainTime > 0)
         {
             remainTime -= Time.deltaTime;
