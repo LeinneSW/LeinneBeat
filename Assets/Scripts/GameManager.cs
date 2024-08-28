@@ -53,12 +53,17 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = -1;
-
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        if (SceneManager.GetActiveScene().name != SCENE_MUSIC_SELECT)
+        {
+            SceneManager.LoadScene(SCENE_MUSIC_SELECT);
+        }
+
         StartCoroutine(LoadGameData());
+
+        QualitySettings.vSyncCount = 0;
+        Application.targetFrameRate = -1;
 
         BackgroundMusic = gameObject.AddComponent<AudioSource>();
         BackgroundMusic.loop = false;
@@ -66,11 +71,6 @@ public class GameManager : MonoBehaviour
 
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Screen.SetResolution(Screen.height * 10 / 16, Screen.height, true);
-
-        if (SceneManager.GetActiveScene().name == SCENE_IN_GAME)
-        {
-            SceneManager.LoadScene(SCENE_MUSIC_SELECT);
-        }
     }
 
     private void Start()
@@ -268,10 +268,7 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        if (SceneManager.GetActiveScene().name == SCENE_MUSIC_SELECT)
-        {
-            CreateSelectMusicUI();
-        }
+        CreateSelectMusicUI();
     }
 
     public void SelectChart(Chart chart)
@@ -303,7 +300,7 @@ public class GameManager : MonoBehaviour
             }
             BackgroundMusic.volume = .35f;
 
-            // 10초 동안 재생
+            // 15초 동안 재생
             yield return new WaitForSeconds(15);
 
             // 1.5초 페이드 아웃
