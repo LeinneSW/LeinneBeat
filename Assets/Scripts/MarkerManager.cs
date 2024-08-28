@@ -82,7 +82,7 @@ public class MarkerManager : MonoBehaviour
 
     public void ShowMarker(Note note)
     {
-        var marker = Instantiate(markerPrefab, ConvertPosition(note.Row, note.Column), Quaternion.identity).GetComponent<MarkerObject>();
+        var marker = Instantiate(markerPrefab, note.Position, Quaternion.identity).GetComponent<MarkerObject>();
         marker.note = note;
         markers[note.Row * 4 + note.Column].Add(marker);
     }
