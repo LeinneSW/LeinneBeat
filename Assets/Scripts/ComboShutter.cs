@@ -4,8 +4,8 @@ using System.Collections;
 public class ShutterCombo : MonoBehaviour
 {
     private bool up;
-    private readonly float amplitude = 12f; // 오르내리는 높이의 반경
     private readonly float frequency = 3f;  // 주기 (초당 오르내림 횟수)
+    private readonly float amplitude = 12f; // 오르내리는 높이의 반경
 
     private void Start()
     {
@@ -43,10 +43,10 @@ public class ShutterCombo : MonoBehaviour
         var startPos = transform.position;
         var endPos = transform.position;
         endPos.y = up ? -130 : -830;
-        while (moveTime < .8f)
+        while (moveTime < .5f)
         {
             moveTime += Time.deltaTime;
-            transform.position = Vector3.Lerp(startPos, endPos, moveTime / .8f);
+            transform.position = Vector3.Lerp(startPos, endPos, moveTime / .5f);
             yield return null;
         }
     }
