@@ -36,7 +36,7 @@ public class GameManager : MonoBehaviour
 
     public Music SelectedMusic { get; private set; } = null;
     public Difficulty SelectedDifficulty{ get; private set; } = Difficulty.BASIC;
-    public Chart SelectedChart { get => SelectedMusic.GetChart(SelectedDifficulty); }
+    public Chart SelectedChart { get => SelectedMusic?.GetChart(SelectedDifficulty); }
 
     public int Combo { get; private set; } = 0;
     public int ShutterPoint { get; private set; } = 0;
@@ -70,6 +70,7 @@ public class GameManager : MonoBehaviour
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = -1;
 
+        // TODO: 곡 미선택시의 기본 배경음악 추가
         BackgroundSource = gameObject.AddComponent<AudioSource>();
         BackgroundSource.loop = false;
         BackgroundSource.volume = 0;
@@ -223,13 +224,23 @@ public class GameManager : MonoBehaviour
             SelectedDifficulty = Difficulty.EXTREME;
         });
 
-        // 곡을 선택하여 무조건 재생되게함
-        SelectMusic(SelectedMusic ?? musicList[0]);
+        previewCoroutine = StartCoroutine(PlayMusicPreview());
     }
 
     string RemoveLastExtension(string path)
     {
         return Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path));
+    }
+
+    private AudioType GetAudioType(string extension)
+    {
+        return extension.ToLower() switch
+        {
+            ".mp3" => AudioType.MPEG,
+            ".ogg" => AudioType.OGGVORBIS,
+            ".wav" => AudioType.WAV,
+            _ => AudioType.UNKNOWN,
+        };
     }
 
     private IEnumerator LoadGameData()
@@ -254,14 +265,21 @@ public class GameManager : MonoBehaviour
 
         foreach (var dirPath in Directory.GetDirectories(Path.Combine(Application.dataPath, "Songs")))
         {
-            var musicPath = Path.Combine(dirPath, "song.mp3");
             var musicName = Path.GetFileName(dirPath);
-            using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, AudioType.MPEG);
+            var songFiles = Directory.GetFiles(dirPath, "song.*");
+            if (songFiles.Length < 1)
+            {
+                Debug.Log($"mp3파일이 존재하지 않습니다. 폴더명: {musicName}");
+                continue;
+            }
+
+            var musicPath = songFiles[0];
+            using UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, GetAudioType(Path.GetExtension(musicPath)));
             yield return www.SendWebRequest();
 
             if (www.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log($"mp3파일이 존재하지 않습니다. 폴더명: {musicPath}");
+                Debug.Log($"폴더: {musicPath}, 오류: {www.error}");
                 continue;
             }
 
@@ -290,6 +308,11 @@ public class GameManager : MonoBehaviour
 
     public IEnumerator PlayMusicPreview()
     {
+        if (SelectedMusic == null)
+        {
+            yield break;
+        }
+
         var music = SelectedMusic;
         BackgroundSource.clip = music.clip;
         while (true)
