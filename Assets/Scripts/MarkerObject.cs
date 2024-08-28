@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class MarkerObject : MonoBehaviour
 {
@@ -192,7 +191,7 @@ public class MarkerObject : MonoBehaviour
     {
         if (GameManager.Instance.AutoMode)
         {
-            if (Time.time >= StartTime + 0.481f)
+            if (Time.time > StartTime + 0.482f)
             {
                 OnTouch();
             }
