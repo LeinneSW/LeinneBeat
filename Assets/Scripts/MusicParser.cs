@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.Networking;
 
 public enum Difficulty
 {
@@ -47,6 +46,7 @@ public class MusicParser : MonoBehaviour
 public class Music{
     public readonly string name;
     public readonly AudioClip clip;
+    public readonly Sprite jacket = null;
 
     /**
     * 음악이 시작되는 시간 
@@ -69,6 +69,13 @@ public class Music{
     {
         this.name = name;
         this.clip = clip;
+    }
+
+    public Music(AudioClip clip, string name, Sprite jacket)
+    {
+        this.name = name;
+        this.clip = clip;
+        this.jacket = jacket;
     }
 
     public void AddChart(Chart chart)
@@ -392,8 +399,9 @@ public class Measure
                     {
                         for (int newY = yIndex - 1; newY >= 0; --newY)
                         {
+                            var index = newY * 4 + xIndex;
                             var longNoteChar = noteGrid[newY][xIndex];
-                            if (timingMap.ContainsKey(longNoteChar))
+                            if (!longNoteList.Contains(index) && timingMap.ContainsKey(longNoteChar))
                             {
                                 longNoteList.Add(newY * 4 + xIndex);
                                 AddNote(new(MeasureIndex, newY, xIndex, yIndex, xIndex, timingMap[longNoteChar]));
@@ -406,8 +414,9 @@ public class Measure
                     {
                         for (int newY = yIndex + 1; newY < 4; ++newY)
                         {
+                            var index = newY * 4 + xIndex;
                             var longNoteChar = noteGrid[newY][xIndex];
-                            if (timingMap.ContainsKey(longNoteChar))
+                            if (!longNoteList.Contains(index) && timingMap.ContainsKey(longNoteChar))
                             {
                                 longNoteList.Add(newY * 4 + xIndex);
                                 AddNote(new(MeasureIndex, newY, xIndex, yIndex, xIndex, timingMap[longNoteChar]));
@@ -420,8 +429,9 @@ public class Measure
                     {
                         for (int newX = xIndex + 1; newX < noteGrid[yIndex].Length; ++newX)
                         {
+                            var index = yIndex * 4 + newX;
                             var longNoteChar = noteGrid[yIndex][newX];
-                            if (timingMap.ContainsKey(longNoteChar))
+                            if (!longNoteList.Contains(index) && timingMap.ContainsKey(longNoteChar))
                             {
                                 longNoteList.Add(yIndex * 4 + newX);
                                 AddNote(new(MeasureIndex, yIndex, newX, yIndex, xIndex, timingMap[longNoteChar]));
@@ -434,8 +444,9 @@ public class Measure
                     {
                         for (int newX = xIndex - 1; newX >= 0; --newX)
                         {
+                            var index = yIndex * 4 + newX;
                             var longNoteChar = noteGrid[yIndex][newX];
-                            if (timingMap.ContainsKey(longNoteChar))
+                            if (!longNoteList.Contains(index) && timingMap.ContainsKey(longNoteChar))
                             {
                                 longNoteList.Add(yIndex * 4 + newX);
                                 AddNote(new(MeasureIndex, yIndex, newX, yIndex, xIndex, timingMap[longNoteChar]));
