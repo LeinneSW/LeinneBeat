@@ -118,6 +118,7 @@ public class MarkerObject : MonoBehaviour
         var judge = STATE_POOR;
         var judgeTime = (StartTime + 29 / 60d - Time.time) * 1000; // + 빠르게침, - 느리게침
         var judgeAbs = Math.Abs(judgeTime);
+        // TODO: 판정 범위 조절 기능 구현 예정
         if (judgeAbs <= 41.667f)
         {
             judge = STATE_PREFECT;
@@ -126,7 +127,7 @@ public class MarkerObject : MonoBehaviour
         {
             judge = STATE_GREAT;
         }
-        else if (judgeAbs <= 166.667f)
+        else if (judgeAbs <= 125f)
         {
             judge = STATE_GOOD;
         }
