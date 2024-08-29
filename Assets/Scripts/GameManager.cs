@@ -371,12 +371,13 @@ public class GameManager : MonoBehaviour
         }
 
         BackgroundSource.Stop();
-        yield return new WaitForSeconds(.35f);
-        var comboText = GameObject.Find("Combo").GetComponent<Text>(); // TODO: Hack this code
+        yield return new WaitForSeconds(.1f);
+        // TODO: Ready, GO 연출을 좀더 맛깔나게
+        var comboText = GameObject.Find("Combo").GetComponent<Text>();
         comboText.fontSize = 160;
         readyEffect.Play();
         comboText.text = "Ready";
-        yield return new WaitForSeconds(1.8f);
+        yield return new WaitForSeconds(1.9f);
 
         goEffect.Play();
         comboText.text = "Go";
