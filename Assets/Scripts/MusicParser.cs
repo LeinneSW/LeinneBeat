@@ -154,7 +154,7 @@ public class Music{
         return scoreList.ContainsKey(difficulty) ? scoreList[difficulty] : 0;
     }
 
-    public int SetScore(Difficulty difficulty, int score)
+    public void SetScore(Difficulty difficulty, int score)
     {
         scoreList[difficulty] = score;
     }
