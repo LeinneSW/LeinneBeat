@@ -130,8 +130,8 @@ public class MarkerObject : MonoBehaviour
         {
             judge = STATE_GOOD;
         }
-        GameManager.Instance.AddScore(judge - 1);
         CreateJudgeEffect(judge);
+        GameManager.Instance.AddScore(judge - 1);
         MarkerManager.Instance.ShowJudgeTime(note.Row, note.Column, judgeTime);
     }
 
@@ -199,17 +199,15 @@ public class MarkerObject : MonoBehaviour
         }
 
         remainTime -= Time.deltaTime;
-        if (remainTime > 0)
+        if (remainTime <= 0) // 입력하지 않은 경우
         {
-            return;
-        }
-
-        if (arrowObject != null) // 롱노트는 2미스
-        {
-            Destroy(arrowObject.gameObject);
+            if (arrowObject != null) // 롱노트는 2미스
+            {
+                Destroy(arrowObject.gameObject);
+                GameManager.Instance.AddScore(STATE_MISS - 1);
+            }
             GameManager.Instance.AddScore(STATE_MISS - 1);
+            Destroy(gameObject);
         }
-        GameManager.Instance.AddScore(STATE_MISS - 1);
-        Destroy(gameObject);
     }
 }
