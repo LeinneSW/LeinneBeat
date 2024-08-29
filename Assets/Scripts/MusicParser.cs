@@ -109,7 +109,7 @@ public class Music{
 
     public List<int> GetMusicBar(Difficulty difficulty)
     {
-        List<int> result = new List<int>(new int[120]);
+        List<int> result = new(new int[120]);
         if (!chartList.ContainsKey(difficulty))
         {
             return result;
@@ -233,8 +233,8 @@ public class Chart
                 {
                     if (chart.bpmList.Count > 0)
                     {
-                        //Debug.Log("[BPM 변경] 기존: " + chart.bpmList[^1] + ", 변경: " + bpmValue + ", bpm이 변경되는 마디: " + measureIndex);
-                        chart.changeBpmMeasureList.Add(beatIndex, chart.bpmList[^1]);
+                        Debug.Log($"[BPM 변경] 기존: {chart.bpmList[^1]}, 변경: {bpmValue}, 변경 시작 마디: {measureIndex}, 비트: {beatIndex}");
+                        chart.changeBpmMeasureList.Add(beatIndex - 1, chart.bpmList[^1]);
                     }
                     chart.bpmList.Add(bpmValue);
                     //Debug.Log("BPM SETTING: " + bpmValue);
@@ -434,18 +434,24 @@ public class Measure
     public void Convert()
     {
         Dictionary<int, double> timingMap = new();
-        //Debug.Log("------------- 박자 시작 -------------");
+        Debug.Log("------------- 박자 시작 -------------");
         var currentBpm = chart.bpmList[^1];
+        Debug.Log($"currentBpm: {currentBpm}");
         for (int yIndex = 0; yIndex < noteTimingStringList.Count; ++yIndex) // 한 구간을 4분음표로 취급하며 보편적으로 한마디에 4개의 박자가 있음
         {
             var timings = noteTimingStringList[yIndex].ToCharArray();
+            Debug.Log($"Count: {timings.Length}");
             for (int xIndex = 0; xIndex < timings.Length; ++xIndex)
             {
+                if (timings[xIndex] == '－')
+                {
+                    continue;
+                }
                 //int currentBeat = 60 / (currentBpm * timings.Length); // 현재 박자의 길이, 16분음표 등등
                 timingMap[timings[xIndex]] = ConvertBeatToTime(BeatIndex + yIndex - 1) + xIndex * 60 / (currentBpm * timings.Length);
             }
         }
-        //Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
+        Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
         foreach (var noteGrid in notePositionStringList)
         {
             List<int> longNoteList = new();

@@ -4,12 +4,23 @@ using UnityEngine;
 public class HoldArrow : MonoBehaviour
 {
     private MarkerObject marker;
+    private Animator animator;
     private LineRenderer lineRenderer;
     private RectTransform rectTransform;
 
     public float duration = 0;
 
     public bool IsStarted { get; private set; } = false;
+    private Vector3 Offset
+    {
+        get => transform.rotation.eulerAngles.z switch
+        {
+            270 => new(-200, 0, 0), // <
+            90 => new(200, 0, 0), // >
+            180 => new(0, 200, 0), // ∧
+            _ => new(0, -200, 0), // V
+        };
+    }
 
     private void Awake()
     {
@@ -18,21 +29,14 @@ public class HoldArrow : MonoBehaviour
         lineRenderer.SetPosition(0, transform.position);
         lineRenderer.SetPosition(1, transform.position);
         rectTransform = GetComponent<RectTransform>();
-        SetScale(new(0, .4f, 1));
+        transform.localScale = new(0, 1, 1);
     }
 
     private void Start()
     {
-        var rotate = transform.rotation.eulerAngles.z;
-        Vector3 offset = rotate switch
-        {
-            270 => new(-200, 0, 0), // <
-            90 => new(200, 0, 0), // >
-            180 => new(0, 200, 0), // ∧
-            _ => new(0, -200, 0), // V
-        };
         marker = transform.GetComponentInParent<MarkerObject>();
-        lineRenderer.SetPosition(1, marker.gameObject.transform.position - offset);
+        lineRenderer.SetPosition(0, transform.position - Offset);
+        lineRenderer.SetPosition(1, marker.gameObject.transform.position - Offset);
 
         StartCoroutine(SpawnEffect());
     }
@@ -45,22 +49,15 @@ public class HoldArrow : MonoBehaviour
 
     private IEnumerator FollowTargetForDuration()
     {
+        GetComponent<Animator>().SetBool("Start", true);
         var updateTime = 0f;
-        // TODO: 마커 확대/축소는 스프라이트 애니메이션으로 대체 예정
-        /*var startScale = rectTransform.localScale;
-        var endScale = new Vector3(1, 1, 1);*/
-
         var startPosition = transform.localPosition;
         var endPosition = new Vector3();
         while (updateTime < duration)
         {
             updateTime += Time.deltaTime;
-            /*if (updateTime < 0.17f)
-            {
-                startPosition += (SetScale(Vector3.Lerp(startScale, endScale, Mathf.Min(0.15f, updateTime) / 0.15f))) / 2;
-            }*/
             transform.localPosition = Vector3.Lerp(startPosition, endPosition, updateTime / duration);
-            lineRenderer.SetPosition(0, transform.position);
+            lineRenderer.SetPosition(0, transform.position - Offset);
             yield return null;
         }
         marker.OnRelease();
@@ -74,22 +71,22 @@ public class HoldArrow : MonoBehaviour
         material.color = color;
 
         float elapsedTime = 0f;
-        var targetScale = new Vector3(.4f, .4f, 1);
+        var targetScale = new Vector3(1, 1, 1);
         var originalScale = rectTransform.localScale;
         while (elapsedTime < 0.15f)
         {
             elapsedTime += Time.deltaTime;
             color.a = Mathf.Clamp01(elapsedTime / 0.15f);
             material.color = color;
-            SetScale(Vector3.Lerp(originalScale, targetScale, elapsedTime / 0.15f));
+            transform.localScale = Vector3.Lerp(originalScale, targetScale, elapsedTime / 0.15f);
             yield return null;
         }
         color.a = 1;
         material.color = color;
-        SetScale(targetScale);
+        transform.localScale = targetScale;
     }
 
-    private Vector3 SetScale(Vector3 newScale)
+    /*private Vector3 SetScale(Vector3 newScale)
     {
         var diffVector = (newScale - transform.localScale) * rectTransform.sizeDelta;
         var diffValue = diffVector.y / 2;
@@ -104,7 +101,7 @@ public class HoldArrow : MonoBehaviour
         transform.position += offset;
         lineRenderer.SetPosition(0, transform.position);
         return offset;
-    }
+    }*/
 
     private void OnDestroy(){
         StopAllCoroutines();
