@@ -99,6 +99,48 @@ public class Music{
     {
         return chartList.ContainsKey(difficulty);
     }
+
+    public List<int> GetMusicBar(Difficulty difficulty)
+    {
+        List<int> result = new List<int>(new int[120]);
+        if (!chartList.ContainsKey(difficulty))
+        {
+            return result;
+        }
+
+        var offset = 29d / 60d - StartOffset;
+        var noteList = chartList[difficulty].NoteList;
+
+        int noteIndex = 0;
+        int noteCount = noteList.Count;
+        for (int musicIndex = 1; musicIndex <= 120; ++musicIndex)
+        {
+            var musicMin = clip.length * (musicIndex - 1) / 120;
+            var musicMax = clip.length * musicIndex / 120;
+            while (noteIndex < noteCount)
+            {
+                var note = noteList[noteIndex];
+                var time = note.StartTime - offset;
+
+                if (time >= musicMax)
+                {
+                    break;
+                }
+
+                if (time >= musicMin)
+                {
+                    result[musicIndex - 1]++;
+                    var finishTime = note.FinishTime - offset;
+                    if (musicMin <= finishTime && finishTime < musicMax)
+                    {
+                        result[musicIndex - 1]++;
+                    }
+                }
+                noteIndex++;
+            }
+        }
+        return result;
+    }
 }
 
 public class Chart
