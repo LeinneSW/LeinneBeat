@@ -45,19 +45,21 @@ public class HoldArrow : MonoBehaviour
 
     private IEnumerator FollowTargetForDuration()
     {
-        var elapsedTime = 0f;
-        var targetScale = new Vector3(1, 1, 1);
-        var startPosition = transform.position;
-        var originalScale = rectTransform.localScale;
-        var goalPosition = marker.gameObject.transform.position;
-        while (elapsedTime < duration)
+        var updateTime = 0f;
+        // TODO: 마커 확대/축소는 스프라이트 애니메이션으로 대체 예정
+        /*var startScale = rectTransform.localScale;
+        var endScale = new Vector3(1, 1, 1);*/
+
+        var startPosition = transform.localPosition;
+        var endPosition = new Vector3();
+        while (updateTime < duration)
         {
-            elapsedTime += Time.deltaTime;
-            if (elapsedTime < 0.17f)
+            updateTime += Time.deltaTime;
+            /*if (updateTime < 0.17f)
             {
-                startPosition += (SetScale(Vector3.Lerp(originalScale, targetScale, Mathf.Min(0.15f, elapsedTime) / 0.15f))) / 2;
-            }
-            transform.position = Vector3.Lerp(startPosition, goalPosition, elapsedTime / duration);
+                startPosition += (SetScale(Vector3.Lerp(startScale, endScale, Mathf.Min(0.15f, updateTime) / 0.15f))) / 2;
+            }*/
+            transform.localPosition = Vector3.Lerp(startPosition, endPosition, updateTime / duration);
             lineRenderer.SetPosition(0, transform.position);
             yield return null;
         }
