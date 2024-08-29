@@ -233,7 +233,7 @@ public class Chart
                 {
                     if (chart.bpmList.Count > 0)
                     {
-                        Debug.Log($"[BPM 변경] 기존: {chart.bpmList[^1]}, 변경: {bpmValue}, 변경 시작 마디: {measureIndex}, 비트: {beatIndex}");
+                        //Debug.Log($"[BPM 변경] 기존: {chart.bpmList[^1]}, 변경: {bpmValue}, 변경 시작 마디: {measureIndex}, 비트: {beatIndex}");
                         chart.changeBpmMeasureList.Add(beatIndex - 1, chart.bpmList[^1]);
                     }
                     chart.bpmList.Add(bpmValue);
@@ -434,7 +434,7 @@ public class Measure
     public void Convert()
     {
         Dictionary<int, double> timingMap = new();
-        Debug.Log("------------- 박자 시작 -------------");
+        //Debug.Log("------------- 박자 시작 -------------");
         var currentBpm = chart.bpmList[^1];
         Debug.Log($"currentBpm: {currentBpm}");
         for (int yIndex = 0; yIndex < noteTimingStringList.Count; ++yIndex) // 한 구간을 4분음표로 취급하며 보편적으로 한마디에 4개의 박자가 있음
@@ -451,7 +451,7 @@ public class Measure
                 timingMap[timings[xIndex]] = ConvertBeatToTime(BeatIndex + yIndex - 1) + xIndex * 60 / (currentBpm * timings.Length);
             }
         }
-        Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
+        //Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
         foreach (var noteGrid in notePositionStringList)
         {
             List<int> longNoteList = new();
