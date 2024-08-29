@@ -436,11 +436,11 @@ public class Measure
         Dictionary<int, double> timingMap = new();
         //Debug.Log("------------- 박자 시작 -------------");
         var currentBpm = chart.bpmList[^1];
-        Debug.Log($"currentBpm: {currentBpm}");
+        //Debug.Log($"currentBpm: {currentBpm}");
         for (int yIndex = 0; yIndex < noteTimingStringList.Count; ++yIndex) // 한 구간을 4분음표로 취급하며 보편적으로 한마디에 4개의 박자가 있음
         {
             var timings = noteTimingStringList[yIndex].ToCharArray();
-            Debug.Log($"Count: {timings.Length}");
+            //Debug.Log($"Count: {timings.Length}");
             for (int xIndex = 0; xIndex < timings.Length; ++xIndex)
             {
                 if (timings[xIndex] == '－')
