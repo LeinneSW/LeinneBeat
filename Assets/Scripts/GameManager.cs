@@ -35,8 +35,20 @@ public class GameManager : MonoBehaviour
     public AudioSource BackgroundSource { get; private set; }
 
     public Music SelectedMusic { get; private set; } = null;
-    public Difficulty SelectedDifficulty{ get; private set; } = Difficulty.BASIC;
     public Chart SelectedChart { get => SelectedMusic?.GetChart(SelectedDifficulty); }
+    private Difficulty _difficulty = Difficulty.EXTREME;
+    public Difficulty SelectedDifficulty
+    {
+        get => _difficulty;
+        private set
+        {
+            _difficulty = value;
+            if (SelectedChart != null)
+            {
+                GameObject.Find("SelectedMusicScore").GetComponent<Text>().text = "" + SelectedMusic.GetScore(value);
+            }
+        }
+    }
 
     public int Combo { get; private set; } = 0;
     public int ShutterPoint { get; private set; } = 0;
@@ -299,6 +311,8 @@ public class GameManager : MonoBehaviour
         }
 
         SelectedMusic = music;
+        GameObject.Find("SelectedMusicTtitle").GetComponent<Text>().text = music.name;
+        GameObject.Find("SelectedMusicScore").GetComponent<Text>().text = "" + music.GetScore(SelectedDifficulty);
         previewCoroutine = StartCoroutine(PlayMusicPreview());
         for (int index = 0; index < 3; ++index)
         {
