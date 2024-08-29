@@ -14,6 +14,12 @@ public enum Difficulty
 
 public class MusicParser : MonoBehaviour
 {
+    public static void LoadMusic()
+    {
+        // TODO: 모든 음악 정보는 이곳애서 진행하도록 변경 예정
+        // TODO: info.json 을 사용해 곡정보, 레벨, 싱크값 등을 불러올 예정
+    }
+
     public static bool TryParse(AudioClip clip, string dirPath, out Music music)
     {
         var musicName = Path.GetFileName(dirPath);
@@ -47,6 +53,7 @@ public class Music{
     public readonly string name;
     public readonly AudioClip clip;
     public readonly Sprite jacket = null;
+    public readonly Dictionary<Difficulty, int> scoreList = new();
 
     /**
     * 음악이 시작되는 시간 
@@ -140,6 +147,16 @@ public class Music{
             }
         }
         return result;
+    }
+
+    public int GetScore(Difficulty difficulty)
+    {
+        return scoreList.ContainsKey(difficulty) ? scoreList[difficulty] : 0;
+    }
+
+    public int SetScore(Difficulty difficulty, int score)
+    {
+        scoreList[difficulty] = score;
     }
 }
 

@@ -422,6 +422,7 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
         scoreText.text = ShutterScore + Score + "";
+        SelectedMusic.SetScore(ShutterScore + Score);
         //TODO: NEXT 버튼, Rating 추가
     }
 
