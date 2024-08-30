@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class ShutterCombo : MonoBehaviour
+public class ComboShutter : MonoBehaviour
 {
     private bool up;
     private readonly float frequency = 3f;  // 주기 (초당 오르내림 횟수)
