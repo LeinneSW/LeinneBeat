@@ -8,12 +8,14 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+enum SceneName{
+    MusicSelect,
+    InGame
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; } = null;
-
-    public const string SCENE_MUSIC_SELECT = "MusicSelect";
-    public const string SCENE_IN_GAME = "InGame";
 
     private readonly List<Music> musicList = new();
 
@@ -72,9 +74,9 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        if (SceneManager.GetActiveScene().name != SCENE_MUSIC_SELECT)
+        if (SceneManager.GetActiveScene().name != SceneName.MusicSelect.ToString())
         {
-            SceneManager.LoadScene(SCENE_MUSIC_SELECT);
+            SceneManager.LoadScene(SceneName.MusicSelect.ToString());
         }
 
         StartCoroutine(LoadGameData());
@@ -156,10 +158,10 @@ public class GameManager : MonoBehaviour
     {
         switch (scene.name)
         {
-            case SCENE_MUSIC_SELECT:
+            case SceneName.MusicSelect.ToString():
                 CreateSelectMusicUI();
                 break;
-            case SCENE_IN_GAME:
+            case SceneName.InGame.ToString():
                 Combo = 0;
                 ShutterPoint = 0;
                 for (int i = 0; i < 4; ++i)
@@ -364,7 +366,7 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        SceneManager.LoadScene(SCENE_IN_GAME);
+        SceneManager.LoadScene(SceneName.InGame.ToString());
         StartCoroutine(StartGame());
     }
 
@@ -446,7 +448,7 @@ public class GameManager : MonoBehaviour
         BackgroundSource.Stop();
         StopAllCoroutines();
         _ = ModifyMusicOffset(SelectedMusic.name, SelectedMusic.StartOffset);
-        SceneManager.LoadScene(SCENE_MUSIC_SELECT);
+        SceneManager.LoadScene(SceneName.MusicSelect.ToString());
     }
 
     private async Task ModifyMusicOffset(string name, float startOffset)
