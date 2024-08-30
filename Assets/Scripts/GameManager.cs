@@ -8,32 +8,26 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-enum SceneName{
-    MusicSelect,
-    InGame
-}
-
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; } = null;
 
-    private readonly List<Music> musicList = new();
+    public const string SCENE_MUSIC_SELECT = "MusicSelect";
+    public const string SCENE_IN_GAME = "InGame";
 
     private Coroutine previewCoroutine = null;
     private readonly List<int> scores = new() { 0, 0, 0, 0 };
     private readonly Dictionary<string, float> musicOffsetList = new();
 
-    private readonly List<Button> difficultyButton = new();
-
     public Font textFont;
     public AudioSource goEffect;
     public AudioSource readyEffect;
     public AudioSource resultEffect;
-    public GameObject buttonPrefab;
+    public readonly List<Music> musicList = new();
 
     public float ClapVolume { get; set; } = 0f;
     public float StartTime { get; private set; } = -1;
-    public bool AutoMode { get; private set; } = false;
+    public bool AutoMode { get; set; } = false;
     public AudioSource BackgroundSource { get; private set; }
 
     public Music SelectedMusic { get; private set; } = null;
@@ -42,13 +36,14 @@ public class GameManager : MonoBehaviour
     public Difficulty SelectedDifficulty
     {
         get => _difficulty;
-        private set
+        set
         {
-            _difficulty = value;
-            if (SelectedChart != null)
+            if (StartTime > 0)
             {
-                GameObject.Find("SelectedMusicScore").GetComponent<Text>().text = "" + SelectedMusic.GetScore(value);
+                // 게임이 시작된 경우엔 난이도가 변경되어선 안됨
+                return;
             }
+            _difficulty = value;
         }
     }
 
@@ -74,9 +69,9 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        if (SceneManager.GetActiveScene().name != SceneName.MusicSelect.ToString())
+        if (SceneManager.GetActiveScene().name != SCENE_MUSIC_SELECT)
         {
-            SceneManager.LoadScene(SceneName.MusicSelect.ToString());
+            SceneManager.LoadScene(SCENE_MUSIC_SELECT);
         }
 
         StartCoroutine(LoadGameData());
@@ -158,87 +153,18 @@ public class GameManager : MonoBehaviour
     {
         switch (scene.name)
         {
-            case SceneName.MusicSelect.ToString():
-                CreateSelectMusicUI();
+            case SCENE_MUSIC_SELECT:
+                previewCoroutine = StartCoroutine(PlayMusicPreview());
                 break;
-            case SceneName.InGame.ToString():
+            case SCENE_IN_GAME:
                 Combo = 0;
                 ShutterPoint = 0;
                 for (int i = 0; i < 4; ++i)
                 {
                     scores[i] = 0;
                 }
-                var offsetText = GameObject.Find("MusicOffset");
-                var text = offsetText.GetComponent<InputField>();
-                text.text = "" + SelectedMusic.StartOffset;
-                text.onValueChanged.AddListener((value) =>
-                {
-                    if (float.TryParse(value, out var offset))
-                    {
-                        SetMusicOffset(offset);
-                    }
-                });
-                for (int i = 1; i < 4; ++i)
-                {
-                    var number = 1 / Math.Pow(10, i);
-                    var plusButton = GameObject.Find("+" + number);
-                    var btn = plusButton.GetComponent<Button>();
-                    btn.onClick.AddListener(() => AddMusicOffset((float)number));
-
-                    var minusButton = GameObject.Find("-" + number);
-                    btn = minusButton.GetComponent<Button>();
-                    btn.onClick.AddListener(() => AddMusicOffset((float)-number));
-                }
-                var titleText = GameObject.Find("MusicTitle");
-                var title = titleText.GetComponent<Text>();
-                title.text = SelectedMusic.name;
-
-                var autoButton = GameObject.Find("AutoButton").GetComponent<Button>();
-                autoButton.onClick.AddListener(() => {
-                    AutoMode = !AutoMode;
-                    autoButton.GetComponentInChildren<Text>().text = "현재: " + (AutoMode ? "On" : "Off");
-                });
                 break;
         }
-    }
-
-    private void AddMusicButton(RectTransform content, Music music)
-    {
-        var button = Instantiate(buttonPrefab, content);
-        button.GetComponent<Button>().onClick.AddListener(() => SelectMusic(music));
-        button.GetComponentInChildren<Text>().text = music.name;
-    }
-
-    private void CreateSelectMusicUI()
-    {
-        GameObject.Find("StartGameButton").GetComponent<Button>().onClick.AddListener(() => PlayChart());
-        var content = GameObject.Find("ChartScroll").transform.GetChild(0).GetChild(0).GetComponent<RectTransform>();
-        for (int i = 0; i < musicList.Count; ++i)
-        {
-            AddMusicButton(content, musicList[i]);
-        }
-
-        difficultyButton.Clear();
-        var basic = GameObject.Find("BasicButton").GetComponent<Button>();
-        var advanced = GameObject.Find("AdvancedButton").GetComponent<Button>();
-        var extreme = GameObject.Find("ExtremeButton").GetComponent<Button>();
-        difficultyButton.Add(basic);
-        difficultyButton.Add(advanced);
-        difficultyButton.Add(extreme);
-        basic.onClick.AddListener(() => {
-            // TODO: Basic sound
-            SelectedDifficulty = Difficulty.Basic;
-        });
-        advanced.onClick.AddListener(() => {
-            // TODO: Advnaced sound
-            SelectedDifficulty = Difficulty.Advanced;
-        });
-        extreme.onClick.AddListener(() => {
-            // TODO: Extreme sound
-            SelectedDifficulty = Difficulty.Extreme;
-        });
-
-        previewCoroutine = StartCoroutine(PlayMusicPreview());
     }
 
     string RemoveLastExtension(string path)
@@ -302,7 +228,7 @@ public class GameManager : MonoBehaviour
                 musicList.Add(music);
             }
         }
-        CreateSelectMusicUI();
+        UIManager.Instance.InitSelectMusicScene();
     }
 
     public void SelectMusic(Music music)
@@ -313,12 +239,28 @@ public class GameManager : MonoBehaviour
         }
 
         SelectedMusic = music;
-        GameObject.Find("SelectedMusicTtitle").GetComponent<Text>().text = music.name;
-        GameObject.Find("SelectedMusicScore").GetComponent<Text>().text = "" + music.GetScore(SelectedDifficulty);
+        UIManager.Instance.GetUIObject<Text>("SelectedMusicTtitle").text = music.name;
+        UIManager.Instance.GetUIObject<Text>("SelectedMusicScore").text = "" + music.GetScore(SelectedDifficulty);
         previewCoroutine = StartCoroutine(PlayMusicPreview());
         for (int index = 0; index < 3; ++index)
         {
-            difficultyButton[index].interactable = SelectedMusic.CanPlay((Difficulty) index);
+            Difficulty difficulty = (Difficulty) index;
+            UIManager.Instance.GetUIObject<Button>($"{difficulty}Button").interactable = SelectedMusic.CanPlay(difficulty);
+        }
+
+        List<int> musicBarValues = SelectedMusic.GetMusicBar(SelectedDifficulty);
+        var gridPanel = UIManager.Instance.GetUIObject<RectTransform>("MusicBar");
+        foreach (Transform child in gridPanel)
+        {
+            Destroy(child.gameObject); // 기존 블록 제거
+        }
+
+        for (int i = 0; i < musicBarValues.Count; i++)
+        {
+            for (int j = 0, limit = Math.Min(musicBarValues[i], 8); j < limit; j++)
+            {
+                UIManager.Instance.DrawRectangle(gridPanel, new(i * 11f, j * 11f));
+            }
         }
     }
 
@@ -366,7 +308,7 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        SceneManager.LoadScene(SceneName.InGame.ToString());
+        SceneManager.LoadScene(SCENE_IN_GAME);
         StartCoroutine(StartGame());
     }
 
@@ -448,7 +390,7 @@ public class GameManager : MonoBehaviour
         BackgroundSource.Stop();
         StopAllCoroutines();
         _ = ModifyMusicOffset(SelectedMusic.name, SelectedMusic.StartOffset);
-        SceneManager.LoadScene(SceneName.MusicSelect.ToString());
+        SceneManager.LoadScene(SCENE_MUSIC_SELECT);
     }
 
     private async Task ModifyMusicOffset(string name, float startOffset)
