@@ -136,11 +136,11 @@ public class Music{
 
                 if (time >= musicMin)
                 {
-                    result[musicIndex - 1]++;
+                    ++result[musicIndex - 1];
                     var finishTime = note.FinishTime - offset;
                     if (musicMin <= finishTime && finishTime < musicMax)
                     {
-                        result[musicIndex - 1]++;
+                        ++result[musicIndex - 1];
                     }
                 }
                 noteIndex++;
