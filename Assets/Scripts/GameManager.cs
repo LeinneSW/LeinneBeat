@@ -335,22 +335,22 @@ public class GameManager : MonoBehaviour
             BackgroundSource.Play();
             BackgroundSource.time = 30f;
             
-            // 1.5초 페이드 인
+            // 1.3초 페이드 인
             while (BackgroundSource.volume < .35f)
             {
-                BackgroundSource.volume += .35f * Time.deltaTime / 1.5f;
+                BackgroundSource.volume += .35f * Time.deltaTime / 1.3f;
                 yield return null;
             }
             BackgroundSource.volume = .35f;
 
-            // 15초 동안 재생
-            yield return new WaitForSeconds(15);
+            // 12초 동안 재생
+            yield return new WaitForSeconds(12);
 
-            // 1.5초 페이드 아웃
+            // 2초 페이드 아웃
             var startVolume = BackgroundSource.volume;
             while (BackgroundSource.volume > 0)
             {
-                BackgroundSource.volume -= startVolume * Time.deltaTime / 1.5f;
+                BackgroundSource.volume -= startVolume * Time.deltaTime / 2f;
                 yield return null;
             }
             BackgroundSource.Stop();
