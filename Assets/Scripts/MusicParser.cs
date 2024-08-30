@@ -7,9 +7,9 @@ using UnityEngine;
 
 public enum Difficulty
 {
-    BASIC,
-    ADVANCED,
-    EXTREME
+    Basic,
+    Advanced,
+    Extreme
 }
 
 public class MusicParser : MonoBehaviour

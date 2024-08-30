@@ -36,7 +36,7 @@ public class GameManager : MonoBehaviour
 
     public Music SelectedMusic { get; private set; } = null;
     public Chart SelectedChart { get => SelectedMusic?.GetChart(SelectedDifficulty); }
-    private Difficulty _difficulty = Difficulty.EXTREME;
+    private Difficulty _difficulty = Difficulty.Extreme;
     public Difficulty SelectedDifficulty
     {
         get => _difficulty;
@@ -225,15 +225,15 @@ public class GameManager : MonoBehaviour
         difficultyButton.Add(extreme);
         basic.onClick.AddListener(() => {
             // TODO: Basic sound
-            SelectedDifficulty = Difficulty.BASIC;
+            SelectedDifficulty = Difficulty.Basic;
         });
         advanced.onClick.AddListener(() => {
             // TODO: Advnaced sound
-            SelectedDifficulty = Difficulty.ADVANCED;
+            SelectedDifficulty = Difficulty.Advanced;
         });
         extreme.onClick.AddListener(() => {
             // TODO: Extreme sound
-            SelectedDifficulty = Difficulty.EXTREME;
+            SelectedDifficulty = Difficulty.Extreme;
         });
 
         previewCoroutine = StartCoroutine(PlayMusicPreview());
