@@ -43,10 +43,15 @@ public class ComboShutter : MonoBehaviour
         var startPos = transform.position;
         var endPos = transform.position;
         endPos.y = up ? -130 : -830;
-        while (moveTime < .5f)
+
+        // 현재 높이에 비례한 이동 시간 계산
+        var baseTime = 0.30f;
+        var maxY = up ? 670 + amplitude : -1630 - amplitude;
+        var adjustedTime = baseTime * (startPos.y / maxY); // 높이에 비례한 이동 시간
+        while (moveTime < adjustedTime)
         {
             moveTime += Time.deltaTime;
-            transform.position = Vector3.Lerp(startPos, endPos, moveTime / .5f);
+            transform.position = Vector3.Lerp(startPos, endPos, moveTime / adjustedTime);
             yield return null;
         }
     }
