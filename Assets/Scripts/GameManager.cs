@@ -32,20 +32,7 @@ public class GameManager : MonoBehaviour
 
     public Music SelectedMusic { get; private set; } = null;
     public Chart SelectedChart { get => SelectedMusic?.GetChart(SelectedDifficulty); }
-    private Difficulty _difficulty = Difficulty.Extreme;
-    public Difficulty SelectedDifficulty
-    {
-        get => _difficulty;
-        set
-        {
-            if (StartTime > 0)
-            {
-                // 게임이 시작된 경우엔 난이도가 변경되어선 안됨
-                return;
-            }
-            _difficulty = value;
-        }
-    }
+    public Difficulty SelectedDifficulty { get; private set; } = Difficulty.Extreme;
 
     public int Combo { get; private set; } = 0;
     public int ShutterPoint { get; private set; } = 0;
@@ -135,9 +122,6 @@ public class GameManager : MonoBehaviour
             return;
         }
         musicOffsetList[SelectedMusic.name] = offset;
-        var offsetText = GameObject.Find("MusicOffset");
-        var text = offsetText.GetComponent<InputField>();
-        text.text = "" + musicOffsetList[SelectedMusic.name];
     }
 
     public float GetMusicOffset(string name)
@@ -154,7 +138,10 @@ public class GameManager : MonoBehaviour
         switch (scene.name)
         {
             case SCENE_MUSIC_SELECT:
-                previewCoroutine = StartCoroutine(PlayMusicPreview());
+                if (SelectedMusic != null)
+                {
+                    SelectMusic(SelectedMusic);
+                }
                 break;
             case SCENE_IN_GAME:
                 Combo = 0;
@@ -223,7 +210,7 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
-            if (MusicParser.TryParse(DownloadHandlerAudioClip.GetContent(www), dirPath, out Music music))
+            if (MusicManager.TryParse(DownloadHandlerAudioClip.GetContent(www), dirPath, out Music music))
             {
                 musicList.Add(music);
             }
@@ -238,30 +225,43 @@ public class GameManager : MonoBehaviour
             StopCoroutine(previewCoroutine);
         }
 
+        // TODO: play select sound
         SelectedMusic = music;
-        UIManager.Instance.GetUIObject<Text>("SelectedMusicTtitle").text = music.name;
-        UIManager.Instance.GetUIObject<Text>("SelectedMusicScore").text = "" + music.GetScore(SelectedDifficulty);
+        var uiManager = UIManager.Instance;
+        uiManager.GetUIObject<Text>("SelectedMusicTtitle").text = music.name;
         previewCoroutine = StartCoroutine(PlayMusicPreview());
         for (int index = 0; index < 3; ++index)
         {
             Difficulty difficulty = (Difficulty) index;
-            UIManager.Instance.GetUIObject<Button>($"{difficulty}Button").interactable = SelectedMusic.CanPlay(difficulty);
+            uiManager.GetUIObject<Button>($"{difficulty}Button").interactable = SelectedMusic.CanPlay(difficulty);
         }
-
-        List<int> musicBarValues = SelectedMusic.GetMusicBar(SelectedDifficulty);
-        var gridPanel = UIManager.Instance.GetUIObject<RectTransform>("MusicBar");
-        foreach (Transform child in gridPanel)
+        if (SelectedChart != null)
         {
-            Destroy(child.gameObject); // 기존 블록 제거
+            uiManager.DrawMusicBar(SelectedChart.MusicBar);
+            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + SelectedChart.level;
+            uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + SelectedChart.Score;
         }
-
-        for (int i = 0; i < musicBarValues.Count; i++)
+        else
         {
-            for (int j = 0, limit = Math.Min(musicBarValues[i], 8); j < limit; j++)
-            {
-                UIManager.Instance.DrawRectangle(gridPanel, new(i * 11f, j * 11f));
-            }
+            uiManager.DrawMusicBar(new());
+            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "채보 없음";
+            uiManager.GetUIObject<Text>("SelectedMusicScore").text = "0";
         }
+    }
+
+    public void SelectDifficulty(Difficulty difficulty)
+    {
+        if (StartTime > 0 || SelectedDifficulty == difficulty || !SelectedMusic.CanPlay(difficulty))
+        {
+            // 게임이 시작된 경우엔 난이도가 변경되어선 안됨
+            return;
+        }
+        // TODO: play difficulty sound
+        SelectedDifficulty = difficulty;
+        var uiManager = UIManager.Instance;
+        uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + SelectedChart.level;
+        uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + SelectedChart.Score;
+        uiManager.DrawMusicBar(SelectedChart.MusicBar);
     }
 
     public IEnumerator PlayMusicPreview()
@@ -331,7 +331,7 @@ public class GameManager : MonoBehaviour
         BackgroundSource.Stop();
         yield return new WaitForSeconds(.1f);
         // TODO: Ready, GO 연출을 좀더 맛깔나게
-        var comboText = GameObject.Find("Combo").GetComponent<Text>();
+        var comboText = UIManager.Instance.GetUIObject<Text>("Combo");
         comboText.fontSize = 160;
         readyEffect.Play();
         comboText.text = "Ready";
@@ -368,10 +368,13 @@ public class GameManager : MonoBehaviour
         {
             yield return null;
         }
+        yield return new WaitForSeconds(.2f);
         resultEffect.Play();
 
         // TODO: result animation
-        var scoreText = GameObject.Find("Score").GetComponent<Text>();
+        comboText.text = "";
+
+        var scoreText = UIManager.Instance.GetUIObject<Text>("Score");
         float elapsedTime = 0f;
         while (elapsedTime < .8f)
         {
@@ -438,7 +441,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayClapForAuto(float delay)
     {
-        yield return new WaitForSeconds(delay + 0.48333f - 0.140f); // 판정점 프레임 추가
+        yield return new WaitForSeconds(delay + 0.48333f - 0.130f); // 판정점 프레임 추가
         MarkerManager.Instance.PlayClap();
     }
 

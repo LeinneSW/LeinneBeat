@@ -60,24 +60,14 @@ public class UIManager : MonoBehaviour
         var content = GetUIObject<RectTransform>("MusicListContent");
         for (int i = 0; i < GameManager.Instance.musicList.Count; ++i)
         {
-            Debug.Log($"곡 이름: {GameManager.Instance.musicList[i].name}");
             AddMusicButton(content, GameManager.Instance.musicList[i]);
         }
         var basic = GetUIObject<Button>("BasicButton");
+        basic.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Basic));
         var advanced = GetUIObject<Button>("AdvancedButton");
+        advanced.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Advanced));
         var extreme = GetUIObject<Button>("ExtremeButton");
-        basic.onClick.AddListener(() => {
-            // TODO: Basic sound
-            GameManager.Instance.SelectedDifficulty = Difficulty.Basic;
-        });
-        advanced.onClick.AddListener(() => {
-            // TODO: Advnaced sound
-            GameManager.Instance.SelectedDifficulty = Difficulty.Advanced;
-        });
-        extreme.onClick.AddListener(() => {
-            // TODO: Extreme sound
-            GameManager.Instance.SelectedDifficulty = Difficulty.Extreme;
-        });
+        extreme.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Extreme));
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -105,10 +95,16 @@ public class UIManager : MonoBehaviour
                 {
                     var number = 1 / Math.Pow(10, i);
                     var plusButton = GetUIObject<Button>("+" + number);
-                    plusButton.onClick.AddListener(() => GameManager.Instance.AddMusicOffset((float)number));
+                    plusButton.onClick.AddListener(() => {
+                        GameManager.Instance.AddMusicOffset((float)number);
+                        offsetText.text = "" + GameManager.Instance.SelectedMusic.StartOffset;
+                    });
 
                     var minusButton = GetUIObject<Button>("-" + number);
-                    minusButton.onClick.AddListener(() => GameManager.Instance.AddMusicOffset((float)-number));
+                    minusButton.onClick.AddListener(() => {
+                        GameManager.Instance.AddMusicOffset((float)-number);
+                        offsetText.text = "" + GameManager.Instance.SelectedMusic.StartOffset;
+                    });
                 }
 
                 var autoButton = GetUIObject<Button>("AutoButton");
@@ -120,7 +116,24 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void DrawRectangle(RectTransform parent, Vector2 position)
+    public void DrawMusicBar(List<int> musicBar)
+    {
+        var gridPanel = GetUIObject<RectTransform>("MusicBar");
+        foreach (Transform child in gridPanel)
+        {
+            Destroy(child.gameObject); // 기존 블록 제거
+        }
+
+        for (int i = 0; i < musicBar.Count; i++)
+        {
+            for (int j = 0, limit = Math.Min(musicBar[i], 8); j < limit; j++)
+            {
+                UIManager.Instance.DrawRectangle(gridPanel, new(i * 11f, j * 11f));
+            }
+        }
+    }
+
+    private void DrawRectangle(RectTransform parent, Vector2 position)
     {
         // 배경을 위한 기본 이미지 생성
         GameObject rectObject = new("Rect");
@@ -129,9 +142,8 @@ public class UIManager : MonoBehaviour
         var image = rectObject.AddComponent<Image>();
         image.color = Color.gray;
 
-        // RectTransform 설정
-        RectTransform rectTransform = rectObject.GetComponent<RectTransform>();
-        rectTransform.sizeDelta = new(9f, 9f); // 크기 설정
-        rectTransform.anchoredPosition = position - new Vector2(650, 55) + new Vector2(11 / 2f, 11 / 2f); // 위치 설정
+        var rectTransform = rectObject.GetComponent<RectTransform>();
+        rectTransform.sizeDelta = new(10f, 10f); // 크기 설정
+        rectTransform.anchoredPosition = position; // 위치 설정
     }
 }

@@ -12,18 +12,17 @@ public enum Difficulty
     Extreme
 }
 
-public class MusicParser : MonoBehaviour
+public class MusicManager : MonoBehaviour
 {
     public static void LoadMusic()
     {
         // TODO: 모든 음악 정보는 이곳애서 진행하도록 변경 예정
-        // TODO: info.json 을 사용해 곡정보, 레벨, 싱크값 등을 불러올 예정
+        // TODO: info.json 을 사용해 이름, 작곡가, 싱크값 등을 불러올 예정
     }
 
     public static bool TryParse(AudioClip clip, string dirPath, out Music music)
     {
-        var musicName = Path.GetFileName(dirPath);
-        music = new(clip, musicName);
+        music = new(dirPath, clip);
         _ = music.StartOffset; // TODO: remove HACK
         foreach (var difficulty in Enum.GetValues(typeof(Difficulty)))
         {
@@ -35,10 +34,10 @@ public class MusicParser : MonoBehaviour
                 continue;
             }
 
-            var chart = Chart.Parse(filePath, 0, (Difficulty) difficulty);
+            var chart = Chart.Parse(music, (Difficulty) difficulty);
             if (chart == null)
             {
-                Debug.Log($"{musicName}의 {diffStr}채보가 잘못되었습니다.");
+                Debug.Log($"{Path.GetFileName(dirPath)}의 {diffStr}채보가 잘못되었습니다.");
             }
             else
             {
@@ -51,6 +50,7 @@ public class MusicParser : MonoBehaviour
 
 public class Music{
     public readonly string name;
+    public readonly string path;
     public readonly AudioClip clip;
     public readonly Sprite jacket = null;
     public readonly Dictionary<Difficulty, int> scoreList = new();
@@ -72,17 +72,19 @@ public class Music{
 
     private readonly Dictionary<Difficulty, Chart> chartList = new();
 
-    public Music(AudioClip clip, string name)
+    public Music(string path, AudioClip clip)
     {
-        this.name = name;
+        this.path = path;
         this.clip = clip;
+        name = Path.GetFileName(path);
     }
 
-    public Music(AudioClip clip, string name, Sprite jacket)
+    public Music(string path, AudioClip clip, Sprite jacket)
     {
-        this.name = name;
         this.clip = clip;
+        this.path = path;
         this.jacket = jacket;
+        name = Path.GetFileName(path);
     }
 
     public void AddChart(Chart chart)
@@ -107,48 +109,6 @@ public class Music{
         return chartList.ContainsKey(difficulty);
     }
 
-    public List<int> GetMusicBar(Difficulty difficulty)
-    {
-        List<int> result = new(new int[120]);
-        if (!chartList.ContainsKey(difficulty))
-        {
-            return result;
-        }
-
-        var offset = 29d / 60d - StartOffset;
-        var noteList = chartList[difficulty].NoteList;
-
-        int noteIndex = 0;
-        int noteCount = noteList.Count;
-        for (int musicIndex = 1; musicIndex <= 120; ++musicIndex)
-        {
-            var musicMin = clip.length * (musicIndex - 1) / 120;
-            var musicMax = clip.length * musicIndex / 120;
-            while (noteIndex < noteCount)
-            {
-                var note = noteList[noteIndex];
-                var time = note.StartTime - offset;
-
-                if (time >= musicMax)
-                {
-                    break;
-                }
-
-                if (time >= musicMin)
-                {
-                    ++result[musicIndex - 1];
-                    var finishTime = note.FinishTime - offset;
-                    if (musicMin <= finishTime && finishTime < musicMax)
-                    {
-                        ++result[musicIndex - 1];
-                    }
-                }
-                noteIndex++;
-            }
-        }
-        return result;
-    }
-
     public int GetScore(Difficulty difficulty)
     {
         return scoreList.ContainsKey(difficulty) ? scoreList[difficulty] : 0;
@@ -164,8 +124,10 @@ public class Chart
 {
     public static readonly Regex NOTE_REGEX = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}\|.+(\|)?))$", RegexOptions.Compiled);
 
+    public readonly Music music;
     public readonly double level;
     public readonly Difficulty difficulty;
+
     /** 곡의 BPM 목록 */
     public readonly List<double> bpmList = new();
     /** 모든 박자가 들어가는 배열 */
@@ -189,8 +151,53 @@ public class Chart
     /** 그리드 별 노트 배열 [row * 4 + column] = List<Note> */
     private readonly Dictionary<int, List<Note>> gridNoteList = new();
 
-    private Chart(double level, Difficulty difficulty)
+    public List<int> MusicBar
     {
+        get
+        {
+            List<int> result = new(new int[120]);
+            var offset = 29d / 60d - music.StartOffset;
+
+            int noteIndex = 0;
+            int noteCount = NoteList.Count;
+            for (int musicIndex = 1, limit = result.Count; musicIndex <= limit; ++musicIndex)
+            {
+                var musicMin = music.clip.length * (musicIndex - 1) / limit;
+                var musicMax = music.clip.length * musicIndex / limit;
+                while (noteIndex < noteCount)
+                {
+                    var note = NoteList[noteIndex];
+                    var time = note.StartTime - offset;
+
+                    if (time >= musicMax)
+                    {
+                        break;
+                    }
+
+                    if (time >= musicMin)
+                    {
+                        ++result[musicIndex - 1];
+                        var finishTime = note.FinishTime - offset;
+                        if (musicMin <= finishTime && finishTime < musicMax)
+                        {
+                            ++result[musicIndex - 1];
+                        }
+                    }
+                    noteIndex++;
+                }
+            }
+            return result;
+        }
+    }
+
+    public int Score
+    {
+        get => music.GetScore(difficulty);
+    }
+
+    private Chart(Music music, double level, Difficulty difficulty)
+    {
+        this.music = music;
         this.level = level;
         this.difficulty = difficulty;
     }
@@ -212,10 +219,19 @@ public class Chart
         return NOTE_REGEX.IsMatch(text);
     }
 
-    public static Chart Parse(string filePath, double level, Difficulty difficulty)
+    public static Chart Parse(Music music, Difficulty difficulty)
     {
-        string[] lines = File.ReadAllLines(filePath);
-        Chart chart = new(level, difficulty);
+        string[] lines = File.ReadAllLines(Path.Combine(music.path, difficulty.ToString().ToLower() + ".txt"));
+        double level = 1;
+        foreach (var text in lines)
+        {
+            var line = RemoveComment(text).ToLower();
+            if (line.StartsWith("level:") && TryParseDoubleInText(line, out level))
+            {
+                break;
+            }
+        }
+        Chart chart = new(music, level, difficulty);
         int beatIndex = 1;
         int measureIndex = 1;
         for (int i = 0; i < lines.Length; ++i)
