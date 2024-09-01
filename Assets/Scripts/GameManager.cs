@@ -172,7 +172,8 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator LoadGameData()
     {
-        var path = Path.Combine(Application.dataPath, "Songs", "sync.txt");
+        var basePath = Path.Combine(Application.dataPath, "..", "Songs");
+        var path = Path.Combine(basePath, "sync.txt");
         if (File.Exists(path))
         {
             string[] lines = File.ReadAllLines(path);
@@ -190,7 +191,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        foreach (var dirPath in Directory.GetDirectories(Path.Combine(Application.dataPath, "Songs")))
+        foreach (var dirPath in Directory.GetDirectories(basePath))
         {
             var musicName = Path.GetFileName(dirPath);
             var songFiles = Directory.GetFiles(dirPath, "song.*");
@@ -398,7 +399,7 @@ public class GameManager : MonoBehaviour
 
     private async Task ModifyMusicOffset(string name, float startOffset)
     {
-        var path = Path.Combine(Application.dataPath, "Songs", "sync.txt");
+        var path = Path.Combine(Application.dataPath, "..", "Songs", "sync.txt");
         List<string> lines;
         if (File.Exists(path))
         {
