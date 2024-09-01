@@ -142,6 +142,7 @@ public class GameManager : MonoBehaviour
                 {
                     SelectMusic(SelectedMusic);
                 }
+                UIManager.Instance.GetUIObject<Button>("ReloadMusicButton").onClick.AddListener(() => StartCoroutine(LoadGameData()));
                 break;
             case SCENE_IN_GAME:
                 Combo = 0;
@@ -191,6 +192,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        musicList.Clear();
         foreach (var dirPath in Directory.GetDirectories(basePath))
         {
             var musicName = Path.GetFileName(dirPath);
@@ -217,6 +219,7 @@ public class GameManager : MonoBehaviour
             }
         }
         UIManager.Instance.InitSelectMusicScene();
+        UIManager.Instance.GetUIObject<Button>("ReloadMusicButton").onClick.AddListener(() => StartCoroutine(LoadGameData()));
     }
 
     public void SelectMusic(Music music)
@@ -303,7 +306,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void PlayChart()
+    public void PlayMusic()
     {
         if (SelectedChart == null)
         {
@@ -329,6 +332,7 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
+        UIManager.Instance.DrawMusicBar(SelectedChart.MusicBar);
         BackgroundSource.Stop();
         yield return new WaitForSeconds(.1f);
         // TODO: Ready, GO 연출을 좀더 맛깔나게

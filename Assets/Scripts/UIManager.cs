@@ -56,8 +56,12 @@ public class UIManager : MonoBehaviour
 
     public void InitSelectMusicScene()
     {
-        GetUIObject<Button>("StartGameButton").onClick.AddListener(() => GameManager.Instance.PlayChart());
+        GetUIObject<Button>("StartGameButton").onClick.AddListener(() => GameManager.Instance.PlayMusic());
         var content = GetUIObject<RectTransform>("MusicListContent");
+        foreach (Transform child in content)
+        {
+            Destroy(child.gameObject); // 기존 버튼 제거
+        }
         for (int i = 0; i < GameManager.Instance.musicList.Count; ++i)
         {
             AddMusicButton(content, GameManager.Instance.musicList[i]);
