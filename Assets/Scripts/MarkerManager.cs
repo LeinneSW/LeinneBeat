@@ -21,7 +21,7 @@ public class MarkerManager : MonoBehaviour
         { JudgementType.Normal, new double[] { 2.5 / 60, 5 / 60, 7.5 / 60 } },
         { JudgementType.Hard, new double[] { 2.5 / 45, 5 / 45, 7.5 / 45 } },
         { JudgementType.Extreme, new double[] { 2.5 / 30, 5 / 30, 7.5 / 30 } },
-    }
+    };
     public static double[] CurrentJudgementTable
     {
         get => judgementTables[JudgeType];
