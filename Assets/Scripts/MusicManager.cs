@@ -216,7 +216,6 @@ public class Music{
         this.title = title;
         this.author = author;
         this.jacket = jacket;
-        title = Path.GetFileName(path);
     }
 
     public void AddChart(Chart chart)
