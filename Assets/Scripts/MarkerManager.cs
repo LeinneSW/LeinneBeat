@@ -15,14 +15,14 @@ public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; } = null;
 
-    public static JudgementType JudgeType { get; private set; } = JudgementType.Normal;
-    public static readonly Dictionary<JudgementType, double[]> judgementTables = new()
+    public JudgementType JudgeType { get; private set; } = JudgementType.Normal;
+    public readonly Dictionary<JudgementType, double[]> judgementTables = new()
     {
         { JudgementType.Normal, new double[] { 2.5 / 60, 5 / 60, 7.5 / 60 } },
         { JudgementType.Hard, new double[] { 2.5 / 45, 5 / 45, 7.5 / 45 } },
         { JudgementType.Extreme, new double[] { 2.5 / 30, 5 / 30, 7.5 / 30 } },
     };
-    public static double[] CurrentJudgementTable
+    public double[] CurrentJudgementTable
     {
         get => judgementTables[JudgeType];
     }
