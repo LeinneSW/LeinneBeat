@@ -151,15 +151,15 @@ public class MarkerObject : MonoBehaviour
         var judgeTime = Math.Max(0, (FinishTime + 29 / 60d - Time.timeAsDouble) * 1000); // + 빠르게침, - 판정은 없음
         //var maxTime = FinishTime - StartTime;
         var judgeTable = MarkerManager.Instance.CurrentJudgementTable;
-        if (judgeAbs <= judgeTable[0])
+        if (judgeTime <= judgeTable[0])
         {
             judge = STATE_PREFECT;
         }
-        else if (judgeAbs <= judgeTable[1])
+        else if (judgeTime <= judgeTable[1])
         {
             judge = STATE_GREAT;
         }
-        else if (judgeAbs <= judgeTable[2])
+        else if (judgeTime <= judgeTable[2])
         {
             judge = STATE_GOOD;
         }
