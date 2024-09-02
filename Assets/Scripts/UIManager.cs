@@ -110,12 +110,6 @@ public class UIManager : MonoBehaviour
                         offsetText.text = "" + GameManager.Instance.SelectedMusic.StartOffset;
                     });
                 }
-
-                var autoButton = GetUIObject<Button>("AutoButton");
-                autoButton.onClick.AddListener(() => {
-                    GameManager.Instance.AutoMode = !GameManager.Instance.AutoMode;
-                    autoButton.GetComponentInChildren<Text>().text = "현재: " + (GameManager.Instance.AutoMode ? "On" : "Off");
-                });
                 break;
         }
     }

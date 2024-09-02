@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
 
     public float ClapVolume { get; set; } = 0f;
     public float StartTime { get; private set; } = -1;
-    public bool AutoMode { get; set; } = false;
+    public bool AutoMode { get; private set; } = false;
     public AudioSource BackgroundSource { get; private set; }
 
     public Music SelectedMusic { get; private set; } = null;
@@ -151,6 +151,11 @@ public class GameManager : MonoBehaviour
                 {
                     scores[i] = 0;
                 }
+                var autoButton = GetUIObject<Button>("AutoButton");
+                autoButton.onClick.AddListener(() => {
+                    AutoMode = !AutoMode;
+                    autoButton.GetComponentInChildren<Text>().text = "현재: " + (AutoMode ? "On" : "Off");
+                });
                 break;
         }
     }
