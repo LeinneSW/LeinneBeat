@@ -3,11 +3,11 @@ using UnityEngine;
 
 public class MarkerObject : MonoBehaviour
 {
-    public static readonly int STATE_PREFECT = 1;
-    public static readonly int STATE_GREAT = 2;
-    public static readonly int STATE_GOOD = 3;
-    public static readonly int STATE_POOR = 4;
-    public static readonly int STATE_MISS = 5;
+    public const int STATE_PREFECT = 1;
+    public const int STATE_GREAT = 2;
+    public const int STATE_GOOD = 3;
+    public const int STATE_POOR = 4;
+    public const int STATE_MISS = 5;
 
     private bool touched = false;
 
