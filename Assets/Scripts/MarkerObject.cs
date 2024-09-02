@@ -192,7 +192,7 @@ public class MarkerObject : MonoBehaviour
     {
         if (GameManager.Instance.AutoMode)
         {
-            if (Time.time > StartTime + 0.482f)
+            if (Time.time > StartTime + 0.4815f)
             {
                 OnTouch();
             }
