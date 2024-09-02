@@ -1,9 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public enum Difficulty
 {
@@ -12,44 +16,175 @@ public enum Difficulty
     Extreme
 }
 
+[Serializable]
+public class MusicInfo
+{
+    public string title;
+    public string author;
+    public float offset;
+    public float preview;
+}
+
 public class MusicManager : MonoBehaviour
 {
-    public static void LoadMusic()
+    public static MusicManager Instance { get; private set; } = null;
+
+    public Sprite defaultJacket;
+
+    public readonly List<Music> musicList = new();
+
+    private AudioType GetAudioType(string extension)
     {
-        // TODO: 모든 음악 정보는 이곳애서 진행하도록 변경 예정
-        // TODO: info.json 을 사용해 이름, 작곡가, 싱크값 등을 불러올 예정
+        return extension.ToLower() switch
+        {
+            ".mp3" => AudioType.MPEG,
+            ".ogg" => AudioType.OGGVORBIS,
+            ".wav" => AudioType.WAV,
+            _ => AudioType.UNKNOWN,
+        };
     }
 
-    public static bool TryParse(AudioClip clip, string dirPath, out Music music)
+    private void Awake()
     {
-        music = new(dirPath, clip);
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        LoadMusicDir();
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        switch (scene.name)
+        {
+            case GameManager.SCENE_MUSIC_SELECT:
+                UIManager.Instance.ResetMusicList();
+                for (int i = 0; i < musicList.Count; ++i)
+                {
+                    UIManager.Instance.AddMusicButton(musicList[i]);
+                }
+                break;
+        }
+    }
+
+    public void LoadMusicDir()
+    {
+        // TODO: info.json의 offset값으로 싱크 조절
+        var basePath = Path.Combine(Application.dataPath, "..", "Songs");
+        var syncPath = Path.Combine(basePath, "sync.txt");
+        var syncList = GameManager.Instance.musicOffsetList;
+        if (File.Exists(syncPath))
+        {
+            string[] lines = File.ReadAllLines(syncPath);
+            foreach (string line in lines)
+            {
+                var split = line.Trim().Split(":");
+                if (split.Length < 2)
+                {
+                    continue;
+                }
+                if (float.TryParse(split[1].Trim(), out float value))
+                {
+                    syncList[split[0].Trim()] = value;
+                }
+            }
+        }
+
+        UIManager.Instance.ResetMusicList();
+        foreach (var dirPath in Directory.GetDirectories(basePath))
+        {
+            StartCoroutine(LoadMusic(dirPath));
+        }
+    }
+
+    private IEnumerator LoadMusic(string dirPath)
+    {
+        var title = Path.GetFileName(dirPath);
+        var author = "작곡가";
+        var songFiles = Directory.GetFiles(dirPath, "song.*");
+        if (songFiles.Length < 1)
+        {
+            Debug.Log($"'{title}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            yield break;
+        }
+
+        var musicPath = songFiles[0];
+        var audioType = GetAudioType(Path.GetExtension(musicPath));
+        if (audioType == AudioType.UNKNOWN)
+        {
+            Debug.Log($"'{title}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            yield break;
+        }
+
+        using var www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, audioType);
+        yield return www.SendWebRequest();
+
+        if (www.result != UnityWebRequest.Result.Success)
+        {
+            Debug.Log($"폴더: {musicPath}, 오류: {www.error}");
+            yield break;
+        }
+
+        Sprite sprite = defaultJacket;
+        string[] jacketFiles = Directory.GetFiles(dirPath, $"jacket.*");
+        string[] extensions = new[] { "png", "jpg", "jpeg", "bmp" };
+        if (jacketFiles.Length > 0)
+        {
+            byte[] fileData = File.ReadAllBytes(jacketFiles[0]);
+            Texture2D texture = new(2, 2);
+            if (texture.LoadImage(fileData))
+            {
+                sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            }
+        }
+
+        string jsonPath = Path.Combine(dirPath, "info.json");
+        if (File.Exists(jsonPath))
+        {
+            try
+            {
+                string json = File.ReadAllText(jsonPath);
+                var jsonData = JsonUtility.FromJson<MusicInfo>(json);
+                title = jsonData.title;
+                author = jsonData.author ?? author;
+            }
+            catch
+            {
+                Debug.Log($"곡 이름: {title}");
+            }
+        }
+
+        Music music = new(DownloadHandlerAudioClip.GetContent(www), dirPath, title, author, sprite);
         _ = music.StartOffset; // TODO: remove HACK
         foreach (var difficulty in Enum.GetValues(typeof(Difficulty)))
         {
-            var diffStr = difficulty.ToString().ToLower();
-            var filePath = Path.Combine(dirPath, $"{diffStr}.txt");
-            if (!File.Exists(filePath))
-            {
-                //Debug.Log($"{musicName}의 {diffStr}채보가 발견되지 않았습니다.");
-                continue;
-            }
-
             var chart = Chart.Parse(music, (Difficulty) difficulty);
-            if (chart == null)
-            {
-                Debug.Log($"{Path.GetFileName(dirPath)}의 {diffStr}채보가 잘못되었습니다.");
-            }
-            else
+            if (chart != null)
             {
                 music.AddChart(chart);
             }
         }
-        return music.AvailableDifficulty.Count > 0;
+        if (music.AvailableDifficulty.Count > 0)
+        {
+            musicList.Add(music);
+            UIManager.Instance.AddMusicButton(music);
+        }
     }
 }
 
 public class Music{
-    public readonly string name;
+    public readonly string title;
+    public readonly string author;
+
     public readonly string path;
     public readonly AudioClip clip;
     public readonly Sprite jacket = null;
@@ -62,7 +197,7 @@ public class Music{
     */
     public float StartOffset
     {
-        get => GameManager.Instance.GetMusicOffset(name);
+        get => GameManager.Instance.GetMusicOffset(title);
     }
 
     public List<Difficulty> AvailableDifficulty
@@ -70,21 +205,18 @@ public class Music{
         get => chartList.Keys.ToList();
     }
 
+    public bool IsLong { get; private set; } = false;
+
     private readonly Dictionary<Difficulty, Chart> chartList = new();
 
-    public Music(string path, AudioClip clip)
-    {
-        this.path = path;
-        this.clip = clip;
-        name = Path.GetFileName(path);
-    }
-
-    public Music(string path, AudioClip clip, Sprite jacket)
+    public Music(AudioClip clip, string path, string title, string author, Sprite jacket = null)
     {
         this.clip = clip;
         this.path = path;
+        this.title = title;
+        this.author = author;
         this.jacket = jacket;
-        name = Path.GetFileName(path);
+        title = Path.GetFileName(path);
     }
 
     public void AddChart(Chart chart)
@@ -92,6 +224,7 @@ public class Music{
         if (!chartList.ContainsKey(chart.difficulty))
         {
             chartList[chart.difficulty] = chart;
+            IsLong = IsLong || chart.IsLong;
         }
     }
 
@@ -221,12 +354,20 @@ public class Chart
 
     public static Chart Parse(Music music, Difficulty difficulty)
     {
-        string[] lines = File.ReadAllLines(Path.Combine(music.path, difficulty.ToString().ToLower() + ".txt"));
+        var diffStr = difficulty.ToString().ToLower();
+        var filePath = Path.Combine(music.path, $"{diffStr}.txt");
+        if (!File.Exists(filePath))
+        {
+            //Debug.Log($"{musicName}의 {diffStr}채보가 발견되지 않았습니다.");
+            return null;
+        }
+
         double level = 1;
+        string[] lines = File.ReadAllLines(filePath);
         foreach (var text in lines)
         {
             var line = RemoveComment(text).ToLower();
-            if (line.StartsWith("level:") && TryParseDoubleInText(line, out level))
+            if (line.StartsWith("lev") && TryParseDoubleInText(line, out level))
             {
                 break;
             }

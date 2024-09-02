@@ -22,10 +22,6 @@ public class UIManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
-
-    private void Start()
-    {
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -46,26 +42,35 @@ public class UIManager : MonoBehaviour
         return foundObject;
     }
 
-    private void AddMusicButton(RectTransform content, Music music)
+    public void AddMusicButton(Music music)
     {
-        // TODO: 버튼 에셋 추가 예정
-        var button = Instantiate(musicButton, content);
-        button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
-        button.GetComponentInChildren<Text>().text = music.name;
+        var content = GetUIObject<RectTransform>("MusicListContent");
+        if (content != null)
+        {
+            // TODO: 버튼 에셋 추가 예정
+            var button = Instantiate(musicButton, content);
+            button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
+            button.transform.GetChild(0).GetComponent<Text>().text = $"{music.title}{(music.IsLong ? " (홀드)" : "")}";
+            button.transform.GetChild(1).GetComponent<Text>().text = music.author;
+            if (music.jacket != null)
+            {
+                button.transform.GetChild(2).GetComponent<Image>().sprite = music.jacket;
+            }
+        }
     }
 
-    public void InitSelectMusicScene()
+    public void ResetMusicList()
     {
-        GetUIObject<Button>("StartGameButton").onClick.AddListener(() => GameManager.Instance.PlayMusic());
         var content = GetUIObject<RectTransform>("MusicListContent");
         foreach (Transform child in content)
         {
             Destroy(child.gameObject); // 기존 버튼 제거
         }
-        for (int i = 0; i < GameManager.Instance.musicList.Count; ++i)
-        {
-            AddMusicButton(content, GameManager.Instance.musicList[i]);
-        }
+    }
+
+    public void InitSelectMusicScene()
+    {
+        GetUIObject<Button>("StartGameButton").onClick.AddListener(() => GameManager.Instance.PlayMusic());
         var basic = GetUIObject<Button>("BasicButton");
         basic.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Basic));
         var advanced = GetUIObject<Button>("AdvancedButton");
@@ -83,10 +88,10 @@ public class UIManager : MonoBehaviour
                 break;
             case GameManager.SCENE_IN_GAME:
                 var titleText = GetUIObject<Text>("MusicTitle");
-                titleText.text = GameManager.Instance.SelectedMusic.name;
+                titleText.text = GameManager.Instance.CurrentMusic.title;
 
                 var offsetText = GetUIObject<InputField>("MusicOffset");
-                offsetText.text = "" + GameManager.Instance.SelectedMusic.StartOffset;
+                offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
                 offsetText.onValueChanged.AddListener((value) =>
                 {
                     // BUG: 입력시 다시 값이 변경되지 않도록(0. >> 0이되어버림)
@@ -101,13 +106,13 @@ public class UIManager : MonoBehaviour
                     var plusButton = GetUIObject<Button>("+" + number);
                     plusButton.onClick.AddListener(() => {
                         GameManager.Instance.AddMusicOffset((float)number);
-                        offsetText.text = "" + GameManager.Instance.SelectedMusic.StartOffset;
+                        offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
                     });
 
                     var minusButton = GetUIObject<Button>("-" + number);
                     minusButton.onClick.AddListener(() => {
                         GameManager.Instance.AddMusicOffset((float)-number);
-                        offsetText.text = "" + GameManager.Instance.SelectedMusic.StartOffset;
+                        offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
                     });
                 }
                 break;

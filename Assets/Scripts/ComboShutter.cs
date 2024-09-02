@@ -26,7 +26,7 @@ public class ComboShutter : MonoBehaviour
             yield return null;
         }
 
-        var music = GameManager.Instance.SelectedMusic;
+        var music = GameManager.Instance.CurrentMusic;
         var remainTime = music.clip.length + Mathf.Max(0, music.StartOffset);
         while (remainTime > 0)
         {
