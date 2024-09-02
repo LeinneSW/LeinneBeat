@@ -7,7 +7,6 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public enum Difficulty
 {
@@ -173,7 +172,7 @@ public class MusicManager : MonoBehaviour
                 music.AddChart(chart);
             }
         }
-        if (music.AvailableDifficulty.Count > 0)
+        if (music.IsValid)
         {
             musicList.Add(music);
             UIManager.Instance.AddMusicButton(music);
@@ -184,6 +183,7 @@ public class MusicManager : MonoBehaviour
 public class Music{
     public readonly string title;
     public readonly string author;
+    public readonly float preview = 35f;
 
     public readonly string path;
     public readonly AudioClip clip;
@@ -200,10 +200,7 @@ public class Music{
         get => GameManager.Instance.GetMusicOffset(title);
     }
 
-    public List<Difficulty> AvailableDifficulty
-    {
-        get => chartList.Keys.ToList();
-    }
+    public bool IsValid { get => chartList.Count > 0; }
 
     public bool IsLong { get; private set; } = false;
 
