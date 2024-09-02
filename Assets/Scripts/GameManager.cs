@@ -151,7 +151,7 @@ public class GameManager : MonoBehaviour
                 {
                     scores[i] = 0;
                 }
-                var autoButton = GetUIObject<Button>("AutoButton");
+                var autoButton = UIManager.Instance.GetUIObject<Button>("AutoButton");
                 autoButton.onClick.AddListener(() => {
                     AutoMode = !AutoMode;
                     autoButton.GetComponentInChildren<Text>().text = "현재: " + (AutoMode ? "On" : "Off");
