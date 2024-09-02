@@ -115,18 +115,18 @@ public class MarkerObject : MonoBehaviour
     public void CalculateJudgement()
     {
         var judge = STATE_POOR;
-        var judgeTime = (StartTime + 29 / 60d - Time.time) * 1000; // + 빠르게침, - 느리게침
+        var judgeTime = (StartTime + 29 / 60d - Time.timeAsDouble) * 1000; // + 빠르게침, - 느리게침
         var judgeAbs = Math.Abs(judgeTime);
-        // TODO: 판정 범위 조절 기능 구현 예정
-        if (judgeAbs <= 41.667f)
+        var judgeTable = MarkerManager.Instance.CurrentJudgementTable;
+        if (judgeAbs <= judgeTable[0])
         {
             judge = STATE_PREFECT;
         }
-        else if (judgeAbs <= 83.334f)
+        else if (judgeAbs <= judgeTable[1])
         {
             judge = STATE_GREAT;
         }
-        else if (judgeAbs <= 125f)
+        else if (judgeAbs <= judgeTable[2])
         {
             judge = STATE_GOOD;
         }
@@ -148,17 +148,18 @@ public class MarkerObject : MonoBehaviour
     {
         // TODO: 롱노트의 판정 산정 방식은 다르게 측정되어야함
         var judge = STATE_POOR;
-        var judgeTime = Math.Max(0, (FinishTime + 29 / 60d - Time.time) * 1000); // + 빠르게침, - 판정은 없음
+        var judgeTime = Math.Max(0, (FinishTime + 29 / 60d - Time.timeAsDouble) * 1000); // + 빠르게침, - 판정은 없음
         //var maxTime = FinishTime - StartTime;
-        if (judgeTime <= 41.667f)
+        var judgeTable = MarkerManager.Instance.CurrentJudgementTable;
+        if (judgeAbs <= judgeTable[0])
         {
             judge = STATE_PREFECT;
         }
-        else if (judgeTime <= 83.334f)
+        else if (judgeAbs <= judgeTable[1])
         {
             judge = STATE_GREAT;
         }
-        else if (judgeTime <= 166.667f)
+        else if (judgeAbs <= judgeTable[2])
         {
             judge = STATE_GOOD;
         }
