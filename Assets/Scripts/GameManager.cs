@@ -7,6 +7,16 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+public enum GameMode{
+    Normal,
+    Degree90,
+    Degree180,
+    Degree270,
+    Random, // Not implemented: 무리배치 이슈
+    FullRandom, // Not implemented: 무리배치 이슈
+    HalfRandom,
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; } = null;
@@ -28,6 +38,7 @@ public class GameManager : MonoBehaviour
     public bool AutoMode { get; private set; } = false;
     public AudioSource BackgroundSource { get; private set; }
 
+    public GameMode CurrentMode { get; set; } = GameMode.Normal;
     public Music CurrentMusic { get; private set; } = null;
     public Chart CurrentChart { get => CurrentMusic?.GetChart(CurrentDifficulty); }
     public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
