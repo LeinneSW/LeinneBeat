@@ -15,13 +15,18 @@ public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; } = null;
 
-    public JudgementType JudgeType { get; private set; } = JudgementType.Normal;
-    public readonly Dictionary<JudgementType, double[]> judgementTables = new()
+    private JudgementType _judgeType = JudgementType.Normal;
+    public JudgementType JudgeType
     {
-        { JudgementType.Normal, new double[] { 2.5 / 60, 5.0 / 60, 7.5 / 60 } },
-        { JudgementType.Hard, new double[] { 2.5 / 45, 5.0 / 45, 7.5 / 45 } },
-        { JudgementType.Extreme, new double[] { 2.5 / 30, 5.0 / 30, 7.5 / 30 } },
-    };
+        get => _judgeType;
+        set
+        {
+            if (GameManager.Instance.StartTime <= 0)
+            {
+                _judgeType = value;
+            }
+        }
+    }
     public double[] CurrentJudgementTable
     {
         get => judgementTables[JudgeType];
@@ -40,6 +45,12 @@ public class MarkerManager : MonoBehaviour
     private readonly List<AudioSource> claps = new();
     private readonly List<GameObject> touchedList = new();
     private readonly Dictionary<int, List<MarkerObject>> markers = new();
+    private readonly Dictionary<JudgementType, double[]> judgementTables = new()
+    {
+        { JudgementType.Normal, new double[] { 2.5 / 60, 5.0 / 60, 7.5 / 60 } },
+        { JudgementType.Hard, new double[] { 2.5 / 90, 5.0 / 90, 7.5 / 90 } },
+        { JudgementType.Extreme, new double[] { 2.5 / 120, 5.0 / 120, 7.5 / 120 } },
+    };
 
     private int _clapIndex = 0;
     private int ClapIndex
