@@ -47,7 +47,6 @@ public class UIManager : MonoBehaviour
         var content = GetUIObject<RectTransform>("MusicListContent");
         if (content != null)
         {
-            // TODO: 버튼 에셋 추가 예정
             var button = Instantiate(musicButton, content);
             button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
             button.transform.GetChild(0).GetComponent<Text>().text = $"{music.title}{(music.IsLong ? " (홀드)" : "")}";
@@ -124,7 +123,7 @@ public class UIManager : MonoBehaviour
         var gridPanel = GetUIObject<RectTransform>("MusicBar");
         foreach (Transform child in gridPanel)
         {
-            Destroy(child.gameObject); // 기존 블록 제거
+            Destroy(child.gameObject); // 기존 블럭 제거
         }
 
         for (int i = 0; i < musicBar.Count; i++)
