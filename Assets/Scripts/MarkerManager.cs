@@ -15,22 +15,19 @@ public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; } = null;
 
-    private JudgementType _judgeType = JudgementType.Normal;
+    private JudgementType judgeType = JudgementType.Normal;
     public JudgementType JudgeType
     {
-        get => _judgeType;
+        get => judgeType;
         set
         {
             if (GameManager.Instance.StartTime <= 0)
             {
-                _judgeType = value;
+                judgeType = value;
             }
         }
     }
-    public double[] CurrentJudgementTable
-    {
-        get => judgementTables[JudgeType];
-    }
+    public double[] CurrentJudgementTable => judgementTables[JudgeType];
 
     public GameObject judgePrefab;
     public GameObject markerPrefab;
@@ -47,16 +44,16 @@ public class MarkerManager : MonoBehaviour
     private readonly Dictionary<int, List<MarkerObject>> markers = new();
     private readonly Dictionary<JudgementType, double[]> judgementTables = new()
     {
-        { JudgementType.Normal, new double[] { 2.5 / 60, 5.0 / 60, 7.5 / 60 } },
-        { JudgementType.Hard, new double[] { 2.5 / 90, 5.0 / 90, 7.5 / 90 } },
-        { JudgementType.Extreme, new double[] { 2.5 / 120, 5.0 / 120, 7.5 / 120 } },
+        { JudgementType.Normal, new[] { 2.5 / 60, 5.0 / 60, 7.5 / 60 } },
+        { JudgementType.Hard, new[] { 2.5 / 90, 5.0 / 90, 7.5 / 90 } },
+        { JudgementType.Extreme, new[] { 2.5 / 120, 5.0 / 120, 7.5 / 120 } },
     };
 
-    private int _clapIndex = 0;
+    private int clapIndex = 0;
     private int ClapIndex
     {
-        get => _clapIndex;
-        set => _clapIndex = value > 15 ? 0 : value;
+        get => clapIndex;
+        set => clapIndex = value > 15 ? 0 : value;
     }
 
     private void Awake()
@@ -99,7 +96,7 @@ public class MarkerManager : MonoBehaviour
 
     private void Start()
     {
-        for (int i = 0; i < 16; ++i)
+        for (var i = 0; i < 16; ++i)
         {
             claps[i].volume = GameManager.Instance.ClapVolume;
         }
@@ -128,7 +125,7 @@ public class MarkerManager : MonoBehaviour
     public void ShowMarker(Note note)
     {
         var marker = Instantiate(markerPrefab, note.Position, Quaternion.identity).GetComponent<MarkerObject>();
-        marker.note = note;
+        marker.Note = note;
         markers[note.Row * 4 + note.Column].Add(marker);
     }
 
@@ -148,15 +145,16 @@ public class MarkerManager : MonoBehaviour
 
     private IEnumerator ShowJudgeTime(Text text, int judge)
     {
-        if (judge > 1)
+        switch (judge)
         {
-            text.color = new Color(14 / 255f, 61 / 255f, 130 / 255f);
-            text.text = "+" + judge;
-        }
-        else if (judge < -1)
-        {
-            text.color = new Color(205 / 255f, 9 / 255f, 0);
-            text.text = "" + judge;
+            case > 1:
+                text.color = new Color(14 / 255f, 61 / 255f, 130 / 255f);
+                text.text = "+" + judge;
+                break;
+            case < -1:
+                text.color = new Color(205 / 255f, 9 / 255f, 0);
+                text.text = "" + judge;
+                break;
         }
         yield return new WaitForSeconds(16f / 30);
         text.text = "";
@@ -176,7 +174,7 @@ public class MarkerManager : MonoBehaviour
         touchedList[row * 4 + column].SetActive(true);
 
         var list = markers[row * 4 + column];
-        for (int i = list.Count - 1; i >= 0; --i)
+        for (var i = list.Count - 1; i >= 0; --i)
         {
             if (list[i] == null)
             {
@@ -194,7 +192,7 @@ public class MarkerManager : MonoBehaviour
         touchedList[row * 4 + column].SetActive(false);
 
         var list = markers[row * 4 + column];
-        for (int i = list.Count - 1; i >= 0; --i)
+        for (var i = list.Count - 1; i >= 0; --i)
         {
             if (list[i] == null)
             {
@@ -207,7 +205,7 @@ public class MarkerManager : MonoBehaviour
         }
     }
 
-    void Update()
+    private void Update()
     {
         if (GameManager.Instance.AutoMode)
         {
@@ -215,9 +213,9 @@ public class MarkerManager : MonoBehaviour
         }
 
         List<int> touched = new();
-        for (int i = 0; i < Input.touchCount; i++)
+        for (var i = 0; i < Input.touchCount; i++)
         {
-            Touch touchState = Input.GetTouch(i);
+            var touchState = Input.GetTouch(i);
             Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touchState.position);
             // row 320 ~ -1480
             // col -800 ~ 800
@@ -225,12 +223,10 @@ public class MarkerManager : MonoBehaviour
             touchPosition /= 400;
             var row = Mathf.FloorToInt(-touchPosition.y);
             var column = Mathf.FloorToInt(touchPosition.x);
-            if (0 <= row && row < 4 && 0 <= column && column < 4)
+            if (row is < 0 or >= 4 || column is < 0 or >= 4) continue;
+            if (touchState.phase != TouchPhase.Ended)
             {
-                if (touchState.phase != TouchPhase.Ended)
-                {
-                    touched.Add(column + row * 4);
-                }
+                touched.Add(column + row * 4);
             }
         }
 
@@ -241,15 +237,15 @@ public class MarkerManager : MonoBehaviour
             mousePosition /= 400;
             var row = Mathf.FloorToInt(-mousePosition.y);
             var column = Mathf.FloorToInt(mousePosition.x);
-            if (0 <= row && row < 4 && 0 <= column && column < 4)
+            if (row is >= 0 and < 4 && column is >= 0 and < 4)
             {
                 touched.Add(column + row * 4);
             }
         }
 
-        for (int row = 0; row < 4; ++row)
+        for (var row = 0; row < 4; ++row)
         {
-            for (int column = 0; column < 4; ++column)
+            for (var column = 0; column < 4; ++column)
             {
                 if (touched.Contains(row * 4 + column))
                 {

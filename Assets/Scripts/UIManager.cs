@@ -6,11 +6,11 @@ using System;
 
 public class UIManager : MonoBehaviour
 {
-    public static UIManager Instance { get; private set; } = null;
+    public static UIManager Instance { get; private set; }
 
-    private Dictionary<string, Component> componentCache = new Dictionary<string, Component>();
+    private readonly Dictionary<string, Component> componentCache = new();
 
-    public GameObject musicButton;
+    public GameObject MusicButton;
 
     private void Awake()
     {
@@ -32,7 +32,7 @@ public class UIManager : MonoBehaviour
             return cacheComponent as T;
         }
 
-        T foundObject = GameObject.Find(name)?.GetComponent<T>();
+        var foundObject = GameObject.Find(name)?.GetComponent<T>();
         if (foundObject == null)
         {
             Debug.LogWarning($"UI Object with name '{name}' not found.");
@@ -45,16 +45,14 @@ public class UIManager : MonoBehaviour
     public void AddMusicButton(Music music)
     {
         var content = GetUIObject<RectTransform>("MusicListContent");
-        if (content != null)
+        if (content == null) return;
+        var button = Instantiate(MusicButton, content);
+        button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
+        button.transform.GetChild(0).GetComponent<Text>().text = $"{music.Title}{(music.IsLong ? " (홀드)" : "")}";
+        button.transform.GetChild(1).GetComponent<Text>().text = music.Author;
+        if (music.Jacket != null)
         {
-            var button = Instantiate(musicButton, content);
-            button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
-            button.transform.GetChild(0).GetComponent<Text>().text = $"{music.title}{(music.IsLong ? " (홀드)" : "")}";
-            button.transform.GetChild(1).GetComponent<Text>().text = music.author;
-            if (music.jacket != null)
-            {
-                button.transform.GetChild(2).GetComponent<Image>().sprite = music.jacket;
-            }
+            button.transform.GetChild(2).GetComponent<Image>().sprite = music.Jacket;
         }
     }
 
@@ -82,12 +80,12 @@ public class UIManager : MonoBehaviour
     {
         switch (scene.name)
         {
-            case GameManager.SCENE_MUSIC_SELECT:
+            case GameManager.SceneMusicSelect:
                 InitSelectMusicScene();
                 break;
-            case GameManager.SCENE_IN_GAME:
+            case GameManager.SceneInGame:
                 var titleText = GetUIObject<Text>("MusicTitle");
-                titleText.text = GameManager.Instance.CurrentMusic.title;
+                titleText.text = GameManager.Instance.CurrentMusic.Title;
 
                 var offsetText = GetUIObject<InputField>("MusicOffset");
                 offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
@@ -99,7 +97,7 @@ public class UIManager : MonoBehaviour
                         GameManager.Instance.SetMusicOffset(offset);
                     }
                 });
-                for (int i = 1; i < 4; ++i)
+                for (var i = 1; i < 4; ++i)
                 {
                     var number = 1 / Math.Pow(10, i);
                     var plusButton = GetUIObject<Button>("+" + number);
@@ -126,9 +124,9 @@ public class UIManager : MonoBehaviour
             Destroy(child.gameObject); // 기존 블럭 제거
         }
 
-        for (int i = 0; i < musicBar.Count; i++)
+        for (var i = 0; i < musicBar.Count; ++i)
         {
-            for (int j = 0, limit = Math.Min(musicBar[i], 8); j < limit; j++)
+            for (int j = 0, limit = Math.Min(musicBar[i], 8); j < limit; ++j)
             {
                 UIManager.Instance.DrawRectangle(gridPanel, new(i * 11f, j * 11f));
             }

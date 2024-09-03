@@ -19,41 +19,35 @@ public enum GameMode{
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; } = null;
+    public static GameManager Instance { get; private set; }
 
-    public const string SCENE_MUSIC_SELECT = "MusicSelect";
-    public const string SCENE_IN_GAME = "InGame";
+    public const string SceneMusicSelect = "MusicSelect";
+    public const string SceneInGame = "InGame";
 
     private Coroutine previewCoroutine = null;
     private readonly List<int> scores = new() { 0, 0, 0, 0 };
-    public Dictionary<string, float> musicOffsetList = new();
+    public Dictionary<string, float> MusicOffsetList = new();
 
-    public Font textFont;
-    public AudioSource goEffect;
-    public AudioSource readyEffect;
-    public AudioSource resultEffect;
+    public AudioSource GoSound;
+    public AudioSource ReadySound;
+    public AudioSource ResultSound;
 
     public float ClapVolume { get; set; } = 0f;
     public float StartTime { get; private set; } = -1;
-    public bool AutoMode { get; private set; } = false;
+    public bool AutoMode { get; private set; }
     public AudioSource BackgroundSource { get; private set; }
 
     public GameMode CurrentMode { get; set; } = GameMode.Normal;
-    public Music CurrentMusic { get; private set; } = null;
-    public Chart CurrentChart { get => CurrentMusic?.GetChart(CurrentDifficulty); }
+    public Music CurrentMusic { get; private set; }
+    public Chart CurrentChart => CurrentMusic?.GetChart(CurrentDifficulty);
     public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
 
-    public int Combo { get; private set; } = 0;
-    public int ShutterPoint { get; private set; } = 0;
+    public int Combo { get; private set; }
+    public int ShutterPoint { get; private set; }
 
-    public int Score
-    {
-        get => 90_000 * (10 * scores[0] + 7 * scores[1] + 4 * scores[2] + scores[3]) / CurrentChart.NoteCount;
-    }
-    public int ShutterScore
-    {
-        get => ShutterPoint * 100000 / 1024;
-    }
+    public int Score => 90_000 * (10 * scores[0] + 7 * scores[1] + 4 * scores[2] + scores[3]) / CurrentChart.NoteCount;
+
+    public int ShutterScore => ShutterPoint * 100000 / 1024;
 
     private void Awake()
     {
@@ -65,9 +59,9 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        if (SceneManager.GetActiveScene().name != SCENE_MUSIC_SELECT)
+        if (SceneManager.GetActiveScene().name != SceneMusicSelect)
         {
-            SceneManager.LoadScene(SCENE_MUSIC_SELECT);
+            SceneManager.LoadScene(SceneMusicSelect);
         }
 
         QualitySettings.vSyncCount = 0;
@@ -98,17 +92,17 @@ public class GameManager : MonoBehaviour
         Combo = judge < 3 ? Combo + 1 : 0;
         GameObject.Find("Combo").GetComponent<Text>().text = Combo > 4 ? $"{Combo}" : "";
 
-        if (judge < 2)
+        switch (judge)
         {
-            ShutterPoint += Mathf.FloorToInt(2048f / Mathf.Min(1024, CurrentChart.NoteCount));
-        }
-        else if (judge == 2)
-        {
-            ShutterPoint += Mathf.FloorToInt(1024f / Mathf.Min(1024, CurrentChart.NoteCount));
-        }
-        else
-        {
-            ShutterPoint -= Mathf.FloorToInt(8192f / Mathf.Min(1024, CurrentChart.NoteCount));
+            case < 2:
+                ShutterPoint += Mathf.FloorToInt(2048f / Mathf.Min(1024, CurrentChart.NoteCount));
+                break;
+            case 2:
+                ShutterPoint += Mathf.FloorToInt(1024f / Mathf.Min(1024, CurrentChart.NoteCount));
+                break;
+            default:
+                ShutterPoint -= Mathf.FloorToInt(8192f / Mathf.Min(1024, CurrentChart.NoteCount));
+                break;
         }
         ShutterPoint = Mathf.Max(Mathf.Min(1024, ShutterPoint), 0);
     }
@@ -119,7 +113,7 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        SetMusicOffset(musicOffsetList[CurrentMusic.title] + offset);
+        SetMusicOffset(MusicOffsetList[CurrentMusic.Title] + offset);
     }
 
     public void SetMusicOffset(float offset)
@@ -128,32 +122,29 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        musicOffsetList[CurrentMusic.title] = offset;
+        MusicOffsetList[CurrentMusic.Title] = offset;
     }
 
     public float GetMusicOffset(string name)
     {
-        if (!musicOffsetList.ContainsKey(name))
-        {
-            musicOffsetList[name] = 0;
-        }
-        return musicOffsetList[name];
+        MusicOffsetList.TryAdd(name, 0);
+        return MusicOffsetList[name];
     }
 
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         switch (scene.name)
         {
-            case SCENE_MUSIC_SELECT:
+            case SceneMusicSelect:
                 if (CurrentMusic != null)
                 {
                     SelectMusic(CurrentMusic);
                 }
                 break;
-            case SCENE_IN_GAME:
+            case SceneInGame:
                 Combo = 0;
                 ShutterPoint = 0;
-                for (int i = 0; i < 4; ++i)
+                for (var i = 0; i < 4; ++i)
                 {
                     scores[i] = 0;
                 }
@@ -176,18 +167,18 @@ public class GameManager : MonoBehaviour
         // TODO: play select sound
         CurrentMusic = music;
         var uiManager = UIManager.Instance;
-        uiManager.GetUIObject<Text>("SelectedMusicTtitle").text = music.title;
-        uiManager.GetUIObject<Image>("SelectedMusicJacket").sprite = music.jacket;
+        uiManager.GetUIObject<Text>("SelectedMusicTtitle").text = music.Title;
+        uiManager.GetUIObject<Image>("SelectedMusicJacket").sprite = music.Jacket;
         previewCoroutine = StartCoroutine(PlayMusicPreview());
-        for (int index = 0; index < 3; ++index)
+        for (var index = 0; index < 3; ++index)
         {
-            Difficulty difficulty = (Difficulty) index;
+            var difficulty = (Difficulty) index;
             uiManager.GetUIObject<Button>($"{difficulty}Button").interactable = CurrentMusic.CanPlay(difficulty);
         }
         if (CurrentChart != null)
         {
             uiManager.DrawMusicBar(CurrentChart.MusicBar);
-            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.level;
+            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
             uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
         }
         else
@@ -208,7 +199,7 @@ public class GameManager : MonoBehaviour
         // TODO: play difficulty sound
         CurrentDifficulty = difficulty;
         var uiManager = UIManager.Instance;
-        uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.level;
+        uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
         uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
         uiManager.DrawMusicBar(CurrentChart.MusicBar);
     }
@@ -221,7 +212,7 @@ public class GameManager : MonoBehaviour
         }
 
         var music = CurrentMusic;
-        BackgroundSource.clip = music.clip;
+        BackgroundSource.clip = music.Clip;
         while (true)
         {
             BackgroundSource.volume = 0;
@@ -257,14 +248,13 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        SceneManager.LoadScene(SCENE_IN_GAME);
+        SceneManager.LoadScene(SceneInGame);
         StartCoroutine(StartGame());
     }
 
-    private void PlayBGM()
+    private void PlayClip()
     {
-        // TODO: 볼륨 조절 노브 추가
-        BackgroundSource.clip = CurrentMusic.clip;
+        BackgroundSource.clip = CurrentMusic.Clip;
         BackgroundSource.volume = 0.35f;
         BackgroundSource.Play();
     }
@@ -280,14 +270,15 @@ public class GameManager : MonoBehaviour
         UIManager.Instance.DrawMusicBar(CurrentChart.MusicBar);
         BackgroundSource.Stop();
         yield return new WaitForSeconds(.1f);
+
         // TODO: Ready, GO 연출을 좀더 맛깔나게
         var comboText = UIManager.Instance.GetUIObject<Text>("Combo");
         comboText.fontSize = 160;
-        readyEffect.Play();
+        ReadySound.Play();
         comboText.text = "Ready";
         yield return new WaitForSeconds(1.9f);
 
-        goEffect.Play();
+        GoSound.Play();
         comboText.text = "Go";
         yield return new WaitForSeconds(1.1f);
         comboText.text = "";
@@ -295,12 +286,12 @@ public class GameManager : MonoBehaviour
 
         if (CurrentMusic.StartOffset < 0)
         {
-            PlayBGM();
+            PlayClip();
             yield return new WaitForSeconds(-CurrentMusic.StartOffset);
         }
         else
         {
-            Invoke(nameof(PlayBGM), CurrentMusic.StartOffset);
+            Invoke(nameof(PlayClip), CurrentMusic.StartOffset);
         }
 
         StartTime = Time.time;
@@ -308,7 +299,7 @@ public class GameManager : MonoBehaviour
         {
             StartCoroutine(ShowMarker(note));
         }
-        foreach (var time in CurrentChart.clapTimings)
+        foreach (var time in CurrentChart.ClapTimings)
         {
             StartCoroutine(PlayClapForAuto((float)time));
         }
@@ -319,13 +310,13 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
         yield return new WaitForSeconds(.2f);
-        resultEffect.Play();
+        ResultSound.Play();
 
         // TODO: result animation
         comboText.text = "";
 
         var scoreText = UIManager.Instance.GetUIObject<Text>("Score");
-        float elapsedTime = 0f;
+        var elapsedTime = 0f;
         while (elapsedTime < .8f)
         {
             elapsedTime += Time.deltaTime;
@@ -342,8 +333,8 @@ public class GameManager : MonoBehaviour
         StartTime = -1;
         BackgroundSource.Stop();
         StopAllCoroutines();
-        _ = ModifyMusicOffset(CurrentMusic.title, CurrentMusic.StartOffset);
-        SceneManager.LoadScene(SCENE_MUSIC_SELECT);
+        _ = ModifyMusicOffset(CurrentMusic.Title, CurrentMusic.StartOffset);
+        SceneManager.LoadScene(SceneMusicSelect);
     }
 
     private async Task ModifyMusicOffset(string name, float startOffset)
@@ -397,10 +388,9 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && StartTime != -1)
+        if (Input.GetKeyDown(KeyCode.Escape) && StartTime > 0)
         {
             FinishGame();
-            return;
         }
     }
 }

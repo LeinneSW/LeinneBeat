@@ -8,19 +8,17 @@ public class HoldArrow : MonoBehaviour
     private LineRenderer lineRenderer;
     private RectTransform rectTransform;
 
-    public float duration = 0;
+    public float Duration = 0;
 
     public bool IsStarted { get; private set; } = false;
-    private Vector3 Offset
-    {
-        get => transform.rotation.eulerAngles.z switch
+    private Vector3 Offset =>
+        transform.rotation.eulerAngles.z switch
         {
             270 => new(-200, 0, 0), // <
             90 => new(200, 0, 0), // >
             180 => new(0, 200, 0), // ∧
             _ => new(0, -200, 0), // V
         };
-    }
 
     private void Awake()
     {
@@ -53,10 +51,10 @@ public class HoldArrow : MonoBehaviour
         var updateTime = 0f;
         var startPosition = transform.localPosition;
         var endPosition = new Vector3();
-        while (updateTime < duration)
+        while (updateTime < Duration)
         {
             updateTime += Time.deltaTime;
-            transform.localPosition = Vector3.Lerp(startPosition, endPosition, updateTime / duration);
+            transform.localPosition = Vector3.Lerp(startPosition, endPosition, updateTime / Duration);
             lineRenderer.SetPosition(0, transform.position - Offset);
             yield return null;
         }
@@ -66,11 +64,11 @@ public class HoldArrow : MonoBehaviour
     private IEnumerator SpawnEffect() // 첫 소환시 이미지가 서서히 보일 수 있도록
     {
         var material = lineRenderer.material;
-        Color color = material.color;
+        var color = material.color;
         color.a = 0f;
         material.color = color;
 
-        float elapsedTime = 0f;
+        var elapsedTime = 0f;
         var targetScale = new Vector3(1, 1, 1);
         var originalScale = rectTransform.localScale;
         while (elapsedTime < 0.15f)
@@ -85,23 +83,6 @@ public class HoldArrow : MonoBehaviour
         material.color = color;
         transform.localScale = targetScale;
     }
-
-    /*private Vector3 SetScale(Vector3 newScale)
-    {
-        var diffVector = (newScale - transform.localScale) * rectTransform.sizeDelta;
-        var diffValue = diffVector.y / 2;
-        transform.localScale = newScale;
-        Vector3 offset = transform.rotation.eulerAngles.z switch
-        {
-            270 => new(-diffValue, 0, 0), // <
-            90 => new(diffValue, 0, 0), // >
-            180 => new(0, diffValue, 0), // ∧
-            _ => new(0, -diffValue, 0), // V
-        };
-        transform.position += offset;
-        lineRenderer.SetPosition(0, transform.position);
-        return offset;
-    }*/
 
     private void OnDestroy(){
         StopAllCoroutines();

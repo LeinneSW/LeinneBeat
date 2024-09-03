@@ -26,11 +26,11 @@ public class MusicInfo
 
 public class MusicManager : MonoBehaviour
 {
-    public static MusicManager Instance { get; private set; } = null;
+    public static MusicManager Instance { get; private set; }
 
-    public Sprite defaultJacket;
+    public Sprite DefaultJacket;
 
-    public readonly List<Music> musicList = new();
+    public readonly List<Music> MusicList = new();
 
     private AudioType GetAudioType(string extension)
     {
@@ -65,11 +65,11 @@ public class MusicManager : MonoBehaviour
     {
         switch (scene.name)
         {
-            case GameManager.SCENE_MUSIC_SELECT:
+            case GameManager.SceneMusicSelect:
                 UIManager.Instance.ResetMusicList();
-                for (int i = 0; i < musicList.Count; ++i)
+                foreach (var music in MusicList)
                 {
-                    UIManager.Instance.AddMusicButton(musicList[i]);
+                    UIManager.Instance.AddMusicButton(music);
                 }
                 break;
         }
@@ -80,18 +80,18 @@ public class MusicManager : MonoBehaviour
         // TODO: info.json의 offset값으로 싱크 조절
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
         var syncPath = Path.Combine(basePath, "sync.txt");
-        var syncList = GameManager.Instance.musicOffsetList;
+        var syncList = GameManager.Instance.MusicOffsetList;
         if (File.Exists(syncPath))
         {
-            string[] lines = File.ReadAllLines(syncPath);
-            foreach (string line in lines)
+            var lines = File.ReadAllLines(syncPath);
+            foreach (var line in lines)
             {
                 var split = line.Trim().Split(":");
                 if (split.Length < 2)
                 {
                     continue;
                 }
-                if (float.TryParse(split[1].Trim(), out float value))
+                if (float.TryParse(split[1].Trim(), out var value))
                 {
                     syncList[split[0].Trim()] = value;
                 }
@@ -133,12 +133,12 @@ public class MusicManager : MonoBehaviour
             yield break;
         }
 
-        Sprite sprite = defaultJacket;
-        string[] jacketFiles = Directory.GetFiles(dirPath, $"jacket.*");
-        string[] extensions = new[] { "png", "jpg", "jpeg", "bmp" };
+        var sprite = DefaultJacket;
+        var jacketFiles = Directory.GetFiles(dirPath, $"jacket.*");
+        var extensions = new[] { "png", "jpg", "jpeg", "bmp" };
         if (jacketFiles.Length > 0)
         {
-            byte[] fileData = File.ReadAllBytes(jacketFiles[0]);
+            var fileData = File.ReadAllBytes(jacketFiles[0]);
             Texture2D texture = new(2, 2);
             if (texture.LoadImage(fileData))
             {
@@ -146,12 +146,12 @@ public class MusicManager : MonoBehaviour
             }
         }
 
-        string jsonPath = Path.Combine(dirPath, "info.json");
+        var jsonPath = Path.Combine(dirPath, "info.json");
         if (File.Exists(jsonPath))
         {
             try
             {
-                string json = File.ReadAllText(jsonPath);
+                var json = File.ReadAllText(jsonPath);
                 var jsonData = JsonUtility.FromJson<MusicInfo>(json);
                 title = jsonData.title;
                 author = jsonData.author ?? author;
@@ -172,65 +172,56 @@ public class MusicManager : MonoBehaviour
                 music.AddChart(chart);
             }
         }
-        if (music.IsValid)
-        {
-            musicList.Add(music);
-            UIManager.Instance.AddMusicButton(music);
-        }
+
+        if (!music.IsValid) yield break;
+        MusicList.Add(music);
+        UIManager.Instance.AddMusicButton(music);
     }
 }
 
 public class Music{
-    public readonly string title;
-    public readonly string author;
-    public readonly float preview = 35f;
+    public readonly string Title;
+    public readonly string Author;
+    public readonly float Preview = 35f;
 
-    public readonly string path;
-    public readonly AudioClip clip;
-    public readonly Sprite jacket = null;
-    public readonly Dictionary<Difficulty, int> scoreList = new();
+    public readonly string Path;
+    public readonly AudioClip Clip;
+    public readonly Sprite Jacket = null;
+    public readonly Dictionary<Difficulty, int> ScoreList = new();
 
     /**
     * 음악이 시작되는 시간 
     * 값이 작아지면: 노래가 빨리재생됨(노래가 느릴때 이쪽으로)
     * 값이 커지면: 노래가 늦게재생됨(노래가 빠를때 이쪽으로)
     */
-    public float StartOffset
-    {
-        get => GameManager.Instance.GetMusicOffset(title);
-    }
+    public float StartOffset => GameManager.Instance.GetMusicOffset(Title);
 
-    public bool IsValid { get => chartList.Count > 0; }
+    public bool IsValid => chartList.Count > 0;
 
-    public bool IsLong { get; private set; } = false;
+    public bool IsLong { get; private set; }
 
     private readonly Dictionary<Difficulty, Chart> chartList = new();
 
     public Music(AudioClip clip, string path, string title, string author, Sprite jacket = null)
     {
-        this.clip = clip;
-        this.path = path;
-        this.title = title;
-        this.author = author;
-        this.jacket = jacket;
+        Clip = clip;
+        Path = path;
+        Title = title;
+        Author = author;
+        Jacket = jacket;
     }
 
     public void AddChart(Chart chart)
     {
-        if (!chartList.ContainsKey(chart.difficulty))
+        if (chartList.TryAdd(chart.Difficulty, chart))
         {
-            chartList[chart.difficulty] = chart;
             IsLong = IsLong || chart.IsLong;
         }
     }
 
     public Chart GetChart(Difficulty difficulty)
     {
-        if (!chartList.ContainsKey(difficulty))
-        {
-            return null;
-        }
-        return chartList[difficulty];
+        return chartList.GetValueOrDefault(difficulty);
     }
 
     public bool CanPlay(Difficulty difficulty)
@@ -240,44 +231,47 @@ public class Music{
 
     public int GetScore(Difficulty difficulty)
     {
-        return scoreList.ContainsKey(difficulty) ? scoreList[difficulty] : 0;
+        return ScoreList.GetValueOrDefault(difficulty, 0);
     }
 
     public void SetScore(Difficulty difficulty, int score)
     {
-        scoreList[difficulty] = score;
+        ScoreList[difficulty] = score;
     }
 }
 
 public class Chart
 {
-    public static readonly Regex NOTE_REGEX = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}\|.+(\|)?))$", RegexOptions.Compiled);
+    public static readonly Regex NoteRegex = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}\|.+(\|)?))$", RegexOptions.Compiled);
 
-    public readonly Music music;
-    public readonly double level;
-    public readonly Difficulty difficulty;
+    public readonly Music Music;
+    public readonly double Level;
+    public readonly Difficulty Difficulty;
 
     /** 곡의 BPM 목록 */
-    public readonly List<double> bpmList = new();
+    public readonly List<double> BpmList = new();
     /** 모든 박자가 들어가는 배열 */
-    public readonly SortedSet<double> clapTimings = new();
+    public readonly SortedSet<double> ClapTimings = new();
     /** BPM이 변경되는 마디 목록 [변경되는마디] = 기존BPM 형태로 저장 */
-    public readonly Dictionary<int, double> changeBpmMeasureList = new();
+    public readonly Dictionary<int, double> ChangeBpmMeasureList = new();
 
-    public int NoteCount { get; private set; } = 0;
-    public bool IsLong { get; private set; } = false;
+    public int NoteCount { get; private set; }
+    public bool IsLong { get; private set; }
     public List<Note> NoteList
     {
         get
         {
-            _allNotes ??= gridNoteList.SelectMany(pair => pair.Value).OrderBy(note => note.StartTime).ToList();
-            return _allNotes;
+            allNotes ??= gridNoteList.SelectMany(pair => pair.Value).OrderBy(note => note.StartTime).ToList();
+            return allNotes;
         }
     }
 
     /** 모든 노트의 출현 순서별 정렬 */
-    private List<Note> _allNotes = null;
-    /** 그리드 별 노트 배열 [row * 4 + column] = List<Note> */
+    private List<Note> allNotes;
+
+    /**
+     * 그리드 별 노트 배열 [row * 4 + column] = List<Note /> 
+     */
     private readonly Dictionary<int, List<Note>> gridNoteList = new();
 
     public List<int> MusicBar
@@ -285,14 +279,14 @@ public class Chart
         get
         {
             List<int> result = new(new int[120]);
-            var offset = 29d / 60d - music.StartOffset;
+            var offset = 29d / 60d - Music.StartOffset;
 
-            int noteIndex = 0;
-            int noteCount = NoteList.Count;
+            var noteIndex = 0;
+            var noteCount = NoteList.Count;
             for (int musicIndex = 1, limit = result.Count; musicIndex <= limit; ++musicIndex)
             {
-                var musicMin = music.clip.length * (musicIndex - 1) / limit;
-                var musicMax = music.clip.length * musicIndex / limit;
+                var musicMin = Music.Clip.length * (musicIndex - 1) / limit;
+                var musicMax = Music.Clip.length * musicIndex / limit;
                 while (noteIndex < noteCount)
                 {
                     var note = NoteList[noteIndex];
@@ -319,16 +313,13 @@ public class Chart
         }
     }
 
-    public int Score
-    {
-        get => music.GetScore(difficulty);
-    }
+    public int Score => Music.GetScore(Difficulty);
 
     private Chart(Music music, double level, Difficulty difficulty)
     {
-        this.music = music;
-        this.level = level;
-        this.difficulty = difficulty;
+        Music = music;
+        Level = level;
+        Difficulty = difficulty;
     }
 
     private static bool TryParseDoubleInText(string text, out double result)
@@ -339,19 +330,19 @@ public class Chart
 
     private static string RemoveComment(string text)
     {
-        var commentIndex = text.IndexOf("//");
+        var commentIndex = text.IndexOf("//", StringComparison.Ordinal);
         return (commentIndex > 0 ? text[..commentIndex].Trim() : text.Trim()).Replace(" ", "");
     }
 
     public static bool IsNoteText(string text)
     {
-        return NOTE_REGEX.IsMatch(text);
+        return NoteRegex.IsMatch(text);
     }
 
     public static Chart Parse(Music music, Difficulty difficulty)
     {
         var diffStr = difficulty.ToString().ToLower();
-        var filePath = Path.Combine(music.path, $"{diffStr}.txt");
+        var filePath = Path.Combine(music.Path, $"{diffStr}.txt");
         if (!File.Exists(filePath))
         {
             //Debug.Log($"{musicName}의 {diffStr}채보가 발견되지 않았습니다.");
@@ -382,14 +373,14 @@ public class Chart
             var lineLower = line.ToLower();
             if ((lineLower.StartsWith("bpm:") || lineLower.StartsWith("t=")) && TryParseDoubleInText(line, out double bpmValue))
             {
-                if (chart.bpmList.Count < 1 || Math.Abs(chart.bpmList[^1] - bpmValue) > 0.01)
+                if (chart.BpmList.Count < 1 || Math.Abs(chart.BpmList[^1] - bpmValue) > 0.01)
                 {
-                    if (chart.bpmList.Count > 0)
+                    if (chart.BpmList.Count > 0)
                     {
                         //Debug.Log($"[BPM 변경] 기존: {chart.bpmList[^1]}, 변경: {bpmValue}, 변경 시작 마디: {measureIndex}, 비트: {beatIndex}");
-                        chart.changeBpmMeasureList.Add(beatIndex - 1, chart.bpmList[^1]);
+                        chart.ChangeBpmMeasureList.Add(beatIndex - 1, chart.BpmList[^1]);
                     }
-                    chart.bpmList.Add(bpmValue);
+                    chart.BpmList.Add(bpmValue);
                     //Debug.Log("BPM SETTING: " + bpmValue);
                 }
             }
@@ -478,7 +469,7 @@ public class Chart
             }
         }
         ++NoteCount;
-        clapTimings.Add(newNote.StartTime);
+        ClapTimings.Add(newNote.StartTime);
     }
 }
 
@@ -545,8 +536,8 @@ public class Measure
     {
         var resultBeat = 0.0;
         int beforeBeatIndex = 1;
-        var currentBpm = chart.bpmList[^1];
-        foreach (var item in chart.changeBpmMeasureList)
+        var currentBpm = chart.BpmList[^1];
+        foreach (var item in chart.ChangeBpmMeasureList)
         {
             resultBeat += (item.Key - beforeBeatIndex + 1) * 60 / item.Value; // 변속 전까지의 길이
             beforeBeatIndex = item.Key + 1;
@@ -588,7 +579,7 @@ public class Measure
     {
         Dictionary<int, double> timingMap = new();
         //Debug.Log("------------- 박자 시작 -------------");
-        var currentBpm = chart.bpmList[^1];
+        var currentBpm = chart.BpmList[^1];
         //Debug.Log($"currentBpm: {currentBpm}");
         for (int yIndex = 0; yIndex < noteTimingStringList.Count; ++yIndex) // 한 구간을 4분음표로 취급하며 보편적으로 한마디에 4개의 박자가 있음
         {

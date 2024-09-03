@@ -4,8 +4,8 @@ using System.Collections;
 public class ComboShutter : MonoBehaviour
 {
     private bool up;
-    private readonly float frequency = 3f;  // 주기 (초당 오르내림 횟수)
-    private readonly float amplitude = 12f; // 오르내리는 높이의 반경
+    private const float Frequency = 3f;  // 주기 (초당 오르내림 횟수)
+    private const float Amplitude = 12f; // 오르내리는 높이의 반경
 
     private void Start()
     {
@@ -27,14 +27,14 @@ public class ComboShutter : MonoBehaviour
         }
 
         var music = GameManager.Instance.CurrentMusic;
-        var remainTime = music.clip.length + Mathf.Max(0, music.StartOffset);
+        var remainTime = music.Clip.length + Mathf.Max(0, music.StartOffset);
         while (remainTime > 0)
         {
             remainTime -= Time.deltaTime;
             var position = transform.position;
-            var percent = GameManager.Instance.ShutterPoint * (800 + amplitude) / 1024;
-            var animation = Mathf.Sin(Time.time * frequency * 2 * Mathf.PI) * amplitude;
-            position.y = up ? (percent + animation - 130 + amplitude) : -(percent + animation + 830 + amplitude);
+            var percent = GameManager.Instance.ShutterPoint * (800 + Amplitude) / 1024;
+            var animation = Mathf.Sin(Time.time * Frequency * 2 * Mathf.PI) * Amplitude;
+            position.y = up ? (percent + animation - 130 + Amplitude) : -(percent + animation + 830 + Amplitude);
             transform.position = position;
             yield return null;
         }
@@ -45,8 +45,8 @@ public class ComboShutter : MonoBehaviour
         endPos.y = up ? -130 : -830;
 
         // 현재 높이에 비례한 이동 시간 계산
-        var baseTime = 0.30f;
-        var maxY = up ? 670 + amplitude : -1630 - amplitude;
+        const float baseTime = 0.30f;
+        var maxY = up ? 670 + Amplitude : -1630 - Amplitude;
         var adjustedTime = baseTime * (startPos.y / maxY); // 높이에 비례한 이동 시간
         while (moveTime < adjustedTime)
         {

@@ -2384,10 +2384,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6a179672234c6c4f92cb66c0cbf538f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textFont: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-  goEffect: {fileID: 1049151500}
-  readyEffect: {fileID: 1049151499}
-  resultEffect: {fileID: 1049151498}
+  GoSound: {fileID: 1049151500}
+  ReadySound: {fileID: 1049151499}
+  ResultSound: {fileID: 1049151498}
 --- !u!4 &1049151502
 Transform:
   m_ObjectHideFlags: 0
@@ -3282,7 +3281,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00988c6c1d752e440bb22db5044958e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  musicButton: {fileID: 3527675590787341535, guid: 83a630e7c89a4034da861ad5419c8a60, type: 3}
+  MusicButton: {fileID: 3527675590787341535, guid: 83a630e7c89a4034da861ad5419c8a60, type: 3}
 --- !u!1 &1710640875
 GameObject:
   m_ObjectHideFlags: 0
@@ -3888,7 +3887,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 600c10347f5de6e4a983610738fd8160, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultJacket: {fileID: 21300000, guid: 8b52cfacab79d0d4083b2db446da21b3, type: 3}
+  DefaultJacket: {fileID: 21300000, guid: 8b52cfacab79d0d4083b2db446da21b3, type: 3}
 --- !u!4 &1942674355
 Transform:
   m_ObjectHideFlags: 0
