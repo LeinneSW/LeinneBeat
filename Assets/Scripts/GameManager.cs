@@ -118,7 +118,7 @@ public class GameManager : MonoBehaviour
 
     public void SetMusicOffset(float offset)
     {
-        if (CurrentChart == null)
+        if (CurrentMusic == null)
         {
             return;
         }
