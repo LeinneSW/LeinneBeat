@@ -117,7 +117,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void DrawMusicBar(List<int> musicBar)
+    public void DrawMusicBar()
     {
         var gridPanel = GetUIObject<RectTransform>("MusicBar");
         foreach (Transform child in gridPanel)
@@ -125,26 +125,37 @@ public class UIManager : MonoBehaviour
             Destroy(child.gameObject); // 기존 블럭 제거
         }
 
+        var currentChart = GameManager.Instance.CurrentChart;
+        if (currentChart == null)
+        {
+            return;
+        }
+
+        var musicBar = currentChart.MusicBar;
+        var musicBarScore = currentChart.MusicBarScore;
         for (var i = 0; i < musicBar.Count; ++i)
         {
-            for (int j = 0, limit = Math.Min(musicBar[i], 8); j < limit; ++j)
-            {
-                UIManager.Instance.DrawRectangle(gridPanel, new(i * 11f, j * 11f));
-            }
+            var color = musicBarScore[i] < 1 ? Color.gray : (musicBarScore[i] > 1 ? Color.yellow : Color.blue);
+            UIManager.Instance.DrawRectangle(gridPanel, i, Math.Min(musicBar[i], 8), color);
         }
     }
 
-    private void DrawRectangle(RectTransform parent, Vector2 position)
+    private void DrawRectangle(RectTransform panel, float x, int count, Color color)
     {
-        // 배경을 위한 기본 이미지 생성
-        GameObject rectObject = new("Rect");
-        rectObject.transform.SetParent(parent);
+        GameObject barChild = new("BarGroup");
+        barChild.transform.SetParent(panel);
+        for (var i = 0; i < count; ++i)
+        {
+            // 배경을 위한 기본 이미지 생성
+            GameObject rectObject = new("Rect");
+            rectObject.transform.SetParent(barChild);
 
-        var image = rectObject.AddComponent<Image>();
-        image.color = Color.gray;
+            var image = rectObject.AddComponent<Image>();
+            image.color = color;
 
-        var rectTransform = rectObject.GetComponent<RectTransform>();
-        rectTransform.sizeDelta = new(10f, 10f); // 크기 설정
-        rectTransform.anchoredPosition = position; // 위치 설정
+            var rectTransform = rectObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new(10f, 10f); // 크기 설정
+            rectTransform.anchoredPosition = new Vector2(x, i * 11f); // 위치 설정
+        }
     }
 }

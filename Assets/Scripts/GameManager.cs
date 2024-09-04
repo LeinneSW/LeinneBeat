@@ -185,15 +185,14 @@ public class GameManager : MonoBehaviour
             var difficulty = (Difficulty) index;
             uiManager.GetUIObject<Button>($"{difficulty}Button").interactable = CurrentMusic.CanPlay(difficulty);
         }
+        uiManager.DrawMusicBar();
         if (CurrentChart != null)
         {
-            uiManager.DrawMusicBar(CurrentChart.MusicBar);
             uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
             uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
         }
         else
         {
-            uiManager.DrawMusicBar(new());
             uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "채보 없음";
             uiManager.GetUIObject<Text>("SelectedMusicScore").text = "0";
         }
@@ -209,9 +208,9 @@ public class GameManager : MonoBehaviour
         // TODO: play difficulty sound
         CurrentDifficulty = difficulty;
         var uiManager = UIManager.Instance;
+        uiManager.DrawMusicBar();
         uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
         uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
-        uiManager.DrawMusicBar(CurrentChart.MusicBar);
     }
 
     public IEnumerator PlayMusicPreview()
@@ -277,7 +276,7 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        UIManager.Instance.DrawMusicBar(CurrentChart.MusicBar);
+        UIManager.Instance.DrawMusicBar();
         BackgroundSource.Stop();
         yield return new WaitForSeconds(.1f);
 

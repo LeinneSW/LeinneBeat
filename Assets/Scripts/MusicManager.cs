@@ -188,6 +188,7 @@ public class Music{
     public readonly AudioClip Clip;
     public readonly Sprite Jacket = null;
     public readonly Dictionary<Difficulty, int> ScoreList = new();
+    public readonly Dictionary<Difficulty, List<int>> MusicBarScoreList = new() { new(new int[120]), new(new int[120]), new(new int[120]) };
 
     /**
     * 음악이 시작되는 시간 
@@ -238,9 +239,23 @@ public class Music{
         return ScoreList.GetValueOrDefault(difficulty, 0);
     }
 
+    public List<int> GetMusicBarScore(Difficulty difficulty)
+    {
+        return MusicBarScoreList.GetValueOrDefault(difficulty, new(new int[120]));
+    }
+
     public void SetScore(Difficulty difficulty, int score)
     {
         ScoreList[difficulty] = score;
+    }
+
+    public void SetMusicBarScore(Difficulty difficulty, List<int> score)
+    {
+        for (int i = score.Count; i < 120; ++i)
+        {
+            score.Add(0);
+        }
+        MusicBarScoreList[difficulty] = score;
     }
 }
 
@@ -318,6 +333,7 @@ public class Chart
     }
 
     public int Score => Music.GetScore(Difficulty);
+    public int MusicBarScore => Music.GetMusicBarScore(Difficulty);
 
     private Chart(Music music, double level, Difficulty difficulty)
     {
