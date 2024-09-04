@@ -189,7 +189,7 @@ public class MarkerObject : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance.AutoMode)
+        if (GameManager.Instance.AutoPlay)
         {
             if (Time.time > StartTime + 0.4815f)
             {

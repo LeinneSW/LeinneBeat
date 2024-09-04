@@ -207,7 +207,7 @@ public class MarkerManager : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance.AutoMode)
+        if (GameManager.Instance.AutoPlay)
         {
             return;
         }
