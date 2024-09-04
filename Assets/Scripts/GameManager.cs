@@ -122,13 +122,23 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        MusicOffsetList[CurrentMusic.Title] = offset;
+        SetMusicOffset(CurrentMusic.Title)
     }
 
-    public float GetMusicOffset(string name)
+    public void SetMusicOffset(string title, float offset)
     {
-        MusicOffsetList.TryAdd(name, 0);
-        return MusicOffsetList[name];
+        MusicOffsetList[title] = offset;
+    }
+
+    public float GetMusicOffset()
+    {
+        return CurrentMusic == null ? 0 : GetMusicOffset(GetMusicOffset.Title);
+    }
+
+    public float GetMusicOffset(string title)
+    {
+        MusicOffsetList.TryAdd(title, 0);
+        return MusicOffsetList[title];
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

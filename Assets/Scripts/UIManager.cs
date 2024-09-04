@@ -91,24 +91,25 @@ public class UIManager : MonoBehaviour
                 offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
                 offsetText.onValueChanged.AddListener((value) =>
                 {
-                    // BUG: 입력시 다시 값이 변경되지 않도록(0. >> 0이되어버림)
                     if (float.TryParse(value, out var offset))
                     {
-                        GameManager.Instance.SetMusicOffset(offset);
+                        GameManager.Instance.CurrentMusic.StartOffset = offset;
                     }
                 });
                 for (var i = 1; i < 4; ++i)
                 {
                     var number = 1 / Math.Pow(10, i);
                     var plusButton = GetUIObject<Button>("+" + number);
-                    plusButton.onClick.AddListener(() => {
-                        GameManager.Instance.AddMusicOffset((float)number);
+                    plusButton.onClick.AddListener(() =>
+                    {
+                        GameManager.Instance.CurrentMusic.StartOffset += (float) number;
                         offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
                     });
 
                     var minusButton = GetUIObject<Button>("-" + number);
-                    minusButton.onClick.AddListener(() => {
-                        GameManager.Instance.AddMusicOffset((float)-number);
+                    minusButton.onClick.AddListener(() =>
+                    {
+                        GameManager.Instance.CurrentMusic.StartOffset -= (float) number;
                         offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
                     });
                 }

@@ -194,7 +194,11 @@ public class Music{
     * 값이 작아지면: 노래가 빨리재생됨(노래가 느릴때 이쪽으로)
     * 값이 커지면: 노래가 늦게재생됨(노래가 빠를때 이쪽으로)
     */
-    public float StartOffset => GameManager.Instance.GetMusicOffset(Title);
+    public float StartOffset
+    {
+        get => GameManager.Instance.GetMusicOffset(Title);
+        set => GameManager.Instance.SetMusicOffset(Title, value);
+    }
 
     public bool IsValid => chartList.Count > 0;
 
