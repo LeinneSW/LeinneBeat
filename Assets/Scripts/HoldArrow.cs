@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class HoldArrow : MonoBehaviour
 {
-    private MarkerObject marker;
+    private Marker marker;
     private Animator animator;
     private LineRenderer lineRenderer;
     private RectTransform rectTransform;
@@ -32,7 +32,7 @@ public class HoldArrow : MonoBehaviour
 
     private void Start()
     {
-        marker = transform.GetComponentInParent<MarkerObject>();
+        marker = transform.GetComponentInParent<Marker>();
         lineRenderer.SetPosition(0, transform.position - Offset);
         lineRenderer.SetPosition(1, marker.gameObject.transform.position - Offset);
 

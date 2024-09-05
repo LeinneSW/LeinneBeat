@@ -10,7 +10,7 @@ public enum JudgeState
     Miss,
 }
 
-public class MarkerObject : MonoBehaviour
+public class Marker : MonoBehaviour
 {
     private bool touched = false;
 
@@ -22,8 +22,8 @@ public class MarkerObject : MonoBehaviour
     public Note Note;
 
     public GameObject ArrowGuide { get; private set; }
-    public float StartTime { get; private set; } = 0f;
-    public float FinishTime { get; private set; } = 0f;
+    public float StartTime { get; private set; }
+    public float FinishTime { get; private set; }
 
     private void Start()
     {

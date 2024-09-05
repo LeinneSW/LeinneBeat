@@ -41,7 +41,7 @@ public class MarkerManager : MonoBehaviour
     private readonly List<Text> judgeText = new();
     private readonly List<AudioSource> claps = new();
     private readonly List<GameObject> touchedList = new();
-    private readonly Dictionary<int, List<MarkerObject>> markers = new();
+    private readonly Dictionary<int, List<Marker>> markers = new();
     private readonly Dictionary<JudgementType, double[]> judgementTables = new()
     {
         { JudgementType.Normal, new[] { 2.5 / 60, 5.0 / 60, 7.5 / 60 } },
@@ -107,24 +107,9 @@ public class MarkerManager : MonoBehaviour
         return new(column * 400 - 600, 120 - row * 400);
     }
 
-    public Vector3 ConvertPosition(int row, int column, int degree)
-    {
-        switch ((degree % 360) / 90)
-        {
-            case 1: // 90도
-                return ConvertPosition(column, 3 - row);
-            case 2: // 180도
-                return ConvertPosition(3 - row, 3 - column);
-            case 3: // 270도
-                return ConvertPosition(3 - column, row);
-            default:
-                return ConvertPosition(row, column);
-        }
-    }
-
     public void ShowMarker(Note note)
     {
-        var marker = Instantiate(markerPrefab, note.Position, Quaternion.identity).GetComponent<MarkerObject>();
+        var marker = Instantiate(markerPrefab, note.Position, Quaternion.identity).GetComponent<Marker>();
         marker.Note = note;
         markers[note.Row * 4 + note.Column].Add(marker);
     }
