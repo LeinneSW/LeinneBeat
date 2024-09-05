@@ -122,7 +122,8 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        SetMusicOffset(CurrentMusic.Title)
+
+        SetMusicOffset(CurrentMusic.Title, offset);
     }
 
     public void SetMusicOffset(string title, float offset)
@@ -132,7 +133,7 @@ public class GameManager : MonoBehaviour
 
     public float GetMusicOffset()
     {
-        return CurrentMusic == null ? 0 : GetMusicOffset(GetMusicOffset.Title);
+        return CurrentMusic == null ? 0 : GetMusicOffset(CurrentMusic.Title);
     }
 
     public float GetMusicOffset(string title)
@@ -177,7 +178,7 @@ public class GameManager : MonoBehaviour
         // TODO: play select sound
         CurrentMusic = music;
         var uiManager = UIManager.Instance;
-        uiManager.GetUIObject<Text>("SelectedMusicTtitle").text = music.Title;
+        uiManager.GetUIObject<Text>("SelectedMusicTitle").text = music.Title;
         uiManager.GetUIObject<Image>("SelectedMusicJacket").sprite = music.Jacket;
         previewCoroutine = StartCoroutine(PlayMusicPreview());
         for (var index = 0; index < 3; ++index)
