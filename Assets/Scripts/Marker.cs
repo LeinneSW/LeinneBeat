@@ -28,6 +28,7 @@ public class Marker : MonoBehaviour
     private void Start()
     {
         animator = GetComponent<Animator>();
+        animator.enabled = false;
 
         ArrowGuide = new GameObject("ArrowGuide");
         ArrowGuide.transform.SetParent(transform);
@@ -85,6 +86,7 @@ public class Marker : MonoBehaviour
 
     private void EnableHoldAnimation()
     {
+        animator.enabled = true;
         animator.SetBool("Hold", true);
     }
 
@@ -183,8 +185,9 @@ public class Marker : MonoBehaviour
         judgeObject = Instantiate(MarkerManager.Instance.judgePrefab, transform.position, Quaternion.identity);
         Destroy(judgeObject, 0.5333f);
 
-        var animator = judgeObject.GetComponent<Animator>();
-        animator.SetInteger("State", (int) judge + 1);
+        var animator = judgeObject.GetComponent<MarkerAnimator>();
+        animator.StartTime = Time.time;
+        animator.SpriteList = MarkerManager.Instance.CurrentMarkerSprites[(int)judge + 1];
     }
 
     private void Update()

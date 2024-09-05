@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -48,8 +49,9 @@ public class MarkerManager : MonoBehaviour
         { JudgementType.Hard, new[] { 2.5 / 90, 5.0 / 90, 7.5 / 90 } },
         { JudgementType.Extreme, new[] { 2.5 / 120, 5.0 / 120, 7.5 / 120 } },
     };
+    public readonly List<List<Sprite>> CurrentMarkerSprites = new();
 
-    private int clapIndex = 0;
+    private int clapIndex;
     private int ClapIndex
     {
         get => clapIndex;
@@ -92,6 +94,23 @@ public class MarkerManager : MonoBehaviour
                 claps.Add(audio);
             };
         }
+
+        // TODO: 다양한 마커 대응
+        var markerDir = new[] { "normal", "perfect", "great", "good", "poor" };
+        foreach (var dir in markerDir)
+        {
+            var files = Directory.GetFiles(Path.Combine(Application.dataPath, "..", "Theme", "marker", dir), "*.png"); // png 파일만 로드
+            var markerList = new List<Sprite>();
+            foreach (var file in files)
+            {
+                var bytes = File.ReadAllBytes(file);
+                var texture = new Texture2D(2, 2);
+                texture.LoadImage(bytes);
+                var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
+                markerList.Add(sprite);
+            }
+            CurrentMarkerSprites.Add(markerList);
+        }
     }
 
     private void Start()
@@ -109,9 +128,14 @@ public class MarkerManager : MonoBehaviour
 
     public void ShowMarker(Note note)
     {
-        var marker = Instantiate(markerPrefab, note.Position, Quaternion.identity).GetComponent<Marker>();
+        var markerObj = Instantiate(markerPrefab, note.Position, Quaternion.identity);
+        var marker = markerObj.GetComponent<Marker>();
         marker.Note = note;
         markers[note.Row * 4 + note.Column].Add(marker);
+
+        var markerAnimation = markerObj.GetComponent<MarkerAnimator>();
+        markerAnimation.SpriteList = CurrentMarkerSprites[0];
+        markerAnimation.StartTime = (float)(note.StartTime + GameManager.Instance.StartTime);
     }
 
     public void ToggleClapSound()
