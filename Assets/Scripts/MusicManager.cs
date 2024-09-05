@@ -188,7 +188,12 @@ public class Music{
     public readonly AudioClip Clip;
     public readonly Sprite Jacket = null;
     public readonly Dictionary<Difficulty, int> ScoreList = new();
-    public readonly Dictionary<Difficulty, List<int>> MusicBarScoreList = new() { new(new int[120]), new(new int[120]), new(new int[120]) };
+    public readonly Dictionary<Difficulty, List<int>> MusicBarScoreList = new()
+    {
+        { Difficulty.Basic, new(new int[120]) },
+        { Difficulty.Advanced, new(new int[120]) },
+        { Difficulty.Extreme, new(new int[120]) }
+    };
 
     /**
     * 음악이 시작되는 시간 

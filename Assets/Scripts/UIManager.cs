@@ -136,19 +136,25 @@ public class UIManager : MonoBehaviour
         for (var i = 0; i < musicBar.Count; ++i)
         {
             var color = musicBarScore[i] < 1 ? Color.gray : (musicBarScore[i] > 1 ? Color.yellow : Color.blue);
-            UIManager.Instance.DrawRectangle(gridPanel, i, Math.Min(musicBar[i], 8), color);
+            DrawRectangle(gridPanel, i * 11f, Math.Min(musicBar[i], 8), color);
         }
     }
 
     private void DrawRectangle(RectTransform panel, float x, int count, Color color)
     {
+        if (count < 1)
+        {
+            return;
+        }
+
         GameObject barChild = new("BarGroup");
         barChild.transform.SetParent(panel);
+        barChild.transform.localPosition = new(0, 0, 0);
         for (var i = 0; i < count; ++i)
         {
             // 배경을 위한 기본 이미지 생성
             GameObject rectObject = new("Rect");
-            rectObject.transform.SetParent(barChild);
+            rectObject.transform.SetParent(barChild.transform);
 
             var image = rectObject.AddComponent<Image>();
             image.color = color;
