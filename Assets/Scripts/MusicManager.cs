@@ -279,6 +279,15 @@ public class Chart
 
     public int NoteCount { get; private set; }
     public bool IsLong { get; private set; }
+    public string BpmString
+    {
+        get
+        {
+            var min = BpmList.Min();
+            var max = BpmList.Max();
+            return Math.Abs(max - min) < 0.01 ? min + "" : $"{min}-{max}";
+        }
+    }
     public List<Note> NoteList
     {
         get
@@ -362,6 +371,12 @@ public class Chart
         return NoteRegex.IsMatch(text);
     }
 
+    public static bool IsBpmText(string text)
+    {
+        var lower = text.ToLower();
+        return lower.StartsWith("bpm") || lower.StartsWith("t=");
+    }
+
     public static Chart Parse(Music music, Difficulty difficulty)
     {
         var diffStr = difficulty.ToString().ToLower();
@@ -393,8 +408,7 @@ public class Chart
                 continue;
             }
 
-            var lineLower = line.ToLower();
-            if ((lineLower.StartsWith("bpm") || lineLower.StartsWith("t=")) && TryParseDoubleInText(line, out var bpmValue))
+            if (IsBpmText(line) && TryParseDoubleInText(line, out var bpmValue))
             {
                 chart.BpmList.Add(bpmValue);
                 //Debug.Log("BPM SETTING: " + bpmValue);
@@ -404,7 +418,7 @@ public class Chart
                 try
                 {
                     var j = -1;
-                    var measure = new Measure(++measureIndex, startOffset, chart);
+                    var measure = new Measure(measureIndex++, startOffset, chart);
                     //Debug.Log($"------------- 마디의 시작: {beatIndex} --------------------");
                     while (lines.Length > i + ++j)
                     {
@@ -530,7 +544,7 @@ public class Note
                 {
                     note.BarRow = 3 - BarRow;
                     note.BarColumn = 3 - BarColumn;
-}
+                }
                 break;
             case 3: // 270도
                 note = new(MeasureIndex, 3 - Column, Row, StartTime);
@@ -599,7 +613,7 @@ public class Measure
     public void Convert()
     {
         Dictionary<int, double> timingMap = new();
-        //Debug.Log("------------- 박자 시작 -------------");
+        //Debug.Log($"------------- 박자 시작: {MeasureNumber} -------------");
         var currentBpm = chart.BpmList[^1];
         //Debug.Log($"currentBpm: {currentBpm}");
         foreach (var timings in noteTimingStringList)
@@ -608,11 +622,12 @@ public class Measure
             //Debug.Log($"Count: {timings.Length}");
             foreach (var timingChar in timings)
             {
-                StartOffset += 60 / (currentBpm * length);
                 //int currentBeat = 60 / (currentBpm * timings.Length); // 현재 박자의 길이, 16분음표 등등
                 timingMap[timingChar] = StartOffset;
+                StartOffset += 60 / (currentBpm * length);
             }
         }
+        //Debug.Log($"------------- 박자 종료: {MeasureNumber} -------------");
         //Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
         foreach (var noteGrid in notePositionStringList)
         {
