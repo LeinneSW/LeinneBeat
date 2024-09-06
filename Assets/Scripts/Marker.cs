@@ -12,7 +12,7 @@ public enum JudgeState
 
 public class Marker : MonoBehaviour
 {
-    private bool touched = false;
+    private bool touched;
 
     private float remainTime = 23 / 30f;
     private Animator animator; // hold
@@ -25,7 +25,7 @@ public class Marker : MonoBehaviour
     public float StartTime { get; private set; }
     public float FinishTime { get; private set; }
 
-    private void Start()
+    private void Awake()
     {
         animator = GetComponent<Animator>();
         animator.enabled = false;
@@ -38,7 +38,10 @@ public class Marker : MonoBehaviour
         var arrowRenderer = ArrowGuide.AddComponent<SpriteRenderer>();
         arrowRenderer.sprite = MarkerManager.Instance.arrowSprite;
         arrowRenderer.sortingOrder = 6;
+    }
 
+    private void Start()
+    {
         StartTime = (float)(Note.StartTime + GameManager.Instance.StartTime);
         CreateArrow();
     }
