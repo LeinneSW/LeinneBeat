@@ -95,11 +95,11 @@ public class MarkerManager : MonoBehaviour
             };
         }
 
-        // TODO: ´Ù¾çÇÑ ¸¶Ä¿ ´ëÀÀ
+        // TODO: ë‹¤ì–‘í•œ ë§ˆì»¤ ëŒ€ì‘
         var markerDir = new[] { "normal", "perfect", "great", "good", "poor" };
         foreach (var dir in markerDir)
         {
-            var files = Directory.GetFiles(Path.Combine(Application.dataPath, "..", "Theme", "marker", dir), "*.png"); // png ÆÄÀÏ¸¸ ·Îµå
+            var files = Directory.GetFiles(Path.Combine(Application.dataPath, "..", "Theme", "marker", dir), "*.png"); // png íŒŒì¼ë§Œ ë¡œë“œ
             var markerList = new List<Sprite>();
             foreach (var file in files)
             {
