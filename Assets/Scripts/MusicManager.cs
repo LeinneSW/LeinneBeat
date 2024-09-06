@@ -383,7 +383,7 @@ public class Chart
             }
         }
         Chart chart = new(music, level, difficulty);
-        var startOffset = 0;
+        var startOffset = 0.0;
         var measureIndex = 0;
         for (var i = 0; i < lines.Length; ++i)
         {
@@ -517,16 +517,16 @@ public class Measure
     public List<string> noteTimingStringList = new();
     public List<List<string>> notePositionStringList = new() { new() };
 
-    public int StartOffset { get; private set; }
-    public int Measure { get; }
+    public double StartOffset { get; private set; }
+    public int MeasureNumber { get; }
 
     private readonly Chart chart;
     private readonly Dictionary<int, List<Note>> noteMap = new();
 
-    public Measure(int measure, int startOffset, Chart chart)
+    public Measure(int measureNumber, double startOffset, Chart chart)
     {
         this.chart = chart;
-        Measure = measure;
+        MeasureNumber = measureNumber;
         StartOffset = startOffset;
     }
 
@@ -565,16 +565,15 @@ public class Measure
         //Debug.Log("------------- 박자 시작 -------------");
         var currentBpm = chart.BpmList[^1];
         //Debug.Log($"currentBpm: {currentBpm}");
-        for (var yIndex = 0; yIndex < noteTimingStringList.Count; ++yIndex) // 한 구간을 4분음표로 취급. 단, 4개 미만은 개수/4 마디로 취급
+        foreach (var timings in noteTimingStringList)
         {
-            var timings = noteTimingStringList[yIndex].ToCharArray();
             var length = Math.Max(4, timings.Length);
             //Debug.Log($"Count: {timings.Length}");
-            for (var xIndex = 0; xIndex < timings.Length; ++xIndex)
+            foreach (var timingChar in timings)
             {
-                StartOffset += xIndex * 60 / (currentBpm * length);
+                StartOffset += 60 / (currentBpm * length);
                 //int currentBeat = 60 / (currentBpm * timings.Length); // 현재 박자의 길이, 16분음표 등등
-                timingMap[timings[xIndex]] = StartOffset;
+                timingMap[timingChar] = StartOffset;
             }
         }
         //Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
@@ -598,7 +597,7 @@ public class Measure
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(newY * 4 + xIndex);
-                                AddNote(new(Measure, newY, xIndex, yIndex, xIndex, value));
+                                AddNote(new(MeasureNumber, newY, xIndex, yIndex, xIndex, value));
                                 //Debug.Log("[롱노트 추가됨] 현재 xIndex: " + xIndex + ", note: " + note + ", longNoteChar: " + longNoteChar);
                                 break;
                             }
@@ -615,7 +614,7 @@ public class Measure
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(newY * 4 + xIndex);
-                                AddNote(new(Measure, newY, xIndex, yIndex, xIndex, value));
+                                AddNote(new(MeasureNumber, newY, xIndex, yIndex, xIndex, value));
                                 //Debug.Log("[롱노트 추가됨] 현재 xIndex: " + xIndex + ", note: " + note + ", longNoteChar: " + longNoteChar);
                                 break;
                             }
@@ -632,7 +631,7 @@ public class Measure
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(yIndex * 4 + newX);
-                                AddNote(new(Measure, yIndex, newX, yIndex, xIndex, value));
+                                AddNote(new(MeasureNumber, yIndex, newX, yIndex, xIndex, value));
                                 //Debug.Log("[롱노트 추가됨] 현재 xIndex: " + xIndex + ", note: " + note + ", longNoteChar: " + longNoteChar);
                                 break;
                             }
@@ -649,7 +648,7 @@ public class Measure
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(yIndex * 4 + newX);
-                                AddNote(new(Measure, yIndex, newX, yIndex, xIndex, value));
+                                AddNote(new(MeasureNumber, yIndex, newX, yIndex, xIndex, value));
                                 //Debug.Log("[롱노트 추가됨] 현재 xIndex: " + xIndex + ", note: " + note + ", longNoteChar: " + longNoteChar);
                                 break;
                             }
@@ -667,7 +666,7 @@ public class Measure
                     var noteChar = noteGrid[yIndex][xIndex];
                     if (!longNoteList.Contains(yIndex * 4 + xIndex) && timingMap.TryGetValue(noteChar, out var value))
                     {
-                        AddNote(new(Measure, yIndex, xIndex, value));
+                        AddNote(new(MeasureNumber, yIndex, xIndex, value));
                         //Debug.Log($"[노트 추가됨] 현재 xIndex: {xIndex}, yIndex: {yIndex}, note: {noteChar}");
                     }
                 }
