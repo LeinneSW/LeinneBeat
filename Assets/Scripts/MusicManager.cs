@@ -510,6 +510,43 @@ public class Note
         BarColumn = barColumn;
         StartTime = startTime;
     }
+
+    public Note Rotate(int row, int column, int degree)
+    {
+        Note note;
+        switch ((degree % 360) / 90)
+        {
+            case 1: // 90도
+                note = new(MeasureIndex, Column, 3 - Row, StartTime);
+                if (IsLong)
+                {
+                    note.BarRow = BarColumn;
+                    note.BarColumn = 3 - BarRow;
+                }
+                break;
+            case 2: // 180도
+                note = new(MeasureIndex, 3 - Row, 3 - Column, StartTime);
+                if (IsLong)
+                {
+                    note.BarRow = 3 - BarRow;
+                    note.BarColumn = 3 - BarColumn;
+}
+                break;
+            case 3: // 270도
+                note = new(MeasureIndex, 3 - Column, Row, StartTime);
+                if (IsLong)
+                {
+                    note.BarRow = 3 - BarColumn;
+                    note.BarColumn = BarRow;
+                }
+                break;
+            default:
+                note = new(MeasureIndex, Row, Column, BarRow, BarColumn, StartTime);
+                break;
+        }
+        note.FinishTime = FinishTime;
+        return note;
+    }
 }
 
 public class Measure
