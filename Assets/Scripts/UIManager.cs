@@ -56,9 +56,20 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void SortMusicButton()
+    {
+        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Title, y.Title, StringComparison.Ordinal));
+        ResetMusicList();
+        foreach (var music in MusicManager.Instance.MusicList)
+        {
+            AddMusicButton(music);
+        }
+    }
+
     public void ResetMusicList()
     {
         var content = GetUIObject<RectTransform>("MusicListContent");
+        if (content == null) return;
         foreach (Transform child in content)
         {
             Destroy(child.gameObject); // 기존 버튼 제거
@@ -74,6 +85,8 @@ public class UIManager : MonoBehaviour
         advanced.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Advanced));
         var extreme = GetUIObject<Button>("ExtremeButton");
         extreme.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Extreme));
+        var sortByName = GetUIObject<Button>("SortByName");
+        sortByName.onClick.AddListener(SortMusicButton);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
