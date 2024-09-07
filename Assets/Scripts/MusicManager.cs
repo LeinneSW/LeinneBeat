@@ -251,7 +251,10 @@ public class Music{
 
     public void SetScore(Difficulty difficulty, int score)
     {
-        ScoreList[difficulty] = score;
+        if (!GameManager.Instance.AutoPlay)
+        {
+            ScoreList[difficulty] = score;
+        }
     }
 
     public void SetMusicBarScore(Difficulty difficulty, List<int> score)
@@ -305,16 +308,21 @@ public class Chart
      */
     private readonly Dictionary<int, List<Note>> gridNoteList = new();
 
+    private List<int> musicBar = null;
     public List<int> MusicBar
     {
         get
         {
-            List<int> result = new(new int[120]);
+            if (musicBar != null)
+            {
+                return musicBar;
+            }
+            musicBar = new(new int[120]);
             var offset = 29d / 60d - Music.StartOffset;
 
             var noteIndex = 0;
             var noteCount = NoteList.Count;
-            for (int musicIndex = 1, limit = result.Count; musicIndex <= limit; ++musicIndex)
+            for (int musicIndex = 1, limit = musicBar.Count; musicIndex <= limit; ++musicIndex)
             {
                 var musicMin = Music.Clip.length * (musicIndex - 1) / limit;
                 var musicMax = Music.Clip.length * musicIndex / limit;
@@ -330,17 +338,19 @@ public class Chart
 
                     if (time >= musicMin)
                     {
-                        ++result[musicIndex - 1];
+                        note.MusicBarIndex = musicIndex - 1;
+                        ++musicBar[musicIndex - 1];
                         var finishTime = note.FinishTime - offset;
                         if (musicMin <= finishTime && finishTime < musicMax)
                         {
-                            ++result[musicIndex - 1];
+                            note.MusicBarLongIndex = musicIndex - 1;
+                            ++musicBar[musicIndex - 1];
                         }
                     }
                     noteIndex++;
                 }
             }
-            return result;
+            return musicBar;
         }
     }
 
@@ -496,12 +506,13 @@ public class Note
     public int Row { get; }
     public int Column { get; }
     public Vector2 Position => MarkerManager.Instance.ConvertPosition(Row, Column);
+    public int MusicBarIndex { get; set; }
 
+    public bool IsLong => BarRow != -1 && BarColumn != -1;
     public int BarRow { get; private set; } = -1;
     public int BarColumn { get; private set; } = -1;
     public Vector2 BarPosition => MarkerManager.Instance.ConvertPosition(BarRow, BarColumn);
-
-    public bool IsLong => BarRow != -1 && BarColumn != -1;
+    public int MusicBarLongIndex { get; set; } = -1;
 
     public double StartTime { get; }
     public double FinishTime { get; set; } = 0; // 롱노트의 끝 판정
