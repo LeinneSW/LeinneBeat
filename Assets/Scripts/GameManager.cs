@@ -25,8 +25,8 @@ public class GameManager : MonoBehaviour
     public const string SceneInGame = "InGame";
 
     private Coroutine previewCoroutine;
-    private readonly List<int> scoreEarly = new() { 0, 0, 0, 0 };
-    private readonly List<int> scoreLate = new() { 0, 0, 0, 0 };
+    private readonly List<int> scoreEarly = new() { 0, 0, 0, 0, 0 };
+    private readonly List<int> scoreLate = new() { 0, 0, 0, 0, 0 };
 
     public AudioSource GoSound;
     public AudioSource ReadySound;
@@ -87,22 +87,23 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    public void AddScore(JudgeState judgeState, int musicBarIndex, bool early = false)
+    public void AddScore(JudgeState judgeState, int musicBarIndex = -1, bool early = false)
     {
         var judge = (int) judgeState;
-        if (judge < (int)JudgeState.Miss)
+        if (early)
         {
-            if (early)
-            {
-                ++scoreEarly[judge];
-            }
-            else
-            {
-                ++scoreLate[judge];
-            }
-            GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
+            ++scoreEarly[judge];
         }
-        CurrentMusicBarScore[musicBarIndex] += judge == (int)JudgeState.Perfect ? 2 : judge >= (int)JudgeState.Poor ? 0 : 1;
+        else
+        {
+            ++scoreLate[judge];
+        }
+        GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
+
+        if (musicBarIndex is >= 0 and < 120)
+        {
+            CurrentMusicBarScore[musicBarIndex] += judge == (int)JudgeState.Perfect ? 2 : 1;
+        }
 
         Combo = judge < 3 ? Combo + 1 : 0;
         GameObject.Find("Combo").GetComponent<Text>().text = Combo > 4 ? $"{Combo}" : "";
@@ -374,16 +375,12 @@ public class GameManager : MonoBehaviour
         CurrentMusic.SetScore(CurrentDifficulty, ShutterScore + Score);
         CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
 
-        var totalWithoutMiss = 0;
-        for (var i = 0; i < 4; ++i)
+        for (int i = 0, limit = (int) JudgeState.Miss; i <= limit; ++i)
         {
             var judge = (JudgeState)i;
-            totalWithoutMiss += scoreEarly[i] + scoreLate[i];
             UIManager.Instance.GetUIObject<Text>($"{judge}Text").text =
                 $"{judge.ToString().ToUpper()}|\t{scoreEarly[i] + scoreLate[i]}";
         }
-        UIManager.Instance.GetUIObject<Text>("MissText").text = $"MISS|\t{CurrentChart.NoteCount - totalWithoutMiss}";
-
     }
 
     public void QuitGame()

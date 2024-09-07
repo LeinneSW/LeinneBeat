@@ -213,9 +213,9 @@ public class Marker : MonoBehaviour
         if (arrowObject != null) // 롱노트는 2미스
         {
             Destroy(arrowObject.gameObject);
-            GameManager.Instance.AddScore(JudgeState.Miss, Note.MusicBarLongIndex);
+            GameManager.Instance.AddScore(JudgeState.Miss);
         }
-        GameManager.Instance.AddScore(JudgeState.Miss, Note.MusicBarIndex);
+        GameManager.Instance.AddScore(JudgeState.Miss);
         Destroy(gameObject);
     }
 }
