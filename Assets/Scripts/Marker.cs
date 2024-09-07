@@ -101,7 +101,7 @@ public class Marker : MonoBehaviour
         }
 
         touched = true;
-        CalculateJudgement();
+        var judge = CalculateJudgement();
         if (arrowObject == null)
         {
             remainTime = 0.2f;
@@ -109,14 +109,17 @@ public class Marker : MonoBehaviour
         }
         else // 롱노트의 경우
         {
-            arrowObject.Duration -= Time.time;
-            remainTime = arrowObject.Duration + 0.166f;
-            arrowObject.EnableArrow();
+            if (judge != JudgeState.Poor)
+            {
+                arrowObject.Duration -= Time.time;
+                remainTime = arrowObject.Duration + 0.166f;
+                arrowObject.EnableArrow();
+            }
             Invoke(nameof(EnableHoldAnimation), 16f / 30f);
         }
     }
 
-    public void CalculateJudgement()
+    public JudgeState CalculateJudgement()
     {
         var judge = JudgeState.Poor;
         var judgeTime = StartTime + 29 / 60d - Time.timeAsDouble; // + 빠르게침, - 느리게침
@@ -135,8 +138,9 @@ public class Marker : MonoBehaviour
             judge = JudgeState.Good;
         }
         CreateJudgeEffect(judge);
-        GameManager.Instance.AddScore((int) judge);
+        GameManager.Instance.AddScore((int)judge, judgeTime > 0);
         MarkerManager.Instance.ShowJudgeTime(Note.Row, Note.Column, judgeTime * 1000);
+        return judge;
     }
 
     public void OnRelease()
@@ -168,7 +172,7 @@ public class Marker : MonoBehaviour
             judge = JudgeState.Good;
         }
         CreateJudgeEffect(judge);
-        GameManager.Instance.AddScore((int) judge);
+        GameManager.Instance.AddScore((int) judge, judgeTime > 0);
 
         Destroy(gameObject);
         Destroy(arrowObject.gameObject);

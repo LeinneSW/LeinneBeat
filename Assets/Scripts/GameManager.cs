@@ -24,8 +24,9 @@ public class GameManager : MonoBehaviour
     public const string SceneMusicSelect = "MusicSelect";
     public const string SceneInGame = "InGame";
 
-    private Coroutine previewCoroutine = null;
-    private readonly List<int> scores = new() { 0, 0, 0, 0 };
+    private Coroutine previewCoroutine;
+    private readonly List<int> scoreEarly = new() { 0, 0, 0, 0 };
+    private readonly List<int> scoreLate = new() { 0, 0, 0, 0 };
     public Dictionary<string, float> MusicOffsetList = new();
 
     public AudioSource GoSound;
@@ -45,7 +46,11 @@ public class GameManager : MonoBehaviour
     public int Combo { get; private set; }
     public int ShutterPoint { get; private set; }
 
-    public int Score => 90_000 * (10 * scores[0] + 7 * scores[1] + 4 * scores[2] + scores[3]) / CurrentChart.NoteCount;
+    public int Score => 90_000 * (
+        10 * (scoreEarly[0] + scoreLate[0]) + 
+        7 * (scoreEarly[1] + scoreLate[1]) + 
+        4 * (scoreEarly[2] + scoreLate[2]) +
+        scoreEarly[3] + scoreLate[3]) / CurrentChart.NoteCount;
 
     public int ShutterScore => ShutterPoint * 100000 / 1024;
 
@@ -81,11 +86,18 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    public void AddScore(int judge)
+    public void AddScore(int judge, bool early = false)
     {
         if (judge < 4)
         {
-            ++scores[judge];
+            if (early)
+            {
+                ++scoreEarly[judge];
+            }
+            else
+            {
+                ++scoreLate[judge];
+            }
             GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
         }
 
@@ -157,7 +169,8 @@ public class GameManager : MonoBehaviour
                 ShutterPoint = 0;
                 for (var i = 0; i < 4; ++i)
                 {
-                    scores[i] = 0;
+                    scoreLate[i] = 0;
+                    scoreEarly[i] = 0;
                 }
                 var autoButton = UIManager.Instance.GetUIObject<Button>("AutoButton");
                 autoButton.onClick.AddListener(() => {
