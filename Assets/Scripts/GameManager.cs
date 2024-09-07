@@ -291,7 +291,6 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        UIManager.Instance.DrawMusicBar();
         BackgroundSource.Stop();
         yield return new WaitForSeconds(.1f);
 
@@ -347,13 +346,18 @@ public class GameManager : MonoBehaviour
             scoreText.text = Score + Mathf.RoundToInt(ShutterScore * Mathf.Clamp01(elapsedTime / .8f)) + "";
             yield return null;
         }
+        
+        //TODO: NEXT 버튼, Rating 추가
         scoreText.text = ShutterScore + Score + "";
         CurrentMusic.SetScore(CurrentDifficulty, ShutterScore + Score);
-        //TODO: NEXT 버튼, Rating 추가
     }
 
-    private void FinishGame()
+    public void QuitGame()
     {
+        if (StartTime <= 0)
+        {
+            return;
+        }
         StartTime = -1;
         BackgroundSource.Stop();
         StopAllCoroutines();
@@ -398,23 +402,15 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator ShowMarker(Note note)
     {
-        var text = GameObject.Find("Measure").GetComponent<Text>();
+        //var text = GameObject.Find("Measure").GetComponent<Text>();
         yield return new WaitForSeconds((float)note.StartTime);
         MarkerManager.Instance.ShowMarker(note);
-        text.text = note.MeasureIndex + "";
+        //text.text = note.MeasureIndex + "";
     }
 
     private IEnumerator PlayClapForAuto(float delay)
     {
         yield return new WaitForSeconds(delay + 0.48333f - 0.130f); // 판정점 프레임 추가
         MarkerManager.Instance.PlayClap();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape) && StartTime > 0)
-        {
-            FinishGame();
-        }
     }
 }

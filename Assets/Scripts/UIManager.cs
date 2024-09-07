@@ -10,7 +10,10 @@ public class UIManager : MonoBehaviour
 
     private readonly Dictionary<string, Component> componentCache = new();
 
-    public GameObject MusicButton;
+    public GameObject SettingPane;
+    public GameObject MusicButtonPrefab;
+
+    private float beforeTime = 0;
 
     private void Awake()
     {
@@ -46,7 +49,7 @@ public class UIManager : MonoBehaviour
     {
         var content = GetUIObject<RectTransform>("MusicListContent");
         if (content == null) return;
-        var button = Instantiate(MusicButton, content);
+        var button = Instantiate(MusicButtonPrefab, content);
         button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
         button.transform.GetChild(0).GetComponent<Text>().text = $"{music.Title}{(music.IsLong ? " (홀드)" : "")}";
         button.transform.GetChild(1).GetComponent<Text>().text = music.Author;
@@ -87,6 +90,12 @@ public class UIManager : MonoBehaviour
         extreme.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Extreme));
         var sortByName = GetUIObject<Button>("SortByName");
         sortByName.onClick.AddListener(SortMusicButton);
+        var settingButton = GetUIObject<Button>("SettingButton");
+    }
+
+    public void ToggleSetting()
+    {
+        SettingPane.SetActive(!SettingPane.activeSelf);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -97,8 +106,22 @@ public class UIManager : MonoBehaviour
                 InitSelectMusicScene();
                 break;
             case GameManager.SceneInGame:
-                var titleText = GetUIObject<Text>("MusicTitle");
-                titleText.text = GameManager.Instance.CurrentMusic.Title;
+                DrawMusicBar();
+
+                var currentMusic = GameManager.Instance.CurrentMusic;
+                GetUIObject<Text>("MusicTitle").text = currentMusic.Title;
+                GetUIObject<Text>("MusicArtist").text = currentMusic.Author;
+                var jacket = GetUIObject<Image>("MusicJacket");
+                jacket.sprite = currentMusic.Jacket;
+                jacket.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    if (Time.time - beforeTime <= 1)
+                    {
+                        GameManager.Instance.QuitGame();
+                        return;
+                    }
+                    beforeTime = Time.time;
+                });
 
                 var offsetText = GetUIObject<InputField>("MusicOffset");
                 offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
