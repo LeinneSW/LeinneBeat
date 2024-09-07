@@ -138,7 +138,7 @@ public class Marker : MonoBehaviour
             judge = JudgeState.Good;
         }
         CreateJudgeEffect(judge);
-        GameManager.Instance.AddScore((int)judge, judgeTime > 0);
+        GameManager.Instance.AddScore(judge, Note.MusicBarIndex, judgeTime > 0);
         MarkerManager.Instance.ShowJudgeTime(Note.Row, Note.Column, judgeTime * 1000);
         return judge;
     }
@@ -172,7 +172,7 @@ public class Marker : MonoBehaviour
             judge = JudgeState.Good;
         }
         CreateJudgeEffect(judge);
-        GameManager.Instance.AddScore((int) judge, judgeTime > 0);
+        GameManager.Instance.AddScore(judge, Note.MusicBarLongIndex, judgeTime > 0);
 
         Destroy(gameObject);
         Destroy(arrowObject.gameObject);
@@ -213,9 +213,9 @@ public class Marker : MonoBehaviour
         if (arrowObject != null) // 롱노트는 2미스
         {
             Destroy(arrowObject.gameObject);
-            GameManager.Instance.AddScore((int) JudgeState.Miss - 1);
+            GameManager.Instance.AddScore(JudgeState.Miss, Note.MusicBarLongIndex);
         }
-        GameManager.Instance.AddScore((int) JudgeState.Miss - 1);
+        GameManager.Instance.AddScore(JudgeState.Miss, Note.MusicBarIndex);
         Destroy(gameObject);
     }
 }

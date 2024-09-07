@@ -308,7 +308,7 @@ public class Chart
      */
     private readonly Dictionary<int, List<Note>> gridNoteList = new();
 
-    private List<int> musicBar = null;
+    private List<int> musicBar;
     public List<int> MusicBar
     {
         get
@@ -318,37 +318,19 @@ public class Chart
                 return musicBar;
             }
             musicBar = new(new int[120]);
+            var limit = musicBar.Count;
+            var divide = Music.Clip.length / limit;
             var offset = 29d / 60d - Music.StartOffset;
-
-            var noteIndex = 0;
-            var noteCount = NoteList.Count;
-            for (int musicIndex = 1, limit = musicBar.Count; musicIndex <= limit; ++musicIndex)
+            foreach (var note in NoteList)
             {
-                var musicMin = Music.Clip.length * (musicIndex - 1) / limit;
-                var musicMax = Music.Clip.length * musicIndex / limit;
-                while (noteIndex < noteCount)
-                {
-                    var note = NoteList[noteIndex];
-                    var time = note.StartTime - offset;
+                var startBarIndex = (int) Math.Floor((note.StartTime - offset) / divide);
+                musicBar[startBarIndex]++;
+                note.MusicBarIndex = startBarIndex;
 
-                    if (time >= musicMax)
-                    {
-                        break;
-                    }
-
-                    if (time >= musicMin)
-                    {
-                        note.MusicBarIndex = musicIndex - 1;
-                        ++musicBar[musicIndex - 1];
-                        var finishTime = note.FinishTime - offset;
-                        if (musicMin <= finishTime && finishTime < musicMax)
-                        {
-                            note.MusicBarLongIndex = musicIndex - 1;
-                            ++musicBar[musicIndex - 1];
-                        }
-                    }
-                    noteIndex++;
-                }
+                if (!(note.FinishTime > 0)) continue;
+                var finishBarIndex = (int)Math.Floor((note.FinishTime - offset) / divide);
+                musicBar[finishBarIndex]++;
+                note.MusicBarLongIndex = finishBarIndex;
             }
             return musicBar;
         }

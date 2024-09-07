@@ -90,7 +90,7 @@ public class UIManager : MonoBehaviour
         extreme.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Extreme));
         var sortByName = GetUIObject<Button>("SortByName");
         sortByName.onClick.AddListener(SortMusicButton);
-        var settingButton = GetUIObject<Button>("SettingButton");
+        //var settingButton = GetUIObject<Button>("SettingButton");
     }
 
     public void ToggleSetting()
@@ -153,6 +153,22 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void UpdateMusicBar(int index)
+    {
+        var gridPanel = GetUIObject<RectTransform>("MusicBar");
+        var scores = GameManager.Instance.CurrentChart.MusicBar;
+        var color = GetMusicBarColor(GameManager.Instance.CurrentMusicBarScore[index], scores[index]);
+        foreach (Transform child in gridPanel.transform.GetChild(index))
+        {
+            child.GetComponent<Image>().color = color;
+        }
+    }
+
+    private Color GetMusicBarColor(int expected, int actual)
+    {
+        return expected < actual ? Color.gray : expected >= actual * 2 ? Color.yellow : Color.blue;
+    }
+
     public void DrawMusicBar()
     {
         var gridPanel = GetUIObject<RectTransform>("MusicBar");
@@ -171,18 +187,13 @@ public class UIManager : MonoBehaviour
         var musicBarScore = currentChart.MusicBarScore;
         for (var i = 0; i < musicBar.Count; ++i)
         {
-            var color = musicBarScore[i] < 1 ? Color.gray : (musicBarScore[i] > 1 ? Color.yellow : Color.blue);
+            var color = GetMusicBarColor(musicBarScore[i], musicBar[i]);
             DrawRectangle(gridPanel, i * 11f, Math.Min(musicBar[i], 8), color);
         }
     }
 
     private void DrawRectangle(RectTransform panel, float x, int count, Color color)
     {
-        if (count < 1)
-        {
-            return;
-        }
-
         GameObject barChild = new("BarGroup");
         barChild.transform.SetParent(panel);
         barChild.transform.localPosition = new(0, 0, 0);

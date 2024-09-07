@@ -27,7 +27,6 @@ public class GameManager : MonoBehaviour
     private Coroutine previewCoroutine;
     private readonly List<int> scoreEarly = new() { 0, 0, 0, 0 };
     private readonly List<int> scoreLate = new() { 0, 0, 0, 0 };
-    public Dictionary<string, float> MusicOffsetList = new();
 
     public AudioSource GoSound;
     public AudioSource ReadySound;
@@ -37,11 +36,13 @@ public class GameManager : MonoBehaviour
     public float StartTime { get; private set; } = -1;
     public bool AutoPlay { get; private set; }
     public AudioSource BackgroundSource { get; private set; }
+    public Dictionary<string, float> MusicOffsetList { get; } = new();
 
     public GameMode CurrentMode { get; set; } = GameMode.Normal;
     public Music CurrentMusic { get; private set; }
     public Chart CurrentChart => CurrentMusic?.GetChart(CurrentDifficulty);
     public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
+    public List<int> CurrentMusicBarScore { get; private set; } = new(new int[120]);
 
     public int Combo { get; private set; }
     public int ShutterPoint { get; private set; }
@@ -86,9 +87,10 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    public void AddScore(int judge, bool early = false)
+    public void AddScore(JudgeState judgeState, int musicBarIndex, bool early = false)
     {
-        if (judge < 4)
+        var judge = (int) judgeState;
+        if (judge < (int)JudgeState.Miss)
         {
             if (early)
             {
@@ -100,6 +102,7 @@ public class GameManager : MonoBehaviour
             }
             GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
         }
+        CurrentMusicBarScore[musicBarIndex] += judge == (int)JudgeState.Perfect ? 2 : judge >= (int)JudgeState.Poor ? 0 : 1;
 
         Combo = judge < 3 ? Combo + 1 : 0;
         GameObject.Find("Combo").GetComponent<Text>().text = Combo > 4 ? $"{Combo}" : "";
@@ -172,6 +175,7 @@ public class GameManager : MonoBehaviour
                     scoreLate[i] = 0;
                     scoreEarly[i] = 0;
                 }
+                CurrentMusicBarScore = new(new int[120]);
                 var autoButton = UIManager.Instance.GetUIObject<Button>("AutoButton");
                 autoButton.onClick.AddListener(() => {
                     AutoPlay = !AutoPlay;
@@ -327,9 +331,22 @@ public class GameManager : MonoBehaviour
             StartCoroutine(PlayClapForAuto((float)time));
         }
 
-        yield return new WaitForSeconds(5f);
+        if (CurrentMusic.StartOffset > 0)
+        {
+            yield return new WaitForSeconds(CurrentMusic.StartOffset);
+        }
+
+        var lastIndex = 0;
+        var divide = BackgroundSource.clip.length / 120;
         while (BackgroundSource.isPlaying)
         {
+            // BUG: 반영 상태가 느리거나 안됨
+            var index = Mathf.FloorToInt((BackgroundSource.time - 23f / 30) / divide);
+            if (index > 0 && index != lastIndex)
+            {
+                UIManager.Instance.UpdateMusicBar(lastIndex);
+                lastIndex = index;
+            }
             yield return null;
         }
         yield return new WaitForSeconds(.2f);
@@ -340,16 +357,33 @@ public class GameManager : MonoBehaviour
 
         var scoreText = UIManager.Instance.GetUIObject<Text>("Score");
         var elapsedTime = 0f;
-        while (elapsedTime < .8f)
+        while (elapsedTime < .6f)
         {
             elapsedTime += Time.deltaTime;
-            scoreText.text = Score + Mathf.RoundToInt(ShutterScore * Mathf.Clamp01(elapsedTime / .8f)) + "";
+            scoreText.text = Score + Mathf.RoundToInt(ShutterScore * Mathf.Clamp01(elapsedTime / .6f)) + "";
             yield return null;
         }
-        
+
+        yield return new WaitForSeconds(.6f);
+
+        comboText.fontSize = 200;
+        comboText.text = "Cleared\n";
+
         //TODO: NEXT 버튼, Rating 추가
         scoreText.text = ShutterScore + Score + "";
         CurrentMusic.SetScore(CurrentDifficulty, ShutterScore + Score);
+        CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
+
+        var totalWithoutMiss = 0;
+        for (var i = 0; i < 4; ++i)
+        {
+            var judge = (JudgeState)i;
+            totalWithoutMiss += scoreEarly[i] + scoreLate[i];
+            UIManager.Instance.GetUIObject<Text>($"{judge}Text").text =
+                $"{judge.ToString().ToUpper()}|\t{scoreEarly[i] + scoreLate[i]}";
+        }
+        UIManager.Instance.GetUIObject<Text>("MissText").text = $"MISS|\t{CurrentChart.NoteCount - totalWithoutMiss}";
+
     }
 
     public void QuitGame()
