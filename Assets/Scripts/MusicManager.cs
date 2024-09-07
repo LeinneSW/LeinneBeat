@@ -450,7 +450,7 @@ public class Chart
 
                         var timingSplit = noteAndTiming[4..].Trim().Split("|");
                         if (timingSplit.Length <= 1) continue;
-                        measure.noteTimingStringList.Add(timingSplit[1].Trim());
+                        measure.NoteTimings.Add(timingSplit[1].Trim());
                     }
                     //Debug.Log($"------------- 마디의 종료: {beatIndex} --------------------");
                     measure.Convert();
@@ -576,11 +576,11 @@ public class Note
 
 public class Measure
 {
-    public List<string> noteTimingStringList = new();
-    public List<List<string>> notePositionStringList = new() { new() };
+    public List<string> NoteTimings = new();
+    public List<List<string>> NotePositions = new() { new() };
 
-    public double StartOffset { get; private set; }
     public int MeasureNumber { get; }
+    public double StartOffset { get; private set; }
 
     private readonly Chart chart;
     private readonly Dictionary<int, List<Note>> noteMap = new();
@@ -594,10 +594,10 @@ public class Measure
 
     public void AddNotePositionText(string text)
     {
-        var list = notePositionStringList[^1];
+        var list = NotePositions[^1];
         if (list.Count == 4)
         {
-            notePositionStringList.Add(list = new());
+            NotePositions.Add(list = new());
         }
         list.Add(text);
     }
@@ -627,7 +627,7 @@ public class Measure
         //Debug.Log($"------------- 박자 시작: {MeasureNumber} -------------");
         var currentBpm = chart.BpmList[^1];
         //Debug.Log($"currentBpm: {currentBpm}");
-        foreach (var timings in noteTimingStringList)
+        foreach (var timings in NoteTimings)
         {
             var length = Math.Max(4, timings.Length);
             //Debug.Log($"Count: {timings.Length}");
@@ -640,7 +640,7 @@ public class Measure
         }
         //Debug.Log($"------------- 박자 종료: {MeasureNumber} -------------");
         //Debug.Log($"------------- 노트 시작: {MeasureIndex} -------------");
-        foreach (var noteGrid in notePositionStringList)
+        foreach (var noteGrid in NotePositions)
         {
             List<int> longNoteList = new();
             for (var yIndex = 0; yIndex < 4; ++yIndex)
