@@ -518,7 +518,7 @@ public class Note
         StartTime = startTime;
     }
 
-    public Note Rotate(int row, int column, int degree)
+    public Note Rotate(int degree)
     {
         Note note;
         switch ((degree % 360) / 90)

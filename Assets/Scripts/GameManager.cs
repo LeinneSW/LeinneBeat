@@ -44,6 +44,19 @@ public class GameManager : MonoBehaviour
     public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
     public List<int> CurrentMusicBarScore { get; private set; } = new(new int[120]);
 
+    private JudgementType currentJudgement = JudgementType.Normal;
+    public JudgementType CurrentJudgement
+    {
+        get => currentJudgement;
+        set
+        {
+            if (StartTime <= 0)
+            {
+                currentJudgement = value;
+            }
+        }
+    }
+
     public int Combo { get; private set; }
     public int ShutterPoint { get; private set; }
 
@@ -299,6 +312,32 @@ public class GameManager : MonoBehaviour
         BackgroundSource.Stop();
         yield return new WaitForSeconds(.1f);
 
+        List<Note> noteList = new();
+        foreach (var note in CurrentChart.NoteList)
+        {
+            switch (CurrentMode)
+            {
+                case GameMode.Degree90:
+                    noteList.Add(note.Rotate(90));
+                    break;
+                case GameMode.Degree180:
+                    noteList.Add(note.Rotate(180));
+                    break;
+                case GameMode.Degree270:
+                    noteList.Add(note.Rotate(270));
+                    break;
+                /*case GameMode.Random:
+                    break;
+                case GameMode.FullRandom:
+                    break;
+                case GameMode.HalfRandom:
+                    break;*/
+                default:
+                    noteList.Add(note);
+                    break;
+            }
+        }
+
         // TODO: Ready, GO 연출을 좀더 맛깔나게
         var comboText = UIManager.Instance.GetUIObject<Text>("Combo");
         comboText.fontSize = 160;
@@ -323,7 +362,7 @@ public class GameManager : MonoBehaviour
         }
 
         StartTime = Time.time;
-        foreach (var note in CurrentChart.NoteList)
+        foreach (var note in noteList)
         {
             StartCoroutine(ShowMarker(note));
         }
@@ -441,7 +480,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator PlayClapForAuto(float delay)
     {
-        yield return new WaitForSeconds(delay + 0.48333f - 0.130f); // 판정점 프레임 추가
+        yield return new WaitForSeconds(delay + 0.48333f - 0.140f); // 판정점 프레임 추가
         MarkerManager.Instance.PlayClap();
     }
 }

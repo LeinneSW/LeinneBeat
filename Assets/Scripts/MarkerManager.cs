@@ -14,21 +14,8 @@ public enum JudgementType
 
 public class MarkerManager : MonoBehaviour
 {
-    public static MarkerManager Instance { get; private set; } = null;
-
-    private JudgementType judgeType = JudgementType.Normal;
-    public JudgementType JudgeType
-    {
-        get => judgeType;
-        set
-        {
-            if (GameManager.Instance.StartTime <= 0)
-            {
-                judgeType = value;
-            }
-        }
-    }
-    public double[] CurrentJudgementTable => judgementTables[JudgeType];
+    public static MarkerManager Instance { get; private set; }
+    public double[] CurrentJudgementTable => judgementTables[GameManager.Instance.CurrentJudgement];
 
     public GameObject judgePrefab;
     public GameObject markerPrefab;
