@@ -55,9 +55,9 @@ public class MarkerManager : MonoBehaviour
 
         Instance = this;
         var canvas = GameObject.Find("JudgeCanvas");
-        for (int row = 0; row < 4; ++row)
+        for (var row = 0; row < 4; ++row)
         {
-            for (int column = 0; column < 4; ++column)
+            for (var column = 0; column < 4; ++column)
             {
                 markers[row * 4 + column] = new();
                 var textObj = Instantiate(judgeTextPrefab, ConvertPosition(row, column), Quaternion.identity);
