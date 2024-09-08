@@ -83,11 +83,38 @@ public class UIManager : MonoBehaviour
     {
         GetUIObject<Button>("StartGameButton").onClick.AddListener(() => GameManager.Instance.PlayMusic());
         var basic = GetUIObject<Button>("BasicButton");
-        basic.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Basic));
         var advanced = GetUIObject<Button>("AdvancedButton");
-        advanced.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Advanced));
         var extreme = GetUIObject<Button>("ExtremeButton");
-        extreme.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Extreme));
+
+        basic.interactable = false;
+        basic.onClick.AddListener(() =>
+        {
+            var color = new Color(146 / 255f, 248 / 255f, 92 / 255f);
+            basic.GetComponent<Image>().color = color;
+            advanced.GetComponent<Image>().color = Color.white;
+            extreme.GetComponent<Image>().color = Color.white;
+            GameManager.Instance.SelectDifficulty(Difficulty.Basic);
+        });
+        advanced.interactable = false;
+        advanced.onClick.AddListener(() =>
+        {
+            
+            var color = new Color(0xFF / 255f, 0xDF / 255f, 0x5D / 255f);
+            basic.GetComponent<Image>().color = Color.white;
+            advanced.GetComponent<Image>().color = color;
+            extreme.GetComponent<Image>().color = Color.white;
+            GameManager.Instance.SelectDifficulty(Difficulty.Advanced);
+        });
+        extreme.interactable = false;
+        extreme.onClick.AddListener(() =>
+        {
+            
+            var color = new Color(0xE7 / 255f, 0x5F / 255f, 0x65 / 255f);
+            basic.GetComponent<Image>().color = Color.white;
+            advanced.GetComponent<Image>().color = Color.white;
+            extreme.GetComponent<Image>().color = color;
+            GameManager.Instance.SelectDifficulty(Difficulty.Extreme);
+        });
         var sortByName = GetUIObject<Button>("SortByName");
         sortByName.onClick.AddListener(SortMusicButton);
         //var settingButton = GetUIObject<Button>("SettingButton");
