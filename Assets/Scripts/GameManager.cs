@@ -34,7 +34,6 @@ public class GameManager : MonoBehaviour
 
     public float ClapVolume { get; set; } = 0f;
     public float StartTime { get; private set; } = -1;
-    public bool AutoPlay { get; private set; }
     public AudioSource BackgroundSource { get; private set; }
     public Dictionary<string, float> MusicOffsetList { get; } = new();
 
@@ -43,6 +42,21 @@ public class GameManager : MonoBehaviour
     public Chart CurrentChart => CurrentMusic?.GetChart(CurrentDifficulty);
     public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
     public List<int> CurrentMusicBarScore { get; private set; } = new(new int[120]);
+
+    private bool autoPlay = false;    
+    public bool AutoPlay
+    {
+        get => autoPlay; 
+        private set
+        {
+            if (StartTime > 0)
+            {
+                // 게임이 시작된 상태에선 자동 재생 불가능
+                return;
+            }
+            autoPlay = value;
+        }
+    }
 
     private JudgementType currentJudgement = JudgementType.Normal;
     public JudgementType CurrentJudgement
