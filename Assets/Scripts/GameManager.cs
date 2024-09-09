@@ -15,9 +15,9 @@ public enum GameMode{
     Degree180,
     Degree270,
     Random,
-    Random2, // Not implemented: 무리배치 이슈
-    FullRandom, // Not implemented: 무리배치 이슈
+    Random2,
     HalfRandom,
+    FullRandom, // 무리배치(겹노트) 해결해야함
 }
 
 public class GameManager : MonoBehaviour
@@ -214,9 +214,26 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // HACK: GameObject.OnClick등록을 위해 정의
+    public void SetJudgement(int judgement)
+    {
+        SetJudgement((JudgementType) judgement);
+    }
+
     public void SetJudgement(JudgementType judgement)
     {
         CurrentJudgement = judgement;
+    }
+
+    // HACK: GameObject.OnClick등록을 위해 정의
+    public void SetGameMode(int gameMode)
+    {
+        SetGameMode((GameMode) gameMode);
+    }
+
+    public void SetGameMode(GameMode gameMode)
+    {
+        CurrentMode = gameMode;
     }
 
     public void ToggleAutoMode()
