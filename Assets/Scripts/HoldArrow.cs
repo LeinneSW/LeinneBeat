@@ -6,9 +6,8 @@ public class HoldArrow : MonoBehaviour
     private Marker marker;
     private Animator animator;
     private LineRenderer lineRenderer;
-    private RectTransform rectTransform;
 
-    public float Duration = 0;
+    public float Duration { get; set; } = 0;
 
     public bool IsStarted { get; private set; } = false;
     private Vector3 Offset =>
@@ -26,7 +25,6 @@ public class HoldArrow : MonoBehaviour
         lineRenderer.widthMultiplier = 22;
         lineRenderer.SetPosition(0, transform.position);
         lineRenderer.SetPosition(1, transform.position);
-        rectTransform = GetComponent<RectTransform>();
         transform.localScale = new(0, 1, 1);
     }
 
@@ -70,7 +68,7 @@ public class HoldArrow : MonoBehaviour
 
         var elapsedTime = 0f;
         var targetScale = new Vector3(1, 1, 1);
-        var originalScale = rectTransform.localScale;
+        var originalScale = new Vector3(0, 1, 1);
         while (elapsedTime < 0.15f)
         {
             elapsedTime += Time.deltaTime;
