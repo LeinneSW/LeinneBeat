@@ -87,6 +87,13 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance == null && SceneManager.GetActiveScene().name != SceneMusicSelect)
+        {
+            Destroy(gameObject);
+            SceneManager.LoadScene(SceneMusicSelect);
+            return;
+        }
+
         if (Instance != null)
         {
             Destroy(gameObject);
@@ -95,10 +102,6 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        if (SceneManager.GetActiveScene().name != SceneMusicSelect)
-        {
-            SceneManager.LoadScene(SceneMusicSelect);
-        }
 
         QualitySettings.vSyncCount = 0;
         Application.targetFrameRate = -1;
