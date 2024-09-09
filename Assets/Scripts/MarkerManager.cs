@@ -101,11 +101,6 @@ public class MarkerManager : MonoBehaviour
             }
             CurrentMarkerSprites.Add(markerList);
         }
-
-        for (var i = 0; i < 16; ++i)
-        {
-            ClapList[i].volume = GameManager.Instance.ClapVolume;
-        }
     }
 
     public Vector3 ConvertPosition(int row, int column)

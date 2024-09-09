@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    public void AddScore(JudgeState judgeState, int musicBarIndex = -1, bool early = false)
+    public void AddScore(JudgeState judgeState, int musicBarIndex, bool early = false)
     {
         var judge = (int) judgeState;
         if (early)
