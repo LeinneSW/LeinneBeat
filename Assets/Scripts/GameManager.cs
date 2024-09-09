@@ -204,19 +204,31 @@ public class GameManager : MonoBehaviour
             case SceneInGame:
                 Combo = 0;
                 ShutterPoint = 0;
+                CurrentMusicBarScore = new(new int[120]);
                 for (var i = 0; i < 4; ++i)
                 {
                     scoreLate[i] = 0;
                     scoreEarly[i] = 0;
                 }
-                CurrentMusicBarScore = new(new int[120]);
-                var autoButton = UIManager.Instance.GetUIObject<Button>("AutoButton");
-                autoButton.onClick.AddListener(() => {
-                    AutoPlay = !AutoPlay;
-                    autoButton.GetComponentInChildren<Text>().text = "현재: " + (AutoPlay ? "On" : "Off");
-                });
                 break;
         }
+    }
+
+    public void SetJudgement(JudgementType judgement)
+    {
+        CurrentJudgement = judgement;
+    }
+
+    public void ToggleAutoMode()
+    {
+        AutoPlay = !AutoPlay;
+        UIManager.Instance.GetUIObject<Button>("AutoMode").GetComponentInChildren<Text>().text = "자동: " + (AutoPlay ? "켜짐" : "꺼짐");
+    }
+
+    public void ToggleClapSound()
+    {
+        ClapVolume = ClapVolume > 0 ? 0 : 0.5f;
+        UIManager.Instance.GetUIObject<Button>("ClapSound").GetComponentInChildren<Text>().text = "박수: " + (ClapVolume > 0 ? "켜짐" : "꺼짐");
     }
 
     public void SelectMusic(Music music)
@@ -333,15 +345,15 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(.1f);
 
         List<Note> noteList;
-            switch (CurrentMode)
-            {
-                case GameMode.Degree90:
+        switch (CurrentMode)
+        {
+            case GameMode.Degree90:
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(90)).ToList();
-                    break;
-                case GameMode.Degree180:
+                break;
+            case GameMode.Degree180:
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(180)).ToList();
-                    break;
-                case GameMode.Degree270:
+                break;
+            case GameMode.Degree270:
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(270)).ToList();
                 break;
             case GameMode.Random:
@@ -364,7 +376,7 @@ public class GameManager : MonoBehaviour
                     }
                 }
                 noteList = CurrentChart.NoteList.Select(note => note.Random(row, column)).ToList();
-                    break;
+                break;
             case GameMode.Random2:
                 List<int> position = new();
                 while (position.Count < 16)
@@ -376,15 +388,14 @@ public class GameManager : MonoBehaviour
                     }
                 }
                 noteList = CurrentChart.NoteList.Select(note => note.Random(position)).ToList();
-                    break;
+                break;
             /*case GameMode.FullRandom:
-                    break;
-                case GameMode.HalfRandom:
-                    break;*/
-                default:
+                break;
+            case GameMode.HalfRandom:
+                break;*/
+            default:
                 noteList = CurrentChart.NoteList;
-                    break;
-            }
+                break;
         }
 
         // TODO: Ready, GO 연출을 좀더 맛깔나게

@@ -15,7 +15,11 @@ public enum JudgementType
 public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; }
+
     public double[] CurrentJudgementTable => judgementTables[GameManager.Instance.CurrentJudgement];
+
+    public readonly List<AudioSource> ClapList = new();
+    public readonly List<List<Sprite>> CurrentMarkerSprites = new();
 
     public GameObject judgePrefab;
     public GameObject markerPrefab;
@@ -27,7 +31,6 @@ public class MarkerManager : MonoBehaviour
     public GameObject judgeTextPrefab;
 
     private readonly List<Text> judgeText = new();
-    private readonly List<AudioSource> claps = new();
     private readonly List<GameObject> touchedList = new();
     private readonly Dictionary<int, List<Marker>> markers = new();
     private readonly Dictionary<JudgementType, double[]> judgementTables = new()
@@ -36,7 +39,6 @@ public class MarkerManager : MonoBehaviour
         { JudgementType.Hard, new[] { 2.5 / 90, 5.0 / 90, 7.5 / 90 } },
         { JudgementType.Extreme, new[] { 2.5 / 120, 5.0 / 120, 7.5 / 120 } },
     };
-    public readonly List<List<Sprite>> CurrentMarkerSprites = new();
 
     private int clapIndex;
     private int ClapIndex
@@ -45,7 +47,7 @@ public class MarkerManager : MonoBehaviour
         set => clapIndex = value > 15 ? 0 : value;
     }
 
-    private void Awake()
+    private void Start()
     {
         if (Instance != null)
         {
@@ -74,11 +76,12 @@ public class MarkerManager : MonoBehaviour
                 clickRenderer.sprite = clickSprite;
                 clickRenderer.sortingOrder = 7;
 
-                var audio = gameObject.AddComponent<AudioSource>();
-                audio.loop = false;
-                audio.playOnAwake = false;
-                audio.clip = clapSound;
-                claps.Add(audio);
+                var clap = gameObject.AddComponent<AudioSource>();
+                clap.loop = false;
+                clap.clip = clapSound;
+                clap.playOnAwake = false;
+                clap.volume = GameManager.Instance.ClapVolume;
+                ClapList.Add(clap);
             };
         }
 
@@ -98,13 +101,10 @@ public class MarkerManager : MonoBehaviour
             }
             CurrentMarkerSprites.Add(markerList);
         }
-    }
 
-    private void Start()
-    {
         for (var i = 0; i < 16; ++i)
         {
-            claps[i].volume = GameManager.Instance.ClapVolume;
+            ClapList[i].volume = GameManager.Instance.ClapVolume;
         }
     }
 
@@ -125,18 +125,9 @@ public class MarkerManager : MonoBehaviour
         markerAnimation.StartTime = (float)(note.StartTime + GameManager.Instance.StartTime);
     }
 
-    public void ToggleClapSound()
-    {
-        GameManager.Instance.ClapVolume = GameManager.Instance.ClapVolume > 0 ? 0 : 0.5f;
-        foreach (var clap in claps)
-        {
-            clap.volume = GameManager.Instance.ClapVolume;
-        }
-    }
-
     public void PlayClap()
     {
-        claps[ClapIndex++].Play();
+        ClapList[ClapIndex++].Play();
     }
 
     private IEnumerator ShowJudgeTime(Text text, int judge)
