@@ -183,8 +183,8 @@ public class UIManager : MonoBehaviour
     public void UpdateMusicBar(int index)
     {
         var gridPanel = GetUIObject<RectTransform>("MusicBar");
-        var scores = GameManager.Instance.CurrentChart.MusicBar;
-        var color = GetMusicBarColor(GameManager.Instance.CurrentMusicBarScore[index], scores[index]);
+        var musicBar = GameManager.Instance.CurrentChart.MusicBar;
+        var color = GetMusicBarColor(musicBar[index], GameManager.Instance.CurrentMusicBarScore[index]);
         foreach (Transform child in gridPanel.transform.GetChild(index))
         {
             child.GetComponent<Image>().color = color;
@@ -193,7 +193,7 @@ public class UIManager : MonoBehaviour
 
     private Color GetMusicBarColor(int expected, int actual)
     {
-        return actual < expected ? Color.gray : expected >= actual * 2 ? Color.yellow : Color.blue;
+        return actual < expected ? Color.gray : actual >= expected * 2 ? Color.yellow : Color.blue;
     }
 
     public void DrawMusicBar()
@@ -214,7 +214,7 @@ public class UIManager : MonoBehaviour
         var musicBarScore = currentChart.MusicBarScore;
         for (var i = 0; i < musicBar.Count; ++i)
         {
-            var color = GetMusicBarColor(musicBarScore[i], musicBar[i]);
+            var color = GetMusicBarColor(musicBar[i], musicBarScore[i]);
             DrawRectangle(gridPanel, i * 11f, Math.Min(musicBar[i], 8), color);
         }
     }
