@@ -135,7 +135,12 @@ public class GameManager : MonoBehaviour
 
         if (musicBarIndex is >= 0 and < 120)
         {
-            CurrentMusicBarScore[musicBarIndex] += judge == (int)JudgeState.Perfect ? 2 : 1;
+            CurrentMusicBarScore[musicBarIndex] += judgeState switch
+            {
+                JudgeState.Perfect => 2,
+                JudgeState.Poor or JudgeState.Miss => -10,
+                _ => 1
+            };
         }
 
         Combo = judge < 3 ? Combo + 1 : 0;

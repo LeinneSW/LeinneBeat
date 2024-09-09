@@ -193,7 +193,7 @@ public class UIManager : MonoBehaviour
 
     private Color GetMusicBarColor(int expected, int actual)
     {
-        return expected < actual ? Color.gray : expected >= actual * 2 ? Color.yellow : Color.blue;
+        return actual < expected ? Color.gray : expected >= actual * 2 ? Color.yellow : Color.blue;
     }
 
     public void DrawMusicBar()
