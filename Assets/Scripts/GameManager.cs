@@ -2,17 +2,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public enum GameMode{
     Normal,
     Degree90,
     Degree180,
     Degree270,
-    Random, // Not implemented: 무리배치 이슈
+    Random,
+    Random2, // Not implemented: 무리배치 이슈
     FullRandom, // Not implemented: 무리배치 이슈
     HalfRandom,
 }
@@ -43,7 +46,7 @@ public class GameManager : MonoBehaviour
     public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
     public List<int> CurrentMusicBarScore { get; private set; } = new(new int[120]);
 
-    private bool autoPlay = false;    
+    private bool autoPlay;    
     public bool AutoPlay
     {
         get => autoPlay; 
@@ -326,28 +329,57 @@ public class GameManager : MonoBehaviour
         BackgroundSource.Stop();
         yield return new WaitForSeconds(.1f);
 
-        List<Note> noteList = new();
-        foreach (var note in CurrentChart.NoteList)
-        {
+        List<Note> noteList;
             switch (CurrentMode)
             {
                 case GameMode.Degree90:
-                    noteList.Add(note.Rotate(90));
+                noteList = CurrentChart.NoteList.Select(note => note.Rotate(90)).ToList();
                     break;
                 case GameMode.Degree180:
-                    noteList.Add(note.Rotate(180));
+                noteList = CurrentChart.NoteList.Select(note => note.Rotate(180)).ToList();
                     break;
                 case GameMode.Degree270:
-                    noteList.Add(note.Rotate(270));
+                noteList = CurrentChart.NoteList.Select(note => note.Rotate(270)).ToList();
+                break;
+            case GameMode.Random:
+                List<int> row = new();
+                List<int> column = new();
+                while (row.Count < 4)
+                {
+                    var random = Random.Range(0, 4);
+                    if (!row.Contains(random))
+                    {
+                        row.Add(random);
+                    }
+                }
+                while (column.Count < 4)
+                {
+                    var random = Random.Range(0, 4);
+                    if (!column.Contains(random))
+                    {
+                        column.Add(random);
+                    }
+                }
+                noteList = CurrentChart.NoteList.Select(note => note.Random(row, column)).ToList();
                     break;
-                /*case GameMode.Random:
+            case GameMode.Random2:
+                List<int> position = new();
+                while (position.Count < 16)
+                {
+                    var random = Random.Range(0, 16);
+                    if (!position.Contains(random))
+                    {
+                        position.Add(random);
+                    }
+                }
+                noteList = CurrentChart.NoteList.Select(note => note.Random(position)).ToList();
                     break;
-                case GameMode.FullRandom:
+            /*case GameMode.FullRandom:
                     break;
                 case GameMode.HalfRandom:
                     break;*/
                 default:
-                    noteList.Add(note);
+                noteList = CurrentChart.NoteList;
                     break;
             }
         }

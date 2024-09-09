@@ -531,10 +531,48 @@ public class Note
         return note;
     }
 
+    public Note Random(List<int> position)
+    {
+        var note = Clone();
+        var newIndex = position[Row * 4 + Column];
+        note.Row = newIndex / 4;
+        note.Column = newIndex % 4;
+        if (!IsLong) return note;
+
+        newIndex = position[BarRow * 4 + BarColumn];
+        note.BarRow = newIndex / 4;
+        note.BarColumn = newIndex % 4;
+        if (note.Row != note.BarRow && note.Column != note.BarColumn)
+        {
+            if (UnityEngine.Random.Range(0, 2) == 0)
+            {
+                note.BarRow = note.Row;
+            }
+            else
+            {
+                note.BarColumn = note.Column;
+            }
+        }
+        note.FinishTime = FinishTime;
+        return note;
+    }
+
+    public Note Random(List<int> row, List<int> column)
+    {
+        var note = Clone();
+        note.Row = row[Row];
+        note.Column = column[Column];
+        if (!IsLong) return note;
+        note.BarRow = row[BarRow];
+        note.BarColumn = column[BarColumn];
+        note.FinishTime = FinishTime;
+        return note;
+    }
+
     public Note Rotate(int degree)
     {
         var note = Clone();
-        switch ((degree % 360) / 90)
+        switch (degree % 360 / 90)
         {
             case 1: // 90도
                 note.Row = 3 - Column;
