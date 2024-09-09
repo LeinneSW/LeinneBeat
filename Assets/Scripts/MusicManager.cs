@@ -485,16 +485,16 @@ public class Chart
 
 public class Note
 {
-    public int Row { get; }
-    public int Column { get; }
-    public Vector2 Position => MarkerManager.Instance.ConvertPosition(Row, Column);
+    public int Row { get; private set; }
+    public int Column { get; private set; }
     public int MusicBarIndex { get; set; }
+    public Vector2 Position => MarkerManager.Instance.ConvertPosition(Row, Column);
 
     public bool IsLong => BarRow != -1 && BarColumn != -1;
     public int BarRow { get; private set; } = -1;
     public int BarColumn { get; private set; } = -1;
-    public Vector2 BarPosition => MarkerManager.Instance.ConvertPosition(BarRow, BarColumn);
     public int MusicBarLongIndex { get; set; } = -1;
+    public Vector2 BarPosition => MarkerManager.Instance.ConvertPosition(BarRow, BarColumn);
 
     public double StartTime { get; }
     public double FinishTime { get; set; } = 0; // 롱노트의 끝 판정
@@ -518,21 +518,32 @@ public class Note
         StartTime = startTime;
     }
 
+    public Note Clone()
+    {
+        Note note = new(MeasureIndex, Row, Column, BarRow, BarColumn, StartTime);
+        note.FinishTime = FinishTime;
+        note.MusicBarIndex = MusicBarIndex;
+        note.MusicBarLongIndex = MusicBarLongIndex;
+        return note;
+    }
+
     public Note Rotate(int degree)
     {
-        Note note;
+        var note = Clone();
         switch ((degree % 360) / 90)
         {
             case 1: // 90도
-                note = new(MeasureIndex, Column, 3 - Row, StartTime);
+                note.Row = 3 - Column;
+                note.Column = Row;
                 if (IsLong)
                 {
-                    note.BarRow = BarColumn;
-                    note.BarColumn = 3 - BarRow;
+                    note.BarRow = 3 - BarColumn;
+                    note.BarColumn = BarRow;
                 }
                 break;
             case 2: // 180도
-                note = new(MeasureIndex, 3 - Row, 3 - Column, StartTime);
+                note.Row = 3 - Row;
+                note.Column = 3 - Column;
                 if (IsLong)
                 {
                     note.BarRow = 3 - BarRow;
@@ -540,18 +551,15 @@ public class Note
                 }
                 break;
             case 3: // 270도
-                note = new(MeasureIndex, 3 - Column, Row, StartTime);
+                note.Row = Column;
+                note.Column = 3 - Row;
                 if (IsLong)
                 {
-                    note.BarRow = 3 - BarColumn;
-                    note.BarColumn = BarRow;
+                    note.BarRow = BarColumn;
+                    note.BarColumn = 3 - BarRow;
                 }
                 break;
-            default:
-                note = new(MeasureIndex, Row, Column, BarRow, BarColumn, StartTime);
-                break;
         }
-        note.FinishTime = FinishTime;
         return note;
     }
 }
