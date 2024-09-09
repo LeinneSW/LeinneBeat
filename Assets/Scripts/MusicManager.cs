@@ -259,7 +259,11 @@ public class Music{
 
     public void SetMusicBarScore(Difficulty difficulty, List<int> score)
     {
-        for (int i = score.Count; i < 120; ++i)
+        if (GameManager.Instance.AutoPlay)
+        {
+            return;
+        }
+        for (var i = score.Count; i < 120; ++i)
         {
             score.Add(0);
         }
