@@ -200,6 +200,11 @@ public class GameManager : MonoBehaviour
 
     public void SelectMusic(Music music)
     {
+        if (CurrentMusic == music)
+        {
+            return;
+        }
+
         if (previewCoroutine != null)
         {
             StopCoroutine(previewCoroutine);
@@ -252,6 +257,9 @@ public class GameManager : MonoBehaviour
         {
             yield break;
         }
+
+        BackgroundSource.Stop();
+        yield return null;
 
         var music = CurrentMusic;
         BackgroundSource.clip = music.Clip;
