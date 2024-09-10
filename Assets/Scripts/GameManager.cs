@@ -114,11 +114,6 @@ public class GameManager : MonoBehaviour
         Screen.SetResolution(Screen.height * 10 / 16, Screen.height, true);
     }
 
-    private void Start()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
     public void AddScore(JudgeState judgeState, int musicBarIndex, bool early = false)
     {
         var judge = (int) judgeState;
@@ -158,29 +153,6 @@ public class GameManager : MonoBehaviour
                 break;
         }
         ShutterPoint = Mathf.Max(Mathf.Min(1024, ShutterPoint), 0);
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        switch (scene.name)
-        {
-            case SceneMusicSelect:
-                if (CurrentMusic != null)
-                {
-                    SelectMusic(CurrentMusic);
-                }
-                break;
-            case SceneInGame:
-                Combo = 0;
-                ShutterPoint = 0;
-                CurrentMusicBarScore = new(new int[120]);
-                for (var i = 0; i < 4; ++i)
-                {
-                    scoreLate[i] = 0;
-                    scoreEarly[i] = 0;
-                }
-                break;
-        }
     }
 
     // HACK: GameObject.OnClick등록을 위해 정의
@@ -262,8 +234,8 @@ public class GameManager : MonoBehaviour
         uiManager.UpdateDifficulty();
         if (CurrentMusic.CanPlay(difficulty))
         {
-        uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
-        uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
+            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
+            uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
         }
     }
 
@@ -477,11 +449,19 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        StartTime = -1;
         BackgroundSource.Stop();
         StopAllCoroutines();
         _ = MusicManager.Instance.SaveMusicOffset(CurrentMusic.Title);
+        Instance = null;
         SceneManager.LoadScene(SceneMusicSelect);
+
+        Instance.AutoPlay = AutoPlay;
+        Instance.ClapVolume = ClapVolume;
+        Instance.CurrentMode = CurrentMode;
+        Instance.CurrentJudgement = CurrentJudgement;
+        Instance.SetDifficulty(CurrentDifficulty);
+        Instance.SelectMusic(CurrentChart);
+        Destroy(gameObject);
     }
 
     private IEnumerator ShowMarker(Note note)
