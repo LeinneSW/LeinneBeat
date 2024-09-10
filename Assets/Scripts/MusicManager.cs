@@ -189,6 +189,42 @@ public class MusicManager : MonoBehaviour
         MusicOffsetList.TryAdd(title, 0);
         return MusicOffsetList[title];
     }
+
+    public async Task SaveMusicOffset(string name)
+    {
+        var startOffset = GetMusicOffset(name);
+        var path = Path.Combine(Application.dataPath, "..", "Songs", "sync.txt");
+        List<string> lines;
+        if (File.Exists(path))
+        {
+            lines = new(await File.ReadAllLinesAsync(path));
+        }
+        else
+        {
+            lines = new();
+        }
+
+        bool find = false;
+        for (int i = lines.Count - 1; i >= 0; --i)
+        {
+            var line = lines[i];
+            if (lines[i].StartsWith($"{name}:", StringComparison.OrdinalIgnoreCase))
+            {
+                lines[i] = $"{name}:{startOffset}";
+                if (line != lines[i])
+                {
+                    find = true;
+                    break;
+                }
+                return; // 동일할경우 저장하지 않음
+            }
+        }
+        if (!find)
+        {
+            lines.Add($"{name}:{startOffset}");
+        }
+        await File.WriteAllLinesAsync(path, lines);
+    }
 }
 
 public class Music{

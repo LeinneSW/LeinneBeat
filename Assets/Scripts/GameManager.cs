@@ -477,43 +477,8 @@ public class GameManager : MonoBehaviour
         StartTime = -1;
         BackgroundSource.Stop();
         StopAllCoroutines();
-        _ = ModifyMusicOffset(CurrentMusic.Title, CurrentMusic.StartOffset);
+        _ = MusicManager.Instance.SaveMusicOffset(CurrentMusic.Title);
         SceneManager.LoadScene(SceneMusicSelect);
-    }
-
-    private async Task ModifyMusicOffset(string name, float startOffset)
-    {
-        var path = Path.Combine(Application.dataPath, "..", "Songs", "sync.txt");
-        List<string> lines;
-        if (File.Exists(path))
-        {
-            lines = new(await File.ReadAllLinesAsync(path));
-        }
-        else
-        {
-            lines = new();
-        }
-
-        bool find = false;
-        for (int i = lines.Count - 1; i >= 0; --i)
-        {
-            var line = lines[i];
-            if (lines[i].StartsWith($"{name}:", StringComparison.OrdinalIgnoreCase))
-            {
-                lines[i] = $"{name}:{startOffset}";
-                if (line != lines[i])
-                {
-                    find = true;
-                    break;
-                }
-                return; // 동일할경우 저장하지 않음
-            }
-        }
-        if (!find)
-        {
-            lines.Add($"{name}:{startOffset}");
-        }
-        await File.WriteAllLinesAsync(path, lines);
     }
 
     private IEnumerator ShowMarker(Note note)
