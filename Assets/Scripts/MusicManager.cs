@@ -31,6 +31,7 @@ public class MusicManager : MonoBehaviour
     public Sprite DefaultJacket;
 
     public readonly List<Music> MusicList = new();
+    public Dictionary<string, float> MusicOffsetList { get; } = new();
 
     private AudioType GetAudioType(string extension)
     {
@@ -177,6 +178,17 @@ public class MusicManager : MonoBehaviour
         MusicList.Add(music);
         UIManager.Instance.AddMusicButton(music);
     }
+
+    public void SetMusicOffset(string title, float offset)
+    {
+        MusicOffsetList[title] = offset;
+    }
+
+    public float GetMusicOffset(string title)
+    {
+        MusicOffsetList.TryAdd(title, 0);
+        return MusicOffsetList[title];
+    }
 }
 
 public class Music{
@@ -202,8 +214,8 @@ public class Music{
     */
     public float StartOffset
     {
-        get => GameManager.Instance.GetMusicOffset(Title);
-        set => GameManager.Instance.SetMusicOffset(Title, value);
+        get => MusicManager.Instance.GetMusicOffset(Title);
+        set => MusicManager.Instance.SetMusicOffset(Title, value);
     }
 
     public bool IsValid => chartList.Count > 0;

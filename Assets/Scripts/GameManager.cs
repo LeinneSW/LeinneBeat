@@ -38,7 +38,6 @@ public class GameManager : MonoBehaviour
     public float ClapVolume { get; set; } = 0f;
     public float StartTime { get; private set; } = -1;
     public AudioSource BackgroundSource { get; private set; }
-    public Dictionary<string, float> MusicOffsetList { get; } = new();
 
     public GameMode CurrentMode { get; set; } = GameMode.Normal;
     public Music CurrentMusic { get; private set; }
@@ -159,41 +158,6 @@ public class GameManager : MonoBehaviour
                 break;
         }
         ShutterPoint = Mathf.Max(Mathf.Min(1024, ShutterPoint), 0);
-    }
-
-    public void AddMusicOffset(float offset)
-    {
-        if (CurrentMusic == null)
-        {
-            return;
-        }
-        SetMusicOffset(MusicOffsetList[CurrentMusic.Title] + offset);
-    }
-
-    public void SetMusicOffset(float offset)
-    {
-        if (CurrentMusic == null)
-        {
-            return;
-        }
-
-        SetMusicOffset(CurrentMusic.Title, offset);
-    }
-
-    public void SetMusicOffset(string title, float offset)
-    {
-        MusicOffsetList[title] = offset;
-    }
-
-    public float GetMusicOffset()
-    {
-        return CurrentMusic == null ? 0 : GetMusicOffset(CurrentMusic.Title);
-    }
-
-    public float GetMusicOffset(string title)
-    {
-        MusicOffsetList.TryAdd(title, 0);
-        return MusicOffsetList[title];
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
