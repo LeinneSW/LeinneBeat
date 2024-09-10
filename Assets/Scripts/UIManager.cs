@@ -146,7 +146,7 @@ public class UIManager : MonoBehaviour
                 InitSelectMusicScene();
                 break;
             case GameManager.SceneInGame:
-                DrawMusicBar();
+                DrawMusicBar(false);
 
                 var currentMusic = GameManager.Instance.CurrentMusic;
                 GetUIObject<Text>("MusicTitle").text = currentMusic.Title;
@@ -209,7 +209,7 @@ public class UIManager : MonoBehaviour
         return actual < expected ? Color.gray : actual >= expected * 2 ? Color.yellow : Color.blue;
     }
 
-    public void DrawMusicBar()
+    public void DrawMusicBar(bool fill = true)
     {
         var gridPanel = GetUIObject<RectTransform>("MusicBar");
         foreach (Transform child in gridPanel)
@@ -224,7 +224,7 @@ public class UIManager : MonoBehaviour
         }
 
         var musicBar = currentChart.MusicBar;
-        var musicBarScore = currentChart.MusicBarScore;
+        var musicBarScore = fill ? currentChart.MusicBarScore : new List<int>(new int[120]);
         for (var i = 0; i < musicBar.Count; ++i)
         {
             var color = GetMusicBarColor(musicBar[i], musicBarScore[i]);
