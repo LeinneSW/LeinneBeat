@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -23,6 +24,14 @@ public class MusicInfo
     public string author;
     public float offset;
     public float preview;
+}
+
+[Serializable]
+public class MusicScoreData
+{
+    public int score = 0;
+    public List<int> musicBar = new List<int>(new int[120]);
+
 }
 
 public class MusicManager : MonoBehaviour
@@ -95,6 +104,23 @@ public class MusicManager : MonoBehaviour
                 if (float.TryParse(split[1].Trim(), out var value))
                 {
                     MusicOffsetList[split[0].Trim()] = value;
+                }
+            }
+        }
+        var scorePath = Path.Combine(basePath, "score.json");
+        if (File.Exists(scorePath))
+        {
+            var text = File.ReadAllText(scorePath);
+            var scoreDataList = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, MusicScoreData>>>(text);
+            foreach (var (musicName, difficultyTable) in scoreDataList)
+            {
+                var music = MusicList.Find(music => music.Title == musicName);
+                if (music == null) continue;
+                foreach (var (difficultyStr, scoreData) in difficultyTable)
+                {
+                    if (!Enum.TryParse(difficultyStr, true, out Difficulty difficulty)) continue;
+                    music.SetScore(difficulty, scoreData.score);
+                    music.SetMusicBarScore(difficulty, scoreData.musicBar);
                 }
             }
         }
@@ -190,6 +216,48 @@ public class MusicManager : MonoBehaviour
         return MusicOffsetList[title];
     }
 
+    public async Task SaveMusicScore(Difficulty difficulty, Music music)
+    {
+        /*Dictionary<string, Dictionary<string, MusicScoreData>> json = new();
+        foreach (var m in MusicList)
+        {
+            json[m.Title] = new();
+            for (var i = 0; i < 3; ++i)
+            {
+                var diff = (Difficulty)i;
+                if (m.CanPlay(diff))
+                {
+                    json[m.Title][diff.ToString()] = new()
+                    {
+                        score = m.GetScore(diff),
+                        musicBar = m.GetMusicBarScore(diff)
+                    };
+                }
+            }
+        }*/
+        Dictionary<string, Dictionary<string, MusicScoreData>> json;
+        var scorePath = Path.Combine(Application.dataPath, "..", "Songs", "score.json");
+        if (File.Exists(scorePath))
+        {
+            var text = await File.ReadAllTextAsync(scorePath);
+            json = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, MusicScoreData>>>(text);
+        }
+        else
+        {
+            json = new();
+        }
+
+        json.TryAdd(music.Title, new());
+        json[music.Title][difficulty.ToString()] = new()
+        {
+            score = music.GetScore(difficulty),
+            musicBar = music.GetMusicBarScore(difficulty)
+        };
+
+        var jsonStr = JsonConvert.SerializeObject(json, Formatting.Indented);
+        await File.WriteAllTextAsync(scorePath, jsonStr);
+    }
+
     public async Task SaveMusicOffset(string name)
     {
         var startOffset = GetMusicOffset(name);
@@ -230,7 +298,12 @@ public class Music{
     public readonly string Path;
     public readonly AudioClip Clip;
     public readonly Sprite Jacket;
-    public readonly Dictionary<Difficulty, int> ScoreList = new();
+    public readonly Dictionary<Difficulty, int> ScoreList = new()
+    {
+        { Difficulty.Basic, 0 },
+        { Difficulty.Advanced, 0 },
+        { Difficulty.Extreme, 0 }
+    };
     public readonly Dictionary<Difficulty, List<int>> MusicBarScoreList = new()
     {
         { Difficulty.Basic, new(new int[120]) },
@@ -294,7 +367,7 @@ public class Music{
 
     public void SetScore(Difficulty difficulty, int score)
     {
-        if (!GameManager.Instance.AutoPlay)
+        if (!GameManager.Instance.AutoPlay && ScoreList[difficulty] < score)
         {
             ScoreList[difficulty] = score;
         }
@@ -306,11 +379,10 @@ public class Music{
         {
             return;
         }
-        for (var i = score.Count; i < 120; ++i)
+        for (var i = 0; i < 120; ++i)
         {
-            score.Add(0);
+            MusicBarScoreList[difficulty][i] = Math.Max(MusicBarScoreList[difficulty][i], score[i]);
         }
-        MusicBarScoreList[difficulty] = score;
     }
 }
 

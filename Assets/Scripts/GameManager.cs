@@ -483,6 +483,8 @@ public class GameManager : MonoBehaviour
             UIManager.Instance.GetUIObject<Text>($"{judge}Text").text =
                 $"{judge.ToString().ToUpper()}|\t{scoreEarly[i] + scoreLate[i]}";
         }
+
+        _ = MusicManager.Instance.SaveMusicScore(CurrentDifficulty, CurrentMusic);
     }
 
     public void QuitGame()
