@@ -97,6 +97,11 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // TODO: 곡 미선택시의 기본 배경음악 추가
+        BackgroundSource = gameObject.AddComponent<AudioSource>();
+        BackgroundSource.loop = false;
+        BackgroundSource.volume = 0;
+
         if (Instance != null)
         {
             AutoPlay = Instance.AutoPlay;
@@ -110,17 +115,6 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = -1;
-
-        // TODO: 곡 미선택시의 기본 배경음악 추가
-        BackgroundSource = gameObject.AddComponent<AudioSource>();
-        BackgroundSource.loop = false;
-        BackgroundSource.volume = 0;
-
-        Screen.sleepTimeout = SleepTimeout.NeverSleep;
-        Screen.SetResolution(Screen.height * 10 / 16, Screen.height, true);
     }
 
     public void AddScore(JudgeState judgeState, int musicBarIndex, bool early = false)
