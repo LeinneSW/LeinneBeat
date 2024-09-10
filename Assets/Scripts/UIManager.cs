@@ -85,15 +85,15 @@ public class UIManager : MonoBehaviour
 
         var basic = GetUIObject<Button>("BasicButton");
         basic.interactable = false;
-        basic.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Basic));
+        basic.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Basic));
 
         var advanced = GetUIObject<Button>("AdvancedButton");
         advanced.interactable = false;
-        advanced.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Advanced));
+        advanced.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Advanced));
 
         var extreme = GetUIObject<Button>("ExtremeButton");
         extreme.interactable = false;
-        extreme.onClick.AddListener(() => GameManager.Instance.SelectDifficulty(Difficulty.Extreme));
+        extreme.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Extreme));
 
         var sortByName = GetUIObject<Button>("SortByName");
         sortByName.onClick.AddListener(SortMusicButton);
@@ -109,30 +109,31 @@ public class UIManager : MonoBehaviour
     {
         DrawMusicBar();
         var difficulty = GameManager.Instance.CurrentDifficulty;
-        Dictionary<Difficulty, Color> = new(){
+        Dictionary<Difficulty, Color> color = new()
+        {
             { Difficulty.Basic, new Color(0x92 / 255f, 0xF8 / 255f, 0x5C / 255f) },
             { Difficulty.Advanced, new Color(0xFF / 255f, 0xDF / 255f, 0x5D / 255f) },
             { Difficulty.Extreme, new Color(0xE7 / 255f, 0x5F / 255f, 0x65 / 255f) },
-        }
+        };
         var basic = GetUIObject<Button>("BasicButton");
         var advanced = GetUIObject<Button>("AdvancedButton");
         var extreme = GetUIObject<Button>("ExtremeButton");
         switch (difficulty)
         {
             case Difficulty.Basic:
-                basic.GetComponent<Image>().color = color;
+                basic.GetComponent<Image>().color = color[difficulty];
                 advanced.GetComponent<Image>().color = Color.white;
                 extreme.GetComponent<Image>().color = Color.white;
                 break;
             case Difficulty.Advanced:
                 basic.GetComponent<Image>().color = Color.white;
-                advanced.GetComponent<Image>().color = color;
+                advanced.GetComponent<Image>().color = color[difficulty];
                 extreme.GetComponent<Image>().color = Color.white;
                 break;
             case Difficulty.Extreme:
                 basic.GetComponent<Image>().color = Color.white;
                 advanced.GetComponent<Image>().color = Color.white;
-                extreme.GetComponent<Image>().color = color;
+                extreme.GetComponent<Image>().color = color[difficulty];
                 break;
         }
     }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -81,7 +82,6 @@ public class MusicManager : MonoBehaviour
         // TODO: info.json의 offset값으로 싱크 조절
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
         var syncPath = Path.Combine(basePath, "sync.txt");
-        var syncList = GameManager.Instance.MusicOffsetList;
         if (File.Exists(syncPath))
         {
             var lines = File.ReadAllLines(syncPath);
@@ -94,7 +94,7 @@ public class MusicManager : MonoBehaviour
                 }
                 if (float.TryParse(split[1].Trim(), out var value))
                 {
-                    syncList[split[0].Trim()] = value;
+                    MusicOffsetList[split[0].Trim()] = value;
                 }
             }
         }
@@ -204,20 +204,15 @@ public class MusicManager : MonoBehaviour
             lines = new();
         }
 
-        bool find = false;
-        for (int i = lines.Count - 1; i >= 0; --i)
+        var find = false;
+        for (var i = lines.Count - 1; i >= 0; --i)
         {
             var line = lines[i];
-            if (lines[i].StartsWith($"{name}:", StringComparison.OrdinalIgnoreCase))
-            {
-                lines[i] = $"{name}:{startOffset}";
-                if (line != lines[i])
-                {
-                    find = true;
-                    break;
-                }
-                return; // 동일할경우 저장하지 않음
-            }
+            if (!lines[i].StartsWith($"{name}:")) continue;
+            lines[i] = $"{name}:{startOffset}";
+            if (line == lines[i]) return; // 동일할경우 저장하지 않음
+            find = true;
+            break;
         }
         if (!find)
         {
@@ -234,7 +229,7 @@ public class Music{
 
     public readonly string Path;
     public readonly AudioClip Clip;
-    public readonly Sprite Jacket = null;
+    public readonly Sprite Jacket;
     public readonly Dictionary<Difficulty, int> ScoreList = new();
     public readonly Dictionary<Difficulty, List<int>> MusicBarScoreList = new()
     {

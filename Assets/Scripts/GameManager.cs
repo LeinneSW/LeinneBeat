@@ -42,8 +42,8 @@ public class GameManager : MonoBehaviour
     public GameMode CurrentMode { get; set; } = GameMode.Normal;
     public Music CurrentMusic { get; private set; }
     public Chart CurrentChart => CurrentMusic?.GetChart(CurrentDifficulty);
-    public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Basic;
-    public List<int> CurrentMusicBarScore { get; private set; } = new(new int[120]);
+    public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
+    public List<int> CurrentMusicBarScore { get; } = new(new int[120]);
 
     private bool autoPlay;    
     public bool AutoPlay
@@ -86,17 +86,26 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null && SceneManager.GetActiveScene().name != SceneMusicSelect)
+        if (SceneManager.GetActiveScene().name == SceneInGame)
         {
+            // 인게임 화면에서 실행되는 경우엔 무조건 막히도록 설정
+            if (Instance == null)
+            {
+                SceneManager.LoadScene(SceneMusicSelect);
+            }
             Destroy(gameObject);
-            SceneManager.LoadScene(SceneMusicSelect);
             return;
         }
 
         if (Instance != null)
         {
-            Destroy(gameObject);
-            return;
+            AutoPlay = Instance.AutoPlay;
+            ClapVolume = Instance.ClapVolume;
+            CurrentMode = Instance.CurrentMode;
+            CurrentJudgement = Instance.CurrentJudgement;
+            SetDifficulty(Instance.CurrentDifficulty);
+            SelectMusic(Instance.CurrentMusic);
+            Destroy(Instance.gameObject);
         }
 
         Instance = this;
@@ -232,11 +241,9 @@ public class GameManager : MonoBehaviour
         CurrentDifficulty = difficulty;
         var uiManager = UIManager.Instance;
         uiManager.UpdateDifficulty();
-        if (CurrentMusic.CanPlay(difficulty))
-        {
-            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
-            uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
-        }
+        if (CurrentMusic == null || !CurrentMusic.CanPlay(difficulty)) return;
+        uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
+        uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
     }
 
     public IEnumerator PlayMusicPreview()
@@ -424,12 +431,12 @@ public class GameManager : MonoBehaviour
             scoreText.text = Score + Mathf.RoundToInt(ShutterScore * Mathf.Clamp01(elapsedTime / .6f)) + "";
             yield return null;
         }
+        var totalScore = ShutterScore + Score;
         scoreText.text = totalScore + "";
 
         yield return new WaitForSeconds(.6f);
 
         var rating = "E";
-        var totalScore = ShutterScore + Score;
         if (totalScore > 999999)
         {
             rating = "EXC";
@@ -485,16 +492,7 @@ public class GameManager : MonoBehaviour
         BackgroundSource.Stop();
         StopAllCoroutines();
         _ = MusicManager.Instance.SaveMusicOffset(CurrentMusic.Title);
-        Instance = null;
         SceneManager.LoadScene(SceneMusicSelect);
-
-        Instance.AutoPlay = AutoPlay;
-        Instance.ClapVolume = ClapVolume;
-        Instance.CurrentMode = CurrentMode;
-        Instance.CurrentJudgement = CurrentJudgement;
-        Instance.SetDifficulty(CurrentDifficulty);
-        Instance.SelectMusic(CurrentChart);
-        Destroy(gameObject);
     }
 
     private IEnumerator ShowMarker(Note note)
