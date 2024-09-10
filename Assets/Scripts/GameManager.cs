@@ -424,15 +424,48 @@ public class GameManager : MonoBehaviour
             scoreText.text = Score + Mathf.RoundToInt(ShutterScore * Mathf.Clamp01(elapsedTime / .6f)) + "";
             yield return null;
         }
+        scoreText.text = totalScore + "";
 
         yield return new WaitForSeconds(.6f);
 
-        comboText.fontSize = 200;
-        comboText.text = "Cleared\n";
+        var rating = "E";
+        var totalScore = ShutterScore + Score;
+        if (totalScore > 999999)
+        {
+            rating = "EXC";
+        }
+        else if (totalScore > 979999)
+        {
+            rating = "SSS";
+        }
+        else if (totalScore > 949999)
+        {
+            rating = "SS";
+        }
+        else if (totalScore > 899999)
+        {
+            rating = "S";
+        }
+        else if (totalScore > 849999)
+        {
+            rating = "A";
+        }
+        else if (totalScore > 799999)
+        {
+            rating = "B";
+        }
+        else if (totalScore > 699999)
+        {
+            rating = "C";
+        }
+        else if (totalScore > 499999)
+        {
+            rating = "D";
+        }
 
-        //TODO: NEXT 버튼, Rating 추가
-        scoreText.text = ShutterScore + Score + "";
-        CurrentMusic.SetScore(CurrentDifficulty, ShutterScore + Score);
+        comboText.fontSize = 200;
+        comboText.text = $"Cleared\n{rating}";
+        CurrentMusic.SetScore(CurrentDifficulty, totalScore);
         CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
 
         for (int i = 0, limit = (int) JudgeState.Miss; i <= limit; ++i)
