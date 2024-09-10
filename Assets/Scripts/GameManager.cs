@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
     public GameMode CurrentMode { get; set; } = GameMode.Normal;
     public Music CurrentMusic { get; private set; }
     public Chart CurrentChart => CurrentMusic?.GetChart(CurrentDifficulty);
-    public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
+    public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Basic;
     public List<int> CurrentMusicBarScore { get; private set; } = new(new int[120]);
 
     private bool autoPlay;    
@@ -249,9 +249,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void SelectDifficulty(Difficulty difficulty)
+    public void SetDifficulty(Difficulty difficulty)
     {
-        if (StartTime > 0 || CurrentDifficulty == difficulty || !CurrentMusic.CanPlay(difficulty))
+        if (StartTime > 0 || CurrentDifficulty == difficulty)
         {
             return;
         }
@@ -259,9 +259,12 @@ public class GameManager : MonoBehaviour
         // TODO: play difficulty sound
         CurrentDifficulty = difficulty;
         var uiManager = UIManager.Instance;
-        uiManager.DrawMusicBar();
+        uiManager.UpdateDifficulty();
+        if (CurrentMusic.CanPlay(difficulty))
+        {
         uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
         uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
+        }
     }
 
     public IEnumerator PlayMusicPreview()
