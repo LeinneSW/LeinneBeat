@@ -63,13 +63,14 @@ public class GameOptions : MonoBehaviour
 
     private void Awake()
     {
-        if (instance != null)
+        if (Instance != null)
         {
             Destroy(gameObject);
             return;
         }
 
-        instance = this;
+        // TODO: setting.json 읽기
+        Instance = this;
         DontDestroyOnLoad(gameObject);
 
         QualitySettings.vSyncCount = 0;
