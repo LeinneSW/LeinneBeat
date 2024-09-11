@@ -76,7 +76,7 @@ public class Marker : MonoBehaviour
         arrowObject.gameObject.transform.SetParent(transform);
 
         FinishTime = (float)(Note.FinishTime + GameManager.Instance.StartTime);
-        arrowObject.FinishTime = FinishTime + 29d / 60;
+        arrowObject.Duration = FinishTime + 29 / 60f;
 
         ArrowGuide.SetActive(true);
         ArrowGuide.transform.rotation = rotation;
@@ -111,7 +111,8 @@ public class Marker : MonoBehaviour
         {
             if (judge != JudgeState.Poor)
             {
-                remainTime = FinishTime - touchTime + 0.166;
+                arrowObject.Duration -= Time.timeAsDouble;
+                remainTime = arrowObject.Duration + 0.166;
                 arrowObject.EnableArrow();
             }
             Invoke(nameof(EnableHoldAnimation), 16f / 30f);

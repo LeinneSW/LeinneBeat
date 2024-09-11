@@ -8,7 +8,8 @@ public class HoldArrow : MonoBehaviour
     private LineRenderer lineRenderer;
 
     public bool IsStarted { get; private set; }
-    public double FinishTime { get; set; } = 0;
+    public double Duration { get; set; } = 0;
+
     private Vector3 Offset =>
         transform.rotation.eulerAngles.z switch
         {
@@ -45,14 +46,13 @@ public class HoldArrow : MonoBehaviour
     private IEnumerator FollowTargetForDuration()
     {
         GetComponent<Animator>().SetBool("Start", true);
-        var time = 0f;
-        var duration = FinishTime - Time.timeAsDouble;
+        var updateTime = 0f;
         var startPosition = transform.localPosition;
         var endPosition = new Vector3();
-        while (Time.timeAsDouble < FinishTime)
+        while (updateTime < Duration)
         {
-            time += Time.deltaTime;
-            transform.localPosition = Vector3.Lerp(startPosition, endPosition, (float) (time / duration));
+            updateTime += Time.deltaTime;
+            transform.localPosition = Vector3.Lerp(startPosition, endPosition, (float) (updateTime / Duration));
             lineRenderer.SetPosition(0, transform.position - Offset);
             yield return null;
         }
