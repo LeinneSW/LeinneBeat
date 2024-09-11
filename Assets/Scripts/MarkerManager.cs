@@ -137,7 +137,7 @@ public class MarkerManager : MonoBehaviour
 
     public void ShowJudgeText(int row, int column, double judgeTime)
     {
-        StartCoroutine(ShowJudgeText(judgeText[row * 4 + column], (int)Math.Floor(judgeTime)));
+        StartCoroutine(ShowJudgeText(judgeText[row * 4 + column], (int)Math.Round(judgeTime * 1000)));
     }
 
     private void OnTouch(int row, int column, double touchTime)
