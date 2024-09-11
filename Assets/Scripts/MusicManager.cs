@@ -176,7 +176,6 @@ public class MusicManager : MonoBehaviour
 
         var sprite = DefaultJacket;
         var jacketFiles = Directory.GetFiles(dirPath, $"jacket.*");
-        var extensions = new[] { "png", "jpg", "jpeg", "bmp" };
         if (jacketFiles.Length > 0)
         {
             var fileData = File.ReadAllBytes(jacketFiles[0]);
