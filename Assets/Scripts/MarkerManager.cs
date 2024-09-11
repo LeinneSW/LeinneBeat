@@ -5,13 +5,6 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum JudgementType
-{
-    Normal,
-    Hard,
-    Extreme
-}
-
 public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; }
@@ -23,7 +16,7 @@ public class MarkerManager : MonoBehaviour
 
     public GameObject judgePrefab;
     public GameObject markerPrefab;
-
+    public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
     public Sprite clickSprite;
     public Sprite arrowSprite;
     public AudioClip clapSound;

@@ -9,17 +9,6 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-public enum GameMode{
-    Normal,
-    Degree90,
-    Degree180,
-    Degree270,
-    Random,
-    Random2,
-    HalfRandom,
-    FullRandom, // 무리배치(겹노트) 해결해야함
-}
-
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -28,59 +17,28 @@ public class GameManager : MonoBehaviour
     public const string SceneInGame = "InGame";
 
     private Coroutine previewCoroutine;
-    private readonly List<int> scoreEarly = new() { 0, 0, 0, 0, 0 };
-    private readonly List<int> scoreLate = new() { 0, 0, 0, 0, 0 };
+    private readonly List<int> earlyJudgeList = new() { 0, 0, 0, 0, 0 };
+    private readonly List<int> rateJudgeList = new() { 0, 0, 0, 0, 0 };
 
     public AudioSource GoSound;
     public AudioSource ReadySound;
     public AudioSource ResultSound;
 
-    public float ClapVolume { get; set; } = 0f;
     public float StartTime { get; private set; } = -1;
     public AudioSource BackgroundSource { get; private set; }
 
-    public GameMode CurrentMode { get; set; } = GameMode.Normal;
     public Music CurrentMusic { get; private set; }
     public Chart CurrentChart => CurrentMusic?.GetChart(CurrentDifficulty);
     public Difficulty CurrentDifficulty { get; private set; } = Difficulty.Extreme;
     public List<int> CurrentMusicBarScore { get; } = new(new int[120]);
 
-    private bool autoPlay;    
-    public bool AutoPlay
-    {
-        get => autoPlay; 
-        private set
-        {
-            if (StartTime > 0)
-            {
-                // 게임이 시작된 상태에선 자동 재생 불가능
-                return;
-            }
-            autoPlay = value;
-        }
-    }
-
-    private JudgementType currentJudgement = JudgementType.Normal;
-    public JudgementType CurrentJudgement
-    {
-        get => currentJudgement;
-        set
-        {
-            if (StartTime <= 0)
-            {
-                currentJudgement = value;
-            }
-        }
-    }
-
     public int Combo { get; private set; }
     public int ShutterPoint { get; private set; }
-
     public int Score => 90_000 * (
-        10 * (scoreEarly[0] + scoreLate[0]) + 
-        7 * (scoreEarly[1] + scoreLate[1]) + 
-        4 * (scoreEarly[2] + scoreLate[2]) +
-        scoreEarly[3] + scoreLate[3]) / CurrentChart.NoteCount;
+        10 * (earlyJudgeList[0] + rateJudgeList[0]) + 
+        7 * (earlyJudgeList[1] + rateJudgeList[1]) + 
+        4 * (earlyJudgeList[2] + rateJudgeList[2]) +
+        earlyJudgeList[3] + rateJudgeList[3]) / CurrentChart.NoteCount;
 
     public int ShutterScore => ShutterPoint * 100000 / 1024;
 
@@ -97,17 +55,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // TODO: 곡 미선택시의 기본 배경음악 추가
         BackgroundSource = gameObject.AddComponent<AudioSource>();
+        BackgroundSource.volume = GameOptions.Instance.MusicVolume;
         BackgroundSource.loop = false;
-        BackgroundSource.volume = 0;
 
         if (Instance != null)
         {
-            AutoPlay = Instance.AutoPlay;
-            ClapVolume = Instance.ClapVolume;
-            CurrentMode = Instance.CurrentMode;
-            CurrentJudgement = Instance.CurrentJudgement;
             SetDifficulty(Instance.CurrentDifficulty);
             SelectMusic(Instance.CurrentMusic);
             Destroy(Instance.gameObject);
@@ -122,11 +75,11 @@ public class GameManager : MonoBehaviour
         var judge = (int) judgeState;
         if (early)
         {
-            ++scoreEarly[judge];
+            ++earlyJudgeList[judge];
         }
         else
         {
-            ++scoreLate[judge];
+            ++rateJudgeList[judge];
         }
         GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
 
@@ -166,7 +119,7 @@ public class GameManager : MonoBehaviour
 
     public void SetJudgement(JudgementType judgement)
     {
-        CurrentJudgement = judgement;
+        GameOptions.Instance.JudgementType = judgement;
     }
 
     // HACK: GameObject.OnClick등록을 위해 정의
@@ -177,19 +130,19 @@ public class GameManager : MonoBehaviour
 
     public void SetGameMode(GameMode gameMode)
     {
-        CurrentMode = gameMode;
+        GameOptions.Instance.CurrentMode = gameMode;
     }
 
     public void ToggleAutoMode()
     {
-        AutoPlay = !AutoPlay;
-        UIManager.Instance.GetUIObject<Button>("AutoMode").GetComponentInChildren<Text>().text = "자동: " + (AutoPlay ? "켜짐" : "꺼짐");
+        GameOptions.Instance.AutoPlay = !GameOptions.Instance.AutoPlay;
+        UIManager.Instance.GetUIObject<Button>("AutoMode").GetComponentInChildren<Text>().text = "자동: " + (GameOptions.Instance.AutoPlay ? "켜짐" : "꺼짐");
     }
 
     public void ToggleClapSound()
     {
-        ClapVolume = ClapVolume > 0 ? 0 : 0.5f;
-        UIManager.Instance.GetUIObject<Button>("ClapSound").GetComponentInChildren<Text>().text = "박수: " + (ClapVolume > 0 ? "켜짐" : "꺼짐");
+        GameOptions.Instance.ClapVolume = GameOptions.Instance.ClapVolume > 0 ? 0 : 0.5f;
+        UIManager.Instance.GetUIObject<Button>("ClapSound").GetComponentInChildren<Text>().text = "박수: " + (GameOptions.Instance.ClapVolume > 0 ? "켜짐" : "꺼짐");
     }
 
     public void SelectMusic(Music music)
@@ -255,30 +208,27 @@ public class GameManager : MonoBehaviour
         BackgroundSource.Stop();
         yield return null;
 
-        var music = CurrentMusic;
-        BackgroundSource.clip = music.Clip;
+        BackgroundSource.clip = CurrentMusic.Clip;
         while (true)
         {
+            var maxVolume = GameOptions.Instance.MusicVolume;
             BackgroundSource.volume = 0;
             BackgroundSource.Play();
             BackgroundSource.time = 30f;
-            
-            // 1.3초 페이드 인
-            while (BackgroundSource.volume < .35f)
+
+            while (BackgroundSource.volume < maxVolume) // 페이드 인
             {
-                BackgroundSource.volume += .35f * Time.deltaTime / 1.3f;
+                BackgroundSource.volume += maxVolume * Time.deltaTime / 1.2f; 
                 yield return null;
             }
-            BackgroundSource.volume = .35f;
+            BackgroundSource.volume = maxVolume;
 
-            // 12초 동안 재생
-            yield return new WaitForSeconds(12);
+            yield return new WaitForSeconds(12); // 12초 동안 재생
 
-            // 2초 페이드 아웃
-            var startVolume = BackgroundSource.volume;
-            while (BackgroundSource.volume > 0)
+            var startVolume = maxVolume;
+            while (BackgroundSource.volume > 0) // 페이드 아웃
             {
-                BackgroundSource.volume -= startVolume * Time.deltaTime / 2f;
+                BackgroundSource.volume -= startVolume * Time.deltaTime / 1.6f;
                 yield return null;
             }
             BackgroundSource.Stop();
@@ -296,10 +246,10 @@ public class GameManager : MonoBehaviour
         StartCoroutine(StartGame());
     }
 
-    private void PlayClip()
+    private void StartMusicClip()
     {
         BackgroundSource.clip = CurrentMusic.Clip;
-        BackgroundSource.volume = 0.35f;
+        BackgroundSource.volume = GameOptions.Instance.MusicVolume;
         BackgroundSource.Play();
     }
 
@@ -315,7 +265,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(.1f);
 
         List<Note> noteList;
-        switch (CurrentMode)
+        switch (GameOptions.Instance.CurrentMode)
         {
             case GameMode.Degree90:
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(90)).ToList();
@@ -383,12 +333,12 @@ public class GameManager : MonoBehaviour
 
         if (CurrentMusic.StartOffset < 0)
         {
-            PlayClip();
+            StartMusicClip();
             yield return new WaitForSeconds(-CurrentMusic.StartOffset);
         }
         else
         {
-            Invoke(nameof(PlayClip), CurrentMusic.StartOffset);
+            Invoke(nameof(StartMusicClip), CurrentMusic.StartOffset);
         }
 
         StartTime = Time.time;
@@ -481,7 +431,7 @@ public class GameManager : MonoBehaviour
         {
             var judge = (JudgeState)i;
             UIManager.Instance.GetUIObject<Text>($"{judge}Text").text =
-                $"{judge.ToString().ToUpper()}|\t{scoreEarly[i] + scoreLate[i]}";
+                $"{judge.ToString().ToUpper()}|\t{earlyJudgeList[i] + rateJudgeList[i]}";
         }
 
         _ = MusicManager.Instance.SaveMusicScore(CurrentDifficulty, CurrentMusic);
