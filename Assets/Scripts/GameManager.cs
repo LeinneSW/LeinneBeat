@@ -44,17 +44,18 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (SceneManager.GetActiveScene().name == SceneInGame)
+        if (SceneManager.GetActiveScene().name != SceneInGame) return;
+        // 인게임 화면에서 실행되는 경우엔 무조건 막히도록 설정
+        if (Instance == null)
         {
-            // 인게임 화면에서 실행되는 경우엔 무조건 막히도록 설정
-            if (Instance == null)
-            {
-                SceneManager.LoadScene(SceneMusicSelect);
-            }
-            Destroy(gameObject);
-            return;
+            SceneManager.LoadScene(SceneMusicSelect);
         }
+        Destroy(gameObject);
+        return;
+    }
 
+    private void Start()
+    {
         BackgroundSource = gameObject.AddComponent<AudioSource>();
         BackgroundSource.volume = GameOptions.Instance.MusicVolume;
         BackgroundSource.loop = false;
@@ -130,7 +131,7 @@ public class GameManager : MonoBehaviour
 
     public void SetGameMode(GameMode gameMode)
     {
-        GameOptions.Instance.CurrentMode = gameMode;
+        GameOptions.Instance.Mode = gameMode;
     }
 
     public void ToggleAutoMode()
@@ -265,7 +266,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(.1f);
 
         List<Note> noteList;
-        switch (GameOptions.Instance.CurrentMode)
+        switch (GameOptions.Instance.Mode)
         {
             case GameMode.Degree90:
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(90)).ToList();

@@ -82,7 +82,7 @@ public class UIManager : MonoBehaviour
     public void SortMusicByScore()
     {
         var difficulty = GameManager.Instance.CurrentDifficulty;
-        MusicManager.Instance.MusicList.Sort((x, y) => x.GetScore(difficulty).Compare(y.GetScore(difficulty)));
+        MusicManager.Instance.MusicList.Sort((x, y) => x.GetScore(difficulty).CompareTo(y.GetScore(difficulty)));
         ResetMusicList();
         foreach (var music in MusicManager.Instance.MusicList)
         {
@@ -118,11 +118,10 @@ public class UIManager : MonoBehaviour
 
         var sortByName = GetUIObject<Button>("SortByName");
         sortByName.onClick.AddListener(SortMusicByName);
-        var sortByName = GetUIObject<Button>("SortByArtist");
-        sortByName.onClick.AddListener(SortMusicByArtist);
-        var sortByName = GetUIObject<Button>("SortByScore");
-        sortByName.onClick.AddListener(SortMusicByScore);
-        //var settingButton = GetUIObject<Button>("SettingButton");
+        var sortByArtist = GetUIObject<Button>("SortByArtist");
+        sortByArtist.onClick.AddListener(SortMusicByArtist);
+        var sortByScore = GetUIObject<Button>("SortByScore");
+        sortByScore.onClick.AddListener(SortMusicByScore);
     }
 
     public void ToggleSetting()

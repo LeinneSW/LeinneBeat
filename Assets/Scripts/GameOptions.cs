@@ -38,14 +38,14 @@ public class GameOptions : MonoBehaviour
     public bool AutoPlay
     {
         get => autoPlay; 
-        private set
+        set
         {
             if (GameManager.Instance.StartTime <= 0)
             {
                 autoPlay = value;
             }
         }
-    };
+    }
     public JudgementType JudgementType
     {
         get => judgementType;

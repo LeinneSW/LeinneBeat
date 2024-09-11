@@ -73,7 +73,7 @@ public class MarkerManager : MonoBehaviour
                 clap.loop = false;
                 clap.clip = clapSound;
                 clap.playOnAwake = false;
-                clap.volume = GameManager.Instance.ClapVolume;
+                clap.volume = GameOptions.Instance.ClapVolume;
                 ClapList.Add(clap);
             };
         }
@@ -166,7 +166,7 @@ public class MarkerManager : MonoBehaviour
         }
     }
 
-    private void OnRelease(int row, int column)
+    private void OnRelease(int row, int column, double releaseTime)
     {
         touchedList[row * 4 + column].SetActive(false);
 
@@ -180,19 +180,19 @@ public class MarkerManager : MonoBehaviour
         }
         if (list.Count > 0)
         {
-            list[0].OnRelease();
+            list[0].OnRelease(releaseTime);
         }
     }
 
     private void Update()
     {
-        if (GameManager.Instance.AutoPlay)
+        if (GameOptions.Instance.AutoPlay)
         {
             return;
         }
 
         var touchTime = Time.timeAsDouble;
-        var gridSize = Mathf.FloorToInt(Screen.width / 4);
+        var gridSize = Screen.width / 4.0f;
         Dictionary<int, bool> touchData = new();
         for (var i = 0; i < Input.touchCount; i++)
         {
@@ -213,8 +213,10 @@ public class MarkerManager : MonoBehaviour
             mousePosition /= 400;
             var row = Mathf.FloorToInt(-mousePosition.y);
             var column = Mathf.FloorToInt(mousePosition.x);
-            if (row is < 0 or >= 4 || column is < 0 or >= 4) continue;
-            touchData[column + row * 4] = true;
+            if (row is >= 0 and < 4 && column is >= 0 and < 4)
+            {
+                touchData[column + row * 4] = true;
+            }
         }
 
         for (var row = 0; row < 4; ++row)

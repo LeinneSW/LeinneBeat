@@ -367,7 +367,7 @@ public class Music{
 
     public void SetScore(Difficulty difficulty, int score)
     {
-        if (!GameManager.Instance.AutoPlay && ScoreList[difficulty] < score)
+        if (!GameOptions.Instance.AutoPlay && ScoreList[difficulty] < score)
         {
             ScoreList[difficulty] = score;
         }
@@ -375,7 +375,7 @@ public class Music{
 
     public void SetMusicBarScore(Difficulty difficulty, List<int> score)
     {
-        if (GameManager.Instance.AutoPlay)
+        if (GameOptions.Instance.AutoPlay)
         {
             return;
         }

@@ -143,6 +143,11 @@ public class Marker : MonoBehaviour
         return judge;
     }
 
+    public void OnRelease()
+    {
+        OnRelease(FinishTime + 1);
+    }
+
     public void OnRelease(double releaseTime)
     {
         if (!touched || arrowObject == null || !arrowObject.IsStarted) // 롱노트를 누르기 전이거나 롱노트가 아닌 경우는 무시
@@ -198,7 +203,7 @@ public class Marker : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance.AutoPlay)
+        if (GameOptions.Instance.AutoPlay)
         {
             if (Time.time >= StartTime + 29d / 60 - Time.deltaTime)
             { // 프레임타임 기준으로 판단하도록 개선
