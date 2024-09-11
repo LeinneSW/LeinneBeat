@@ -122,6 +122,9 @@ public class UIManager : MonoBehaviour
         sortByArtist.onClick.AddListener(SortMusicByArtist);
         var sortByScore = GetUIObject<Button>("SortByScore");
         sortByScore.onClick.AddListener(SortMusicByScore);
+
+        var settingButton = GetUIObject<Button>("SettingButton");
+        settingButton.onClick.AddListener(ToggleSetting);
     }
 
     public void ToggleSetting()
@@ -154,7 +157,7 @@ public class UIManager : MonoBehaviour
                 advanced.GetComponent<Image>().color = color[difficulty];
                 extreme.GetComponent<Image>().color = Color.white;
                 break;
-            case Difficulty.Extreme:
+            default:
                 basic.GetComponent<Image>().color = Color.white;
                 advanced.GetComponent<Image>().color = Color.white;
                 extreme.GetComponent<Image>().color = color[difficulty];
