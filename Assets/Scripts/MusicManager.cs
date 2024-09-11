@@ -107,32 +107,46 @@ public class MusicManager : MonoBehaviour
                 }
             }
         }
+
+        Dictionary<string, Dictionary<string, MusicScoreData>> scoreDataList;
         var scorePath = Path.Combine(basePath, "score.json");
         if (File.Exists(scorePath))
         {
             var text = File.ReadAllText(scorePath);
-            var scoreDataList = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, MusicScoreData>>>(text);
-            foreach (var (musicName, difficultyTable) in scoreDataList)
-            {
-                var music = MusicList.Find(music => music.Title == musicName);
-                if (music == null) continue;
-                foreach (var (difficultyStr, scoreData) in difficultyTable)
-                {
-                    if (!Enum.TryParse(difficultyStr, true, out Difficulty difficulty)) continue;
-                    music.SetScore(difficulty, scoreData.score);
-                    music.SetMusicBarScore(difficulty, scoreData.musicBar);
-                }
-            }
+            scoreDataList = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, MusicScoreData>>>(text);
+        }
+        else
+        {
+            scoreDataList = new();
         }
 
+        var allFiles = Directory.GetDirectories(basePath);
+        var totalCount = allFiles.Length;
         UIManager.Instance.ResetMusicList();
-        foreach (var dirPath in Directory.GetDirectories(basePath))
+        foreach (var dirPath in allFiles)
         {
-            StartCoroutine(LoadMusic(dirPath));
+            StartCoroutine(LoadMusic(dirPath, success =>
+            {
+                if (!success) --totalCount;
+                if (totalCount > MusicList.Count) return;
+
+                UIManager.Instance.SortMusicByName();
+                foreach (var (musicName, difficultyTable) in scoreDataList)
+                {
+                    var music = MusicList.Find(music => music.Title == musicName);
+                    if (music == null) continue;
+                    foreach (var (difficultyStr, scoreData) in difficultyTable)
+                    {
+                        if (!Enum.TryParse(difficultyStr, true, out Difficulty difficulty)) continue;
+                        music.SetScore(difficulty, scoreData.score);
+                        music.SetMusicBarScore(difficulty, scoreData.musicBar);
+                    }
+                }
+            }));
         }
     }
 
-    private IEnumerator LoadMusic(string dirPath)
+    private IEnumerator LoadMusic(string dirPath, Action<bool> afterFunction)
     {
         var title = Path.GetFileName(dirPath);
         var author = "작곡가";
@@ -200,9 +214,11 @@ public class MusicManager : MonoBehaviour
             }
         }
 
-        if (!music.IsValid) yield break;
-        MusicList.Add(music);
-        UIManager.Instance.AddMusicButton(music);
+        if (music.IsValid)
+        {
+            MusicList.Add(music);
+        }
+        afterFunction(music.IsValid);
     }
 
     public void SetMusicOffset(string title, float offset)
