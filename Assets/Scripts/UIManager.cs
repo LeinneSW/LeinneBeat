@@ -59,9 +59,30 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void SortMusicButton()
+    public void SortMusicByName()
     {
         MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Title, y.Title, StringComparison.Ordinal));
+        ResetMusicList();
+        foreach (var music in MusicManager.Instance.MusicList)
+        {
+            AddMusicButton(music);
+        }
+    }
+
+    public void SortMusicByArtist()
+    {
+        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Author, y.Author, StringComparison.Ordinal));
+        ResetMusicList();
+        foreach (var music in MusicManager.Instance.MusicList)
+        {
+            AddMusicButton(music);
+        }
+    }
+
+    public void SortMusicByScore()
+    {
+        var difficulty = GameManager.Instance.CurrentDifficulty;
+        MusicManager.Instance.MusicList.Sort((x, y) => x.GetScore(difficulty).Compare(y.GetScore(difficulty)));
         ResetMusicList();
         foreach (var music in MusicManager.Instance.MusicList)
         {
@@ -96,7 +117,11 @@ public class UIManager : MonoBehaviour
         extreme.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Extreme));
 
         var sortByName = GetUIObject<Button>("SortByName");
-        sortByName.onClick.AddListener(SortMusicButton);
+        sortByName.onClick.AddListener(SortMusicByName);
+        var sortByName = GetUIObject<Button>("SortByArtist");
+        sortByName.onClick.AddListener(SortMusicByArtist);
+        var sortByName = GetUIObject<Button>("SortByScore");
+        sortByName.onClick.AddListener(SortMusicByScore);
         //var settingButton = GetUIObject<Button>("SettingButton");
     }
 
