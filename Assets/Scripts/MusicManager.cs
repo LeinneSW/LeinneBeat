@@ -29,8 +29,8 @@ public class MusicInfo
 [Serializable]
 public class MusicScoreData
 {
-    public int score = 0;
-    public List<int> musicBar = new List<int>(new int[120]);
+    public int score;
+    public List<int> musicBar = new();
 
 }
 
@@ -269,7 +269,7 @@ public class MusicManager : MonoBehaviour
             musicBar = music.GetMusicBarScore(difficulty)
         };
 
-        var jsonStr = JsonConvert.SerializeObject(json, Formatting.Indented);
+        var jsonStr = JsonConvert.SerializeObject(json);
         await File.WriteAllTextAsync(scorePath, jsonStr);
     }
 
@@ -372,12 +372,12 @@ public class Music{
 
     public int GetScore(Difficulty difficulty)
     {
-        return ScoreList.GetValueOrDefault(difficulty, 0);
+        return ScoreList[difficulty];
     }
 
     public List<int> GetMusicBarScore(Difficulty difficulty)
     {
-        return MusicBarScoreList.GetValueOrDefault(difficulty, new(new int[120]));
+        return MusicBarScoreList[difficulty];
     }
 
     public void SetScore(Difficulty difficulty, int score)
@@ -394,7 +394,7 @@ public class Music{
         {
             return;
         }
-        for (var i = 0; i < 120; ++i)
+        for (int i = 0, length = Math.Min(score.Count, 120); i < length; ++i)
         {
             MusicBarScoreList[difficulty][i] = Math.Max(MusicBarScoreList[difficulty][i], score[i]);
         }
