@@ -9,14 +9,14 @@ public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; }
 
-    public double[] CurrentJudgementTable => judgementTables[GameManager.Instance.CurrentJudgement];
+    public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
 
     public readonly List<AudioSource> ClapList = new();
     public readonly List<List<Sprite>> CurrentMarkerSprites = new();
 
     public GameObject judgePrefab;
     public GameObject markerPrefab;
-    public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
+
     public Sprite clickSprite;
     public Sprite arrowSprite;
     public AudioClip clapSound;
