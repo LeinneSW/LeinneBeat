@@ -14,10 +14,10 @@ public class Marker : MonoBehaviour
 {
     private bool touched;
 
-    private float remainTime = 23 / 30f;
     private Animator animator; // hold
     private HoldArrow arrowObject; // hold
     private GameObject judgeObject;
+    private double remainTime = 23 / 30f;
 
     public Note Note;
 
@@ -76,7 +76,7 @@ public class Marker : MonoBehaviour
         arrowObject.gameObject.transform.SetParent(transform);
 
         FinishTime = (float)(Note.FinishTime + GameManager.Instance.StartTime);
-        arrowObject.Duration = FinishTime + 29 / 60f;
+        arrowObject.FinishTime = FinishTime + 29d / 60;
 
         ArrowGuide.SetActive(true);
         ArrowGuide.transform.rotation = rotation;
@@ -111,8 +111,7 @@ public class Marker : MonoBehaviour
         {
             if (judge != JudgeState.Poor)
             {
-                arrowObject.Duration -= Time.time;
-                remainTime = arrowObject.Duration + 0.166f;
+                remainTime = FinishTime - touchTime + 0.166;
                 arrowObject.EnableArrow();
             }
             Invoke(nameof(EnableHoldAnimation), 16f / 30f);
