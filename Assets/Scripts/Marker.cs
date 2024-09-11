@@ -93,7 +93,7 @@ public class Marker : MonoBehaviour
         animator.SetBool("Hold", true);
     }
 
-    public void OnTouch()
+    public void OnTouch(double touchTime)
     {
         if (touched)
         {
@@ -101,7 +101,7 @@ public class Marker : MonoBehaviour
         }
 
         touched = true;
-        var judge = CalculateJudgement();
+        var judge = CalculateJudgement(touchTime);
         if (arrowObject == null)
         {
             remainTime = 0.2f;
@@ -119,10 +119,10 @@ public class Marker : MonoBehaviour
         }
     }
 
-    public JudgeState CalculateJudgement()
+    public JudgeState CalculateJudgement(double touchTime)
     {
         var judge = JudgeState.Poor;
-        var judgeTime = StartTime + 29 / 60d - Time.timeAsDouble; // + 빠르게침, - 느리게침
+        var judgeTime = StartTime + 29 / 60d - touchTime; // + 빠르게침, - 느리게침
         var judgeAbs = Math.Abs(judgeTime);
         var judgeTable = MarkerManager.Instance.CurrentJudgementTable;
         if (judgeAbs <= judgeTable[0])
@@ -139,26 +139,25 @@ public class Marker : MonoBehaviour
         }
         CreateJudgeEffect(judge);
         GameManager.Instance.AddScore(judge, Note.MusicBarIndex, judgeTime > 0);
-        MarkerManager.Instance.ShowJudgeTime(Note.Row, Note.Column, judgeTime * 1000);
+        MarkerManager.Instance.ShowJudgeText(Note.Row, Note.Column, judgeTime * 1000);
         return judge;
     }
 
-    public void OnRelease()
+    public void OnRelease(double releaseTime)
     {
-        if (arrowObject == null || !arrowObject.IsStarted) // 롱노트를 누르기 전이거나 롱노트가 아닌 경우는 무시
+        if (!touched || arrowObject == null || !arrowObject.IsStarted) // 롱노트를 누르기 전이거나 롱노트가 아닌 경우는 무시
         {
             return;
         }
-        CalculateJudgementRelease();
+        CalculateJudgementRelease(releaseTime);
     }
 
-    private void CalculateJudgementRelease()
+    private void CalculateJudgementRelease(double releaseTime)
     {
-        // TODO: 롱노트의 판정 산정 방식은 다르게 측정되어야함
         var judge = JudgeState.Poor;
-        var judgeTime = Math.Max(0, FinishTime + 29 / 60d - Time.timeAsDouble); // + 빠르게침, - 판정은 없음
-        //var maxTime = FinishTime - StartTime;
+        var judgeTime = Math.Max(0, FinishTime + 29 / 60d - releaseTime); // + 빠르게침, - 판정은 없음
         var judgeTable = MarkerManager.Instance.CurrentJudgementTable;
+        // TODO: 롱노트는 판정 산정 방식이 다르나 아직 파악하지 못함
         if (judgeTime <= judgeTable[0])
         {
             judge = JudgeState.Perfect;
@@ -174,8 +173,8 @@ public class Marker : MonoBehaviour
         CreateJudgeEffect(judge);
         GameManager.Instance.AddScore(judge, Note.MusicBarLongIndex, judgeTime > 0);
 
-        Destroy(gameObject);
         Destroy(arrowObject.gameObject);
+        Destroy(gameObject);
     }
 
     private void CreateJudgeEffect(JudgeState judge)
@@ -201,9 +200,9 @@ public class Marker : MonoBehaviour
     {
         if (GameManager.Instance.AutoPlay)
         {
-            if (Time.time > StartTime + 0.4815f)
-            {
-                OnTouch();
+            if (Time.time >= StartTime + 29d / 60 - Time.deltaTime)
+            { // 프레임타임 기준으로 판단하도록 개선
+                OnTouch(StartTime + 29d / 60);
             }
             return;
         }

@@ -125,7 +125,7 @@ public class MarkerManager : MonoBehaviour
         ClapList[ClapIndex++].Play();
     }
 
-    private IEnumerator ShowJudgeTime(Text text, int judge)
+    private IEnumerator ShowJudgeText(Text text, int judge)
     {
         switch (judge)
         {
@@ -142,12 +142,12 @@ public class MarkerManager : MonoBehaviour
         text.text = "";
     }
 
-    public void ShowJudgeTime(int row, int column, double judgeTime)
+    public void ShowJudgeText(int row, int column, double judgeTime)
     {
-        StartCoroutine(ShowJudgeTime(judgeText[row * 4 + column], (int)Math.Floor(judgeTime)));
+        StartCoroutine(ShowJudgeText(judgeText[row * 4 + column], (int)Math.Floor(judgeTime)));
     }
 
-    private void OnTouch(int row, int column)
+    private void OnTouch(int row, int column, double touchTime)
     {
         if (touchedList[row * 4 + column].activeSelf)
         {
@@ -165,7 +165,7 @@ public class MarkerManager : MonoBehaviour
         }
         if (list.Count > 0)
         {
-            list[0].OnTouch();
+            list[0].OnTouch(touchTime);
         }
     }
 
@@ -194,22 +194,19 @@ public class MarkerManager : MonoBehaviour
             return;
         }
 
-        List<int> touched = new();
+        var touchTime = Time.timeAsDouble;
+        var gridSize = Mathf.FloorToInt(Screen.width / 4);
+        Dictionary<int, bool> touchData = new();
         for (var i = 0; i < Input.touchCount; i++)
         {
             var touchState = Input.GetTouch(i);
-            Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touchState.position);
-            // row 320 ~ -1480
-            // col -800 ~ 800
-            touchPosition += new Vector2(800, -320);
-            touchPosition /= 400;
-            var row = Mathf.FloorToInt(-touchPosition.y);
-            var column = Mathf.FloorToInt(touchPosition.x);
+            if (touchState.phase == TouchPhase.Ended) continue;
+
+            var pos = touchState.position;
+            var row = Mathf.FloorToInt((1600 - pos.y) / gridSize);
+            var column = Mathf.FloorToInt(pos.x / gridSize);
             if (row is < 0 or >= 4 || column is < 0 or >= 4) continue;
-            if (touchState.phase != TouchPhase.Ended)
-            {
-                touched.Add(column + row * 4);
-            }
+            touchData[column + row * 4] = true;
         }
 
         if (Input.touchCount < 1 && Input.GetMouseButton(0))
@@ -219,23 +216,21 @@ public class MarkerManager : MonoBehaviour
             mousePosition /= 400;
             var row = Mathf.FloorToInt(-mousePosition.y);
             var column = Mathf.FloorToInt(mousePosition.x);
-            if (row is >= 0 and < 4 && column is >= 0 and < 4)
-            {
-                touched.Add(column + row * 4);
-            }
+            if (row is < 0 or >= 4 || column is < 0 or >= 4) continue;
+            touchData[column + row * 4] = true;
         }
 
         for (var row = 0; row < 4; ++row)
         {
             for (var column = 0; column < 4; ++column)
             {
-                if (touched.Contains(row * 4 + column))
+                if (touchData.ContainsKey(column + row * 4))
                 {
-                    OnTouch(row, column);
+                    OnTouch(row, column, touchTime);
                 }
                 else
                 {
-                    OnRelease(row, column);
+                    OnRelease(row, column, touchTime);
                 }
             }
         }
