@@ -61,7 +61,7 @@ public class UIManager : MonoBehaviour
 
     public void SortMusicByName()
     {
-        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Title, y.Title, StringComparison.Ordinal));
+        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Title, y.Title, StringComparison.OrdinalIgnoreCase));
         ResetMusicList();
         foreach (var music in MusicManager.Instance.MusicList)
         {
@@ -71,7 +71,7 @@ public class UIManager : MonoBehaviour
 
     public void SortMusicByArtist()
     {
-        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Author, y.Author, StringComparison.Ordinal));
+        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Author, y.Author, StringComparison.OrdinalIgnoreCase));
         ResetMusicList();
         foreach (var music in MusicManager.Instance.MusicList)
         {
