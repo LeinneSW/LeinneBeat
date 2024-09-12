@@ -362,7 +362,7 @@ public class GameManager : MonoBehaviour
         while (BackgroundSource.isPlaying)
         {
             // BUG: 반영 상태가 느리거나 안됨
-            var index = Mathf.FloorToInt((BackgroundSource.time - 23f / 30) / divide);
+            var index = Mathf.FloorToInt((BackgroundSource.time - 23f / 30 + CurrentMusic.StartOffset) / divide);
             if (index > 0 && index != lastIndex)
             {
                 UIManager.Instance.UpdateMusicBar(lastIndex);
