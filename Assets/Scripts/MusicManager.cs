@@ -454,7 +454,7 @@ public class Chart
             musicBar = new(new int[120]);
             var limit = musicBar.Count;
             var divide = Music.Clip.length / limit;
-            var offset = 29d / 60d - Music.StartOffset;
+            var offset = 29 / 60d - Music.StartOffset;
             foreach (var note in NoteList)
             {
                 var startBarIndex = (int) Math.Floor((note.StartTime - offset) / divide);
