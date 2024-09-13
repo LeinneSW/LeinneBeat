@@ -611,6 +611,138 @@ public class Chart
     }
 }
 
+public class ChartRandomHelper
+{
+    private List<Note> noteList;
+    private Dictionary<(int, int), List<(double, double)>> occupiedTimeGrid = new();
+    private Dictionary<(int, int), List<(double, double)>> occupiedTimeGridArrow = new();
+
+    public ChartRandomHelper(List<Note> noteList)
+    {
+        this.noteList = noteList;
+    }
+
+    public List<Note> Shuffle()
+    {
+        List<Note> result = new();
+        foreach (var note in noteList)
+        {
+            List<(int, int)> validPositions = new();
+            while (true)
+            {
+                var startTime = note.StartTime;
+                var endTime = (note.IsLong ? note.FinishTime : startTime) + (23 / 30d);
+                for (var r = 0; r < 4; r++)
+                {
+                    for (var c = 0; c < 4; c++)
+                    {
+                        if (IsAvailable(r, c, startTime, endTime))
+                        {
+                            validPositions.Add((r, c)); // 유효한 위치 추가
+                        }
+                    }
+                }
+                if (validPositions.Count < 1) // 불가능한 배치가 발생된 경우
+                {
+                    return Shuffle(); // 재시도
+                }
+                
+                var chosenPosition = validPositions[Random.Range(0, validPositions.Count)];
+                var barRow = -1;
+                var barColumn = -1;
+                var row = chosenPosition.Item1;
+                var column = chosenPosition.Item2;
+                if (note.IsLong)
+                {
+                    // 롱노트의 경우 추가로 barRow, barColumn을 찾아야 함
+                    validPositions = new();
+                    for (var r = 0; r < 4; r++)
+                    {
+                        for (var c = 0; c < 4; c++)
+                        {
+                            var isRowValid = (row == r && column != c);
+                            var isColValid = (row != r && column == c);
+
+                            // Row == barRow 또는 Column == barColumn 중 하나만 만족해야 함
+                            if ((isRowValid || isColValid) && IsAvailableArrow(r, c, startTime, endTime))
+                            {
+                                validPositions.Add((r, c)); // 유효한 위치 추가
+                            }
+                        }
+                    }
+
+                    if (validPositions.Count > 0) // 유효한 위치가 있는 경우
+                    {
+                        var chosenPosition = validPositions[Random.Range(0, validPositions.Count)];
+                        barRow = chosenPosition.Item1;
+                        barColumn = chosenPosition.Item2;
+                    }
+                    else
+                    {
+                        if (Random.Range(0, 2) == 0) // 50% 확률로 Row와 일치할지, Column과 일치할지 결정
+                        {
+                            barRow = row;
+                            barColumn = Random.Range(0, 4);
+                        }
+                        else
+                        {
+                            barRow = column;
+                            barColumn = Random.Range(0, 4);
+                        }
+                    }
+                    AddArrowTime(barRow, barColumn, startTime);
+                }
+                AddNoteTime(row, column, startTime, endTime);
+                result.Add(note.Change(row, column, barRow, barColumn));
+                break;
+            }
+        }
+        return result;
+    }
+
+    private bool IsAvailable(int row, int column, double startTime, double endTime)
+    {
+        if (occupiedTimeGrid.TryGetValue((row, column), out var timeSlots))
+        {
+            foreach (var slot in timeSlots)
+            {
+                if (!(endTime <= slot.Item1 || startTime >= slot.Item2))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private bool IsAvailableArrow(int row, int column, double startTime, double endTime)
+    {
+        if (occupiedTimeGridArrow.TryGetValue((row, column), out var timeSlots))
+        {
+            foreach (var slot in timeSlots)
+            {
+                if (!(endTime <= slot.Item1 || startTime >= slot.Item2))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private void AddNoteTime(int row, int column, double startTime, double endTime)
+    {
+        occupiedTimeGrid.TryAdd((row, column), new());
+        occupiedTimeGrid[(row, column)].Add((startTime, endTime));
+    }
+
+    private void AddArrowTime(int row, int column, double startTime)
+    {
+        occupiedTimeGridArrow.TryAdd((row, column), new());
+        occupiedTimeGridArrow[(row, column)].Add((startTime, startTime + 23 / 30d));
+    }
+}
+
 public class Note
 {
     public int Row { get; private set; }
@@ -646,6 +778,15 @@ public class Note
     public Note Clone()
     {
         Note note = new(Row, Column, BarRow, BarColumn, StartTime);
+        note.FinishTime = FinishTime;
+        note.MusicBarIndex = MusicBarIndex;
+        note.MusicBarLongIndex = MusicBarLongIndex;
+        return note;
+    }
+
+    public Note Change(int row, int column, int barRow = -1, int barColumn = -1)
+    {
+        Note note = new(row, column, barRow, barColumn, StartTime);
         note.FinishTime = FinishTime;
         note.MusicBarIndex = MusicBarIndex;
         note.MusicBarLongIndex = MusicBarLongIndex;
