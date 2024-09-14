@@ -200,7 +200,7 @@ public class MusicManager : MonoBehaviour
             {
                 var json = File.ReadAllText(jsonPath);
                 var jsonData = JsonUtility.FromJson<MusicInfo>(json);
-                title = jsonData.title;
+                title = jsonData.title ?? title;
                 author = jsonData.author ?? author;
             }
             catch
