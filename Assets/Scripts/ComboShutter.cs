@@ -21,7 +21,7 @@ public class ComboShutter : MonoBehaviour
     public IEnumerator StartShutterAnimation()
     {
         // 시작 전까진 셔터는 움직이지 않는다
-        while (GameManager.Instance.StartTime <= 0)
+        while (!GameManager.Instance.IsStarted)
         {
             yield return null;
         }

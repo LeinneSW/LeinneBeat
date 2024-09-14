@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using Random = UnityEngine.Random;
 
 public enum Difficulty
 {
@@ -133,7 +134,13 @@ public class MusicManager : MonoBehaviour
                 UIManager.Instance.SortMusicByName();
                 foreach (var (musicName, difficultyTable) in scoreDataList)
                 {
-                    var music = MusicList.Find(music => music.Title == musicName);
+                    var music = MusicList.Find(music =>
+                    {
+                        var nameSplit = musicName.Split(" [HOLD]");
+                        var isLongData = nameSplit.Length > 1;
+                        if ((isLongData && !music.IsLong) || (!isLongData && music.IsLong)) return false;
+                        return music.Title == nameSplit[0];
+                    });
                     if (music == null) continue;
                     foreach (var (difficultyStr, scoreData) in difficultyTable)
                     {
@@ -175,7 +182,7 @@ public class MusicManager : MonoBehaviour
         }
 
         var sprite = DefaultJacket;
-        var jacketFiles = Directory.GetFiles(dirPath, $"jacket.*");
+        var jacketFiles = Directory.GetFiles(dirPath, "jacket.*");
         if (jacketFiles.Length > 0)
         {
             var fileData = File.ReadAllBytes(jacketFiles[0]);
@@ -263,7 +270,7 @@ public class MusicManager : MonoBehaviour
         }
 
         json.TryAdd(music.Title, new());
-        json[music.Title][difficulty.ToString()] = new()
+        json[$"{music.Title}{(music.IsLong ? " [HOLD]" : "")}"][difficulty.ToString()] = new()
         {
             score = music.GetScore(difficulty),
             musicBar = music.GetMusicBarScore(difficulty)
@@ -382,7 +389,7 @@ public class Music{
 
     public void SetScore(Difficulty difficulty, int score)
     {
-        if (!GameOptions.Instance.AutoPlay && ScoreList[difficulty] < score)
+        if ((!GameOptions.Instance.AutoPlay || !GameManager.Instance.IsStarted) && ScoreList[difficulty] < score)
         {
             ScoreList[difficulty] = score;
         }
@@ -390,7 +397,7 @@ public class Music{
 
     public void SetMusicBarScore(Difficulty difficulty, List<int> score)
     {
-        if (GameOptions.Instance.AutoPlay)
+        if (GameOptions.Instance.AutoPlay && GameManager.Instance.IsStarted)
         {
             return;
         }
@@ -454,15 +461,15 @@ public class Chart
             musicBar = new(new int[120]);
             var limit = musicBar.Count;
             var divide = Music.Clip.length / limit;
-            var offset = 29 / 60d - Music.StartOffset;
+            const double offset = 29 / 60d;
             foreach (var note in NoteList)
             {
-                var startBarIndex = (int) Math.Floor((note.StartTime - offset) / divide);
+                var startBarIndex = (int) Math.Floor((note.StartTime + offset) / divide);
                 musicBar[startBarIndex]++;
                 note.MusicBarIndex = startBarIndex;
 
                 if (!(note.FinishTime > 0)) continue;
-                var finishBarIndex = (int)Math.Floor((note.FinishTime - offset) / divide);
+                var finishBarIndex = (int)Math.Floor((note.FinishTime + offset) / divide);
                 musicBar[finishBarIndex]++;
                 note.MusicBarLongIndex = finishBarIndex;
             }
@@ -592,9 +599,10 @@ public class Chart
         else
         {
             var lastNote = noteList[^1];
-            /*if (!lastNote.IsLong && newNote.StartTime - lastNote.StartTime < 23 / 30f)
+            /*var lastTime = lastNote.IsLong ? lastNote.FinishTime : lastNote.StartTime;
+            if (newNote.StartTime - lastTime <= 31 / 30d)
             {
-                Debug.Log($"[{Name}] 충돌날 수 있는 노트 발견됨. 시작시간: {newNote.StartTime}, Row: {newNote.Row}, Col: {newNote.Column}");
+                Debug.Log($"[{Music.Title}] 충돌날 수 있는 노트 발견됨. 이전노트: {lastTime}, 다음노트: {newNote.StartTime}, Row: {newNote.Row}, Col: {newNote.Column}");
             }*/
 
             if (lastNote.IsLong && lastNote.FinishTime <= 0)
@@ -613,16 +621,16 @@ public class Chart
 
 public class ChartRandomHelper
 {
-    private List<Note> noteList;
-    private Dictionary<(int, int), List<(double, double)>> occupiedTimeGrid = new();
-    private Dictionary<(int, int), List<(double, double)>> occupiedTimeGridArrow = new();
+    private readonly List<Note> noteList;
+    private readonly Dictionary<(int, int), List<(double, double)>> occupiedTimeGrid = new();
+    private readonly Dictionary<(int, int), List<(double, double)>> occupiedTimeGridArrow = new();
 
     public ChartRandomHelper(List<Note> noteList)
     {
         this.noteList = noteList;
     }
 
-    public List<Note> Shuffle()
+    private List<Note> FullRandom()
     {
         List<Note> result = new();
         foreach (var note in noteList)
@@ -631,7 +639,7 @@ public class ChartRandomHelper
             while (true)
             {
                 var startTime = note.StartTime;
-                var endTime = (note.IsLong ? note.FinishTime : startTime) + (23 / 30d);
+                var endTime = (note.IsLong ? note.FinishTime : startTime) + 31 / 30d;
                 for (var r = 0; r < 4; r++)
                 {
                     for (var c = 0; c < 4; c++)
@@ -644,9 +652,9 @@ public class ChartRandomHelper
                 }
                 if (validPositions.Count < 1) // 불가능한 배치가 발생된 경우
                 {
-                    return Shuffle(); // 재시도
+                    return FullRandom(); // 재시도
                 }
-                
+
                 var chosenPosition = validPositions[Random.Range(0, validPositions.Count)];
                 var barRow = -1;
                 var barColumn = -1;
@@ -673,7 +681,7 @@ public class ChartRandomHelper
 
                     if (validPositions.Count > 0) // 유효한 위치가 있는 경우
                     {
-                        var chosenPosition = validPositions[Random.Range(0, validPositions.Count)];
+                        chosenPosition = validPositions[Random.Range(0, validPositions.Count)];
                         barRow = chosenPosition.Item1;
                         barColumn = chosenPosition.Item2;
                     }
@@ -700,34 +708,31 @@ public class ChartRandomHelper
         return result;
     }
 
+    public List<Note> Shuffle(GameMode mode)
+    {
+        return GameOptions.Instance.GameMode switch
+        {
+            GameMode.FullRandom => FullRandom(),
+            GameMode.Degree90 => noteList,
+            GameMode.Degree180 => noteList,
+            GameMode.Degree270 => noteList,
+            GameMode.Random => noteList,
+            GameMode.Random2 => noteList,
+            GameMode.HalfRandom => noteList,
+            _ => noteList
+        };
+    }
+
     private bool IsAvailable(int row, int column, double startTime, double endTime)
     {
-        if (occupiedTimeGrid.TryGetValue((row, column), out var timeSlots))
-        {
-            foreach (var slot in timeSlots)
-            {
-                if (!(endTime <= slot.Item1 || startTime >= slot.Item2))
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return !occupiedTimeGrid.TryGetValue((row, column), out var timeSlots) ||
+               timeSlots.All(slot => endTime <= slot.Item1 || startTime >= slot.Item2);
     }
 
     private bool IsAvailableArrow(int row, int column, double startTime, double endTime)
     {
-        if (occupiedTimeGridArrow.TryGetValue((row, column), out var timeSlots))
-        {
-            foreach (var slot in timeSlots)
-            {
-                if (!(endTime <= slot.Item1 || startTime >= slot.Item2))
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return !occupiedTimeGridArrow.TryGetValue((row, column), out var timeSlots) ||
+               timeSlots.All(slot => endTime <= slot.Item1 || startTime >= slot.Item2);
     }
 
     private void AddNoteTime(int row, int column, double startTime, double endTime)
@@ -757,7 +762,7 @@ public class Note
     public Vector2 BarPosition => MarkerManager.Instance.ConvertPosition(BarRow, BarColumn);
 
     public double StartTime { get; }
-    public double FinishTime { get; set; } = 0; // 롱노트의 끝 판정
+    public double FinishTime { get; set; } // 롱노트의 끝 판정
 
     public Note(int row, int column, double startTime)
     {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
@@ -10,7 +11,6 @@ public class UIManager : MonoBehaviour
 
     private readonly Dictionary<string, Component> componentCache = new();
 
-    public GameObject SettingPane;
     public GameObject MusicButtonPrefab;
 
     private float beforeTime = 0;
@@ -129,7 +129,9 @@ public class UIManager : MonoBehaviour
 
     public void ToggleSetting()
     {
-        SettingPane.SetActive(!SettingPane.activeSelf);
+        var pane = GetUIObject<Image>("SettingPane");
+        var scale = pane.transform.localScale;
+        pane.transform.localScale = scale.x > 0 ? new(0, 0) : new(1, 1);
     }
 
     public void UpdateDifficulty()
@@ -220,8 +222,14 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void UpdateMusicBar(int index)
+    public void UpdateMusicBar(int index, float delay)
     {
+        StartCoroutine(UpdateMusicBarCoroutine(index, delay));
+    }
+
+    private IEnumerator UpdateMusicBarCoroutine(int index, float delay)
+    {
+        yield return new WaitForSeconds(delay);
         var gridPanel = GetUIObject<RectTransform>("MusicBar");
         var musicBar = GameManager.Instance.CurrentChart.MusicBar;
         var color = GetMusicBarColor(musicBar[index], GameManager.Instance.CurrentMusicBarScore[index]);

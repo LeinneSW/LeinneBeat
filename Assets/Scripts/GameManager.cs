@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour
     public AudioSource ReadySound;
     public AudioSource ResultSound;
 
+    public bool IsStarted => StartTime > 0;
     public float StartTime { get; private set; } = -1;
     public AudioSource BackgroundSource { get; private set; }
 
@@ -131,13 +132,12 @@ public class GameManager : MonoBehaviour
 
     public void SetGameMode(GameMode gameMode)
     {
-        GameOptions.Instance.Mode = gameMode;
+        GameOptions.Instance.GameMode = gameMode;
     }
 
     public void ToggleAutoMode()
     {
         GameOptions.Instance.AutoPlay = !GameOptions.Instance.AutoPlay;
-        UIManager.Instance.GetUIObject<Button>("AutoMode").GetComponentInChildren<Text>().text = "자동: " + (GameOptions.Instance.AutoPlay ? "켜짐" : "꺼짐");
     }
 
     public void ToggleClapSound()
@@ -185,7 +185,7 @@ public class GameManager : MonoBehaviour
 
     public void SetDifficulty(Difficulty difficulty)
     {
-        if (StartTime > 0 || CurrentDifficulty == difficulty)
+        if (IsStarted || CurrentDifficulty == difficulty)
         {
             return;
         }
@@ -266,7 +266,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(.1f);
 
         List<Note> noteList;
-        switch (GameOptions.Instance.Mode)
+        switch (GameOptions.Instance.GameMode)
         {
             case GameMode.Degree90:
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(90)).ToList();
@@ -310,10 +310,10 @@ public class GameManager : MonoBehaviour
                 }
                 noteList = CurrentChart.NoteList.Select(note => note.Random(position)).ToList();
                 break;
-            /*case GameMode.FullRandom:
-                break;
             case GameMode.HalfRandom:
-                break;*/
+            case GameMode.FullRandom:
+                noteList = new ChartRandomHelper(CurrentChart.NoteList).Shuffle(GameOptions.Instance.GameMode);
+                break;
             default:
                 noteList = CurrentChart.NoteList;
                 break;
@@ -347,9 +347,13 @@ public class GameManager : MonoBehaviour
         {
             StartCoroutine(ShowMarker(note));
         }
-        foreach (var time in CurrentChart.ClapTimings)
+
+        if (GameOptions.Instance.ClapVolume > 0)
         {
-            StartCoroutine(PlayClapForAuto((float)time));
+            foreach (var time in CurrentChart.ClapTimings)
+            {
+                StartCoroutine(PlayClapForAuto((float)time));
+            }
         }
 
         if (CurrentMusic.StartOffset > 0)
@@ -361,11 +365,10 @@ public class GameManager : MonoBehaviour
         var divide = BackgroundSource.clip.length / 120;
         while (BackgroundSource.isPlaying)
         {
-            // BUG: 반영 상태가 느리거나 안됨
-            var index = Mathf.FloorToInt((BackgroundSource.time - 23f / 30 + CurrentMusic.StartOffset) / divide);
+            var index = Mathf.FloorToInt(BackgroundSource.time / divide);
             if (index > 0 && index != lastIndex)
             {
-                UIManager.Instance.UpdateMusicBar(lastIndex);
+                UIManager.Instance.UpdateMusicBar(lastIndex, 23 / 30f);
                 lastIndex = index;
             }
             yield return null;
@@ -389,39 +392,18 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(.6f);
 
-        var rating = "E";
-        if (totalScore > 999999)
+        var rating = totalScore switch
         {
-            rating = "EXC";
-        }
-        else if (totalScore > 979999)
-        {
-            rating = "SSS";
-        }
-        else if (totalScore > 949999)
-        {
-            rating = "SS";
-        }
-        else if (totalScore > 899999)
-        {
-            rating = "S";
-        }
-        else if (totalScore > 849999)
-        {
-            rating = "A";
-        }
-        else if (totalScore > 799999)
-        {
-            rating = "B";
-        }
-        else if (totalScore > 699999)
-        {
-            rating = "C";
-        }
-        else if (totalScore > 499999)
-        {
-            rating = "D";
-        }
+            > 999999 => "EXC",
+            > 979999 => "SSS",
+            > 949999 => "SS",
+            > 899999 => "S",
+            > 849999 => "A",
+            > 799999 => "B",
+            > 699999 => "C",
+            > 499999 => "D",
+            _ => "E"
+        };
 
         comboText.fontSize = 200;
         comboText.text = $"Cleared\n{rating}";
@@ -440,7 +422,7 @@ public class GameManager : MonoBehaviour
 
     public void QuitGame()
     {
-        if (StartTime <= 0)
+        if (!IsStarted)
         {
             return;
         }

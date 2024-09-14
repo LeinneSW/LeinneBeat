@@ -120,7 +120,7 @@ public class MarkerManager : MonoBehaviour
 
     private IEnumerator ShowJudgeText(Text text, int judge)
     {
-        if(GameOptions.Instance.JudgementVisibilityType == JudgementVisibility.None){
+        if(GameOptions.Instance.JudgementVisibilityType == JudgementVisibilityType.None){
             yield break;
         }
 

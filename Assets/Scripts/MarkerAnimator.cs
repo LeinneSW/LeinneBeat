@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,7 +7,7 @@ public class MarkerAnimator : MonoBehaviour
     public List<Sprite> SpriteList = new();
 
     private const float TimePerFrame = 1 / 30f;
-    private SpriteRenderer spriteRenderer; // 스프라이트 렌더러
+    private SpriteRenderer spriteRenderer;
     
     private void Start()
     {
