@@ -33,8 +33,8 @@ public class ComboShutter : MonoBehaviour
             remainTime -= Time.deltaTime;
             var position = transform.position;
             var percent = GameManager.Instance.ShutterPoint * (800 + Amplitude) / 1024;
-            var animation = Mathf.Sin(Time.time * Frequency * 2 * Mathf.PI) * Amplitude;
-            position.y = up ? (percent + animation - 130 + Amplitude) : -(percent + animation + 830 + Amplitude);
+            var amplitude = Mathf.Sin(Time.time * Frequency * 2 * Mathf.PI) * Amplitude;
+            position.y = up ? percent + amplitude - 130 + Amplitude : -(percent + amplitude + 830 + Amplitude);
             transform.position = position;
             yield return null;
         }
