@@ -104,7 +104,10 @@ public class GameOptions : MonoBehaviour
 
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
         Screen.SetResolution(Screen.height * 10 / 16, Screen.height, true);
+    }
 
+    private void Start()
+    {
         var config = LoadConfig();
         // Game Style Setting
         if (Enum.TryParse<GameMode>(config.GetValueOrDefault("gamemode", ""), true, out var mode))
@@ -121,7 +124,7 @@ public class GameOptions : MonoBehaviour
         {
             JudgementVisibilityType = visibility;
         }
-            
+
         // Volume Setting
         if (float.TryParse(config.GetValueOrDefault("master_volume", ""), out var volume))
         {
@@ -131,7 +134,7 @@ public class GameOptions : MonoBehaviour
         {
             MusicVolume = Mathf.Clamp01(volume);
         }
-         
+
         // Auto Play Setting
         if (bool.TryParse(config.GetValueOrDefault("auto_play", "false"), out var auto))
         {
