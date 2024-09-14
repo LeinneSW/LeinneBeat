@@ -269,8 +269,9 @@ public class MusicManager : MonoBehaviour
             json = new();
         }
 
-        json.TryAdd(music.Title, new());
-        json[$"{music.Title}{(music.IsLong ? " [HOLD]" : "")}"][difficulty.ToString()] = new()
+        var title = $"{music.Title}{(music.IsLong ? " [HOLD]" : "")}";
+        json.TryAdd(title, new());
+        json[title][difficulty.ToString()] = new()
         {
             score = music.GetScore(difficulty),
             musicBar = music.GetMusicBarScore(difficulty)
