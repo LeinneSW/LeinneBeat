@@ -543,7 +543,7 @@ public class Chart
     public static bool IsBpmText(string text)
     {
         var lower = text.ToLower();
-        return lower.StartsWith("bpm") || lower.StartsWith("t=");
+        return lower.StartsWith("bpm") || lower.StartsWith("t=") || lower.StartsWith("#t=");
     }
 
     public static Chart Parse(Music music, Difficulty difficulty)
