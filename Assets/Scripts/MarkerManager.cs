@@ -73,7 +73,7 @@ public class MarkerManager : MonoBehaviour
                 clap.loop = false;
                 clap.clip = clapSound;
                 clap.playOnAwake = false;
-                clap.volume = GameOptions.Instance.ClapVolume;
+                clap.volume = GameOptions.Instance.AutoClap ? .5f : 0;
                 ClapList.Add(clap);
             };
         }

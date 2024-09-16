@@ -35,14 +35,25 @@ public class UIManager : MonoBehaviour
             return cacheComponent as T;
         }
 
-        var foundObject = GameObject.Find(name)?.GetComponent<T>();
-        if (foundObject == null)
+        var obj = GameObject.Find(name);
+        if (obj == null)
         {
-            Debug.LogWarning($"UI Object with name '{name}' not found.");
+            Debug.LogWarning($"[UI 에러] '{name}' 라는 이름의 게임 오브젝트를 찾을 수 없었습니다.");
             return null;
         }
-        componentCache[name] = foundObject;
-        return foundObject;
+
+        if (!obj.TryGetComponent<T>(out var component))
+        {
+            component = obj.GetComponentInChildren<T>();
+        }
+
+        if (component == null)
+        {
+            Debug.LogWarning($"[UI 에러] '{name}' 라는 이름의 게임 오브젝트를 찾을 수 없었습니다.");
+            return null;
+        }
+        componentCache[name] = component;
+        return component;
     }
 
     public void AddMusicButton(Music music)
@@ -100,22 +111,8 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void InitSelectMusicScene()
+    private void InitSelectMusicScene()
     {
-        GetUIObject<Button>("StartGameButton").onClick.AddListener(() => GameManager.Instance.PlayMusic());
-
-        var basic = GetUIObject<Button>("BasicButton");
-        basic.interactable = false;
-        basic.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Basic));
-
-        var advanced = GetUIObject<Button>("AdvancedButton");
-        advanced.interactable = false;
-        advanced.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Advanced));
-
-        var extreme = GetUIObject<Button>("ExtremeButton");
-        extreme.interactable = false;
-        extreme.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Extreme));
-
         var sortByName = GetUIObject<Button>("SortByName");
         sortByName.onClick.AddListener(SortMusicByName);
         var sortByArtist = GetUIObject<Button>("SortByArtist");
@@ -125,6 +122,36 @@ public class UIManager : MonoBehaviour
 
         var settingButton = GetUIObject<Button>("SettingButton");
         settingButton.onClick.AddListener(ToggleSetting);
+
+        GetUIObject<Button>("StartGameButton").onClick.AddListener(() => GameManager.Instance.PlayMusic());
+
+        var basic = GetUIObject<Button>("BasicButton");
+        basic.interactable = false;
+        basic.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Basic));
+        var advanced = GetUIObject<Button>("AdvancedButton");
+        advanced.interactable = false;
+        advanced.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Advanced));
+        var extreme = GetUIObject<Button>("ExtremeButton");
+        extreme.interactable = false;
+        extreme.onClick.AddListener(() => GameManager.Instance.SetDifficulty(Difficulty.Extreme));
+    }
+
+    private void InitOptionUi()
+    {
+        var judgeDropdown = GetUIObject<Dropdown>("JudgeSettings");
+        judgeDropdown.value = (int)GameOptions.Instance.JudgementType;
+        judgeDropdown.onValueChanged.AddListener(value => GameOptions.Instance.JudgementType = (JudgementType)value);
+
+        var randomDropdown = GetUIObject<Dropdown>("RandomSettings");
+        randomDropdown.value = (int)GameOptions.Instance.GameMode;
+        randomDropdown.onValueChanged.AddListener(value => GameOptions.Instance.GameMode = (GameMode)value);
+
+        var autoButton = GetUIObject<Button>("AutoPlay");
+        autoButton.GetComponentInChildren<Text>().text = GameOptions.Instance.AutoPlay ? "켜짐" : "꺼짐";
+        autoButton.onClick.AddListener(() => GameOptions.Instance.AutoPlay = !GameOptions.Instance.AutoPlay);
+        var clapButton = GetUIObject<Button>("AutoClap");
+        clapButton.GetComponentInChildren<Text>().text = GameOptions.Instance.AutoClap ? "켜짐" : "꺼짐";
+        clapButton.onClick.AddListener(() => GameOptions.Instance.AutoClap = !GameOptions.Instance.AutoClap);
     }
 
     public void ToggleSetting()
@@ -173,6 +200,7 @@ public class UIManager : MonoBehaviour
         {
             case GameManager.SceneMusicSelect:
                 InitSelectMusicScene();
+                InitOptionUi();
                 break;
             case GameManager.SceneInGame:
                 DrawMusicBar(false);

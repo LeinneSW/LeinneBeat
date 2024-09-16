@@ -135,17 +135,6 @@ public class GameManager : MonoBehaviour
         GameOptions.Instance.GameMode = gameMode;
     }
 
-    public void ToggleAutoMode()
-    {
-        GameOptions.Instance.AutoPlay = !GameOptions.Instance.AutoPlay;
-    }
-
-    public void ToggleClapSound()
-    {
-        GameOptions.Instance.ClapVolume = GameOptions.Instance.ClapVolume > 0 ? 0 : 0.5f;
-        UIManager.Instance.GetUIObject<Button>("ClapSound").GetComponentInChildren<Text>().text = "박수: " + (GameOptions.Instance.ClapVolume > 0 ? "켜짐" : "꺼짐");
-    }
-
     public void SelectMusic(Music music)
     {
         if (CurrentMusic == music)
@@ -348,7 +337,7 @@ public class GameManager : MonoBehaviour
             StartCoroutine(ShowMarker(note));
         }
 
-        if (GameOptions.Instance.ClapVolume > 0)
+        if (GameOptions.Instance.AutoClap)
         {
             foreach (var time in CurrentChart.ClapTimings)
             {

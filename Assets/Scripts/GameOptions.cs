@@ -30,6 +30,19 @@ public enum JudgementVisibilityType
     Number
 }
 
+public enum MusicSortMethod
+{
+    Name,
+    Artist,
+    Score
+}
+
+public enum SortType
+{
+    Ascending,
+    Descending
+}
+
 public class GameOptions : MonoBehaviour
 {
     public static GameOptions Instance { get; private set; }
@@ -39,8 +52,12 @@ public class GameOptions : MonoBehaviour
         get => gameMode;
         set
         {
-            // TODO: UI 업데이트
             gameMode = value;
+            var dropdown = UIManager.Instance.GetUIObject<Dropdown>("RandomSettings");
+            if (dropdown != null)
+            {
+                dropdown.value = (int) value;
+            }
         }
     }
     public JudgementType JudgementType
@@ -48,8 +65,12 @@ public class GameOptions : MonoBehaviour
         get => judgementType;
         set
         {
-            // TODO: UI 업데이트
             judgementType = value;
+            var dropdown = UIManager.Instance.GetUIObject<Dropdown>("JudgeSettings");
+            if (dropdown != null)
+            {
+                dropdown.value = (int) value;
+            }
         }
     }
 
@@ -60,33 +81,54 @@ public class GameOptions : MonoBehaviour
         get => autoPlay; 
         set
         {
-            // TODO: UI 업데이트
             autoPlay = value;
-            var button = UIManager.Instance.GetUIObject<Button>("AutoMode");
+            var button = UIManager.Instance.GetUIObject<Button>("AutoPlay");
             if (button != null)
             {
-                button.GetComponentInChildren<Text>().text = "자동: " + (value ? "켜짐" : "꺼짐");
+                button.GetComponentInChildren<Text>().text = $"자동: {(value ? "켜짐" : "꺼짐")}";
             }
         }
     }
-    public float ClapVolume
+    public bool AutoClap
     {
-        get => clapVolume;
+        get => autoClap;
         set
         {
-            clapVolume = value;
-            var button = UIManager.Instance.GetUIObject<Button>("ClapSound");
+            autoClap = value;
+            var button = UIManager.Instance.GetUIObject<Button>("AutoClap");
             if (button != null)
             {
-                button.GetComponentInChildren<Text>().text = "박수: " + (value > 0 ? "켜짐" : "꺼짐");
+                button.GetComponentInChildren<Text>().text = $"박수: {(value ? "켜짐" : "꺼짐")}";
             }
         }
     }
 
+    public MusicSortMethod MusicSortMethod
+    {
+        get => musicSortMethod;
+        set
+        {
+            musicSortMethod = value;
+            // TODO: UI 업데이트
+        }
+    }
+
+    public SortType SortType
+    {
+        get => sortType;
+        set
+        {
+            sortType = value;
+            // TODO: UI 업데이트
+        }
+    }
+
     private bool autoPlay;
-    private float clapVolume;
+    private bool autoClap;
     private GameMode gameMode = GameMode.Normal;
+    private SortType sortType = SortType.Ascending;
     private JudgementType judgementType = JudgementType.Normal;
+    private MusicSortMethod musicSortMethod = MusicSortMethod.Name;
 
     private void Awake()
     {
@@ -143,7 +185,7 @@ public class GameOptions : MonoBehaviour
         }
         if (bool.TryParse(config.GetValueOrDefault("clap_sound", "false"), out auto))
         {
-            ClapVolume = auto ? 0.5f : 0;
+            AutoClap = auto;
         }
     }
 
@@ -187,7 +229,7 @@ public class GameOptions : MonoBehaviour
             "",
             "# Auto Play",
             $"auto_play={AutoPlay}",
-            $"clap_sound={ClapVolume > 0}",
+            $"clap_sound={AutoClap}",
         };
         File.WriteAllLines(filePath, textList);
     }
