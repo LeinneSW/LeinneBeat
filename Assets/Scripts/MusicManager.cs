@@ -275,23 +275,6 @@ public class MusicManager : MonoBehaviour
 
     public async Task SaveMusicScore(Difficulty difficulty, Music music)
     {
-        /*Dictionary<string, Dictionary<string, MusicScoreData>> json = new();
-        foreach (var m in MusicList)
-        {
-            json[m.Title] = new();
-            for (var i = 0; i < 3; ++i)
-            {
-                var diff = (Difficulty)i;
-                if (m.CanPlay(diff))
-                {
-                    json[m.Title][diff.ToString()] = new()
-                    {
-                        score = m.GetScore(diff),
-                        musicBar = m.GetMusicBarScore(diff)
-                    };
-                }
-            }
-        }*/
         Dictionary<string, Dictionary<string, MusicScoreData>> json;
         var scorePath = Path.Combine(Application.dataPath, "..", "Songs", "score.json");
         if (File.Exists(scorePath))
