@@ -52,7 +52,8 @@ public class GameOptions : MonoBehaviour
             judgementType = value;
         }
     }
-    public JudgementVisibilityType JudgementVisibilityType { get; set; } = JudgementVisibilityType.Number;
+
+    public bool ShowJudgementState { get; set; } = true;
 
     public bool AutoPlay
     {
@@ -120,9 +121,9 @@ public class GameOptions : MonoBehaviour
         }
 
         // Visual Setting
-        if (Enum.TryParse<JudgementVisibilityType>(config.GetValueOrDefault("judgement_visibility_type", ""), true, out var visibility))
+        if (bool.TryParse(config.GetValueOrDefault("show_judgement_state", "false"), out var visibility))
         {
-            JudgementVisibilityType = visibility;
+            ShowJudgementState = visibility;
         }
 
         // Volume Setting
@@ -178,7 +179,7 @@ public class GameOptions : MonoBehaviour
             $"judgement_type={JudgementType}",
             "",
             "# Visual",
-            $"judgement_visibility_type={JudgementVisibilityType}",
+            $"show_judgement_state={ShowJudgementState}",
             "",
             "# Game Volume",
             $"master_volume={AudioListener.volume}",

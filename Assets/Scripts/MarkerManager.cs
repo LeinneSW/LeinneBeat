@@ -120,10 +120,6 @@ public class MarkerManager : MonoBehaviour
 
     private IEnumerator ShowJudgeText(Text text, int judge)
     {
-        if(GameOptions.Instance.JudgementVisibilityType == JudgementVisibilityType.None){
-            yield break;
-        }
-
         switch (judge)
         {
             case > 1:
@@ -141,6 +137,10 @@ public class MarkerManager : MonoBehaviour
 
     public void ShowJudgeText(int row, int column, double judgeTime)
     {
+        if (!GameOptions.Instance.ShowJudgementState)
+        {
+            return;
+        }
         StartCoroutine(ShowJudgeText(judgeText[row * 4 + column], (int)Math.Round(judgeTime * 1000)));
     }
 
