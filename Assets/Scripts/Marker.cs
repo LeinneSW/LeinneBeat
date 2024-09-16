@@ -114,8 +114,14 @@ public class Marker : MonoBehaviour
                 arrowObject.Duration -= Time.timeAsDouble;
                 remainTime = arrowObject.Duration + 0.166;
                 arrowObject.EnableArrow();
+                Invoke(nameof(EnableHoldAnimation), 16f / 30f);
             }
-            Invoke(nameof(EnableHoldAnimation), 16f / 30f);
+            else
+            {
+                remainTime = 0.2f;
+                Invoke(nameof(Destroy), 0.06f);
+                GameManager.Instance.AddScore(JudgeState.Poor, Note.MusicBarLongIndex); // 과연 롱노트의 올바른 판정값은 무엇인가
+            }
         }
     }
 
@@ -205,10 +211,11 @@ public class Marker : MonoBehaviour
     {
         if (GameOptions.Instance.AutoPlay)
         {
-            if (Time.time >= StartTime + 29 / 60d - Time.deltaTime)
+            OnTouch(StartTime);
+            /*if (Time.time >= StartTime + 29 / 60d - Time.deltaTime)
             { // 프레임타임 기준으로 판단하도록 개선
                 OnTouch(StartTime + 29 / 60d);
-            }
+            }*/
             return;
         }
 
