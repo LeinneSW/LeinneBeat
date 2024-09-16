@@ -179,11 +179,13 @@ public class UIManager : MonoBehaviour
             case GameManager.SceneInGame:
                 DrawMusicBar(false);
 
-                var currentMusic = GameManager.Instance.CurrentMusic;
-                GetUIObject<Text>("MusicTitle").text = currentMusic.Title;
-                GetUIObject<Text>("MusicArtist").text = currentMusic.Artist;
+                var music = GameManager.Instance.CurrentMusic;
+                var chart = GameManager.Instance.CurrentChart;
+                GetUIObject<Text>("MusicTitle").text = music.Title;
+                GetUIObject<Text>("MusicArtist").text = music.Artist;
+                GetUIObject<Text>("MusicLevel").text = chart.Level + "";
                 var jacket = GetUIObject<Image>("MusicJacket");
-                jacket.sprite = currentMusic.Jacket;
+                jacket.sprite = music.Jacket;
                 jacket.GetComponent<Button>().onClick.AddListener(() =>
                 {
                     if (Time.time - beforeTime <= .8f)
