@@ -90,7 +90,7 @@ public class GameManager : MonoBehaviour
             CurrentMusicBarScore[musicBarIndex] += judgeState switch
             {
                 JudgeState.Perfect => 2,
-                JudgeState.Poor or JudgeState.Miss => -10,
+                JudgeState.Poor or JudgeState.Miss => -100,
                 _ => 1
             };
         }
