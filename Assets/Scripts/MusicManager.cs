@@ -41,7 +41,7 @@ public class MusicManager : MonoBehaviour
 
     public Sprite DefaultJacket;
 
-    public readonly List<Music> MusicList = new();
+    public List<Music> MusicList { get; } = new();
     public Dictionary<string, float> MusicOffsetList { get; } = new();
 
     private AudioType GetAudioType(string extension)
@@ -84,6 +84,38 @@ public class MusicManager : MonoBehaviour
                     UIManager.Instance.AddMusicButton(music);
                 }
                 break;
+        }
+    }
+
+    public void Sort()
+    {
+        switch (GameOptions.Instance.MusicSortMethod)
+        {
+            case MusicSortMethod.Title:
+                if (GameOptions.Instance.MusicSortType == SortType.Ascending)
+                    MusicList.Sort((a, b) => string.Compare(a.Title, b.Title, StringComparison.OrdinalIgnoreCase));
+                else
+                    MusicList.Sort((a, b) => string.Compare(b.Title, a.Title, StringComparison.OrdinalIgnoreCase));
+                break;
+            case MusicSortMethod.Artist:
+                if (GameOptions.Instance.MusicSortType == SortType.Ascending)
+                    MusicList.Sort((a, b) => string.Compare(a.Artist, b.Artist, StringComparison.OrdinalIgnoreCase));
+                else
+                    MusicList.Sort((a, b) => string.Compare(b.Artist, a.Artist, StringComparison.OrdinalIgnoreCase));
+                break;
+            default:
+                var difficulty = GameManager.Instance.CurrentDifficulty;
+                if (GameOptions.Instance.MusicSortType == SortType.Ascending)
+                    MusicList.Sort((a, b) => a.GetScore(difficulty).CompareTo(b.GetScore(difficulty)));
+                else
+                    MusicList.Sort((a, b) => b.GetScore(difficulty).CompareTo(a.GetScore(difficulty)));
+                break;
+        }
+
+        UIManager.Instance.ResetMusicList();
+        foreach (var music in MusicList)
+        {
+            UIManager.Instance.AddMusicButton(music);
         }
     }
 
@@ -131,7 +163,7 @@ public class MusicManager : MonoBehaviour
                 if (!success) --totalCount;
                 if (totalCount > MusicList.Count) return;
 
-                UIManager.Instance.SortMusicByName();
+                Sort();
                 foreach (var (musicName, difficultyTable) in scoreDataList)
                 {
                     var music = MusicList.Find(music =>
@@ -161,6 +193,7 @@ public class MusicManager : MonoBehaviour
         if (songFiles.Length < 1)
         {
             Debug.Log($"'{title}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            afterFunction(false);
             yield break;
         }
 
@@ -169,6 +202,7 @@ public class MusicManager : MonoBehaviour
         if (audioType == AudioType.UNKNOWN)
         {
             Debug.Log($"'{title}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            afterFunction(false);
             yield break;
         }
 
@@ -178,6 +212,7 @@ public class MusicManager : MonoBehaviour
         if (www.result != UnityWebRequest.Result.Success)
         {
             Debug.Log($"폴더: {musicPath}, 오류: {www.error}");
+            afterFunction(false);
             yield break;
         }
 
@@ -315,7 +350,7 @@ public class MusicManager : MonoBehaviour
 
 public class Music{
     public readonly string Title;
-    public readonly string Author;
+    public readonly string Artist;
     public readonly float Preview = 35f;
 
     public readonly string Path;
@@ -351,12 +386,12 @@ public class Music{
 
     private readonly Dictionary<Difficulty, Chart> chartList = new();
 
-    public Music(AudioClip clip, string path, string title, string author, Sprite jacket = null)
+    public Music(AudioClip clip, string path, string title, string artist, Sprite jacket = null)
     {
         Clip = clip;
         Path = path;
         Title = title;
-        Author = author;
+        Artist = artist;
         Jacket = jacket;
     }
 
@@ -582,7 +617,7 @@ public class Chart
                 }
             }
         }
-        return chart;
+        return chart.NoteCount < 1 ? null : chart;
     }
 
     public void AddNote(Note newNote)

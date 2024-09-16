@@ -63,41 +63,10 @@ public class UIManager : MonoBehaviour
         var button = Instantiate(MusicButtonPrefab, content);
         button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
         button.transform.GetChild(0).GetComponent<Text>().text = $"{music.Title}{(music.IsLong ? " (홀드)" : "")}";
-        button.transform.GetChild(1).GetComponent<Text>().text = music.Author;
+        button.transform.GetChild(1).GetComponent<Text>().text = music.Artist;
         if (music.Jacket != null)
         {
             button.transform.GetChild(2).GetComponent<Image>().sprite = music.Jacket;
-        }
-    }
-
-    public void SortMusicByName()
-    {
-        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Title, y.Title, StringComparison.OrdinalIgnoreCase));
-        ResetMusicList();
-        foreach (var music in MusicManager.Instance.MusicList)
-        {
-            AddMusicButton(music);
-        }
-    }
-
-    public void SortMusicByArtist()
-    {
-        MusicManager.Instance.MusicList.Sort((x, y) => string.Compare(x.Author, y.Author, StringComparison.OrdinalIgnoreCase));
-        ResetMusicList();
-        foreach (var music in MusicManager.Instance.MusicList)
-        {
-            AddMusicButton(music);
-        }
-    }
-
-    public void SortMusicByScore()
-    {
-        var difficulty = GameManager.Instance.CurrentDifficulty;
-        MusicManager.Instance.MusicList.Sort((x, y) => x.GetScore(difficulty).CompareTo(y.GetScore(difficulty)));
-        ResetMusicList();
-        foreach (var music in MusicManager.Instance.MusicList)
-        {
-            AddMusicButton(music);
         }
     }
 
@@ -113,12 +82,17 @@ public class UIManager : MonoBehaviour
 
     private void InitSelectMusicScene()
     {
-        var sortByName = GetUIObject<Button>("SortByName");
-        sortByName.onClick.AddListener(SortMusicByName);
+        var sortByTitle = GetUIObject<Button>("SortByTitle");
+        sortByTitle.onClick.AddListener(() => GameOptions.Instance.MusicSortMethod = MusicSortMethod.Title);
         var sortByArtist = GetUIObject<Button>("SortByArtist");
-        sortByArtist.onClick.AddListener(SortMusicByArtist);
+        sortByArtist.onClick.AddListener(() => GameOptions.Instance.MusicSortMethod = MusicSortMethod.Artist);
         var sortByScore = GetUIObject<Button>("SortByScore");
-        sortByScore.onClick.AddListener(SortMusicByScore);
+        sortByScore.onClick.AddListener(() => GameOptions.Instance.MusicSortMethod = MusicSortMethod.Score);
+
+        var ascendingButton = GetUIObject<Button>("AscendingButton");
+        ascendingButton.onClick.AddListener(() => GameOptions.Instance.MusicSortType = SortType.Ascending);
+        var descendingButton = GetUIObject<Button>("DescendingButton");
+        descendingButton.onClick.AddListener(() => GameOptions.Instance.MusicSortType = SortType.Descending);
 
         var settingButton = GetUIObject<Button>("SettingButton");
         settingButton.onClick.AddListener(ToggleSetting);
@@ -207,7 +181,7 @@ public class UIManager : MonoBehaviour
 
                 var currentMusic = GameManager.Instance.CurrentMusic;
                 GetUIObject<Text>("MusicTitle").text = currentMusic.Title;
-                GetUIObject<Text>("MusicArtist").text = currentMusic.Author;
+                GetUIObject<Text>("MusicArtist").text = currentMusic.Artist;
                 var jacket = GetUIObject<Image>("MusicJacket");
                 jacket.sprite = currentMusic.Jacket;
                 jacket.GetComponent<Button>().onClick.AddListener(() =>

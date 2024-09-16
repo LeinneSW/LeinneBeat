@@ -32,7 +32,7 @@ public enum JudgementVisibilityType
 
 public enum MusicSortMethod
 {
-    Name,
+    Title,
     Artist,
     Score
 }
@@ -46,7 +46,6 @@ public enum SortType
 public class GameOptions : MonoBehaviour
 {
     public static GameOptions Instance { get; private set; }
-    public float MusicVolume { get; set; } = .35f;
     public GameMode GameMode
     {
         get => gameMode;
@@ -75,6 +74,28 @@ public class GameOptions : MonoBehaviour
     }
 
     public bool ShowJudgementState { get; set; } = true;
+    public MusicSortMethod MusicSortMethod
+    {
+        get => musicSortMethod;
+        set
+        {
+            var isChanged = musicSortMethod != value;
+            musicSortMethod = value;
+            if (isChanged) MusicManager.Instance.Sort();
+        }
+    }
+    public SortType MusicSortType
+    {
+        get => musicSortType;
+        set
+        {
+            var isChanged = value != musicSortType;
+            musicSortType = value;
+            if (isChanged) MusicManager.Instance.Sort();
+        }
+    }
+
+    public float MusicVolume { get; set; } = .35f;
 
     public bool AutoPlay
     {
@@ -103,32 +124,12 @@ public class GameOptions : MonoBehaviour
         }
     }
 
-    public MusicSortMethod MusicSortMethod
-    {
-        get => musicSortMethod;
-        set
-        {
-            musicSortMethod = value;
-            // TODO: UI 업데이트
-        }
-    }
-
-    public SortType SortType
-    {
-        get => sortType;
-        set
-        {
-            sortType = value;
-            // TODO: UI 업데이트
-        }
-    }
-
     private bool autoPlay;
     private bool autoClap;
     private GameMode gameMode = GameMode.Normal;
-    private SortType sortType = SortType.Ascending;
+    private SortType musicSortType = SortType.Ascending;
     private JudgementType judgementType = JudgementType.Normal;
-    private MusicSortMethod musicSortMethod = MusicSortMethod.Name;
+    private MusicSortMethod musicSortMethod = MusicSortMethod.Title;
 
     private void Awake()
     {
@@ -155,14 +156,22 @@ public class GameOptions : MonoBehaviour
         // Game Style Setting
         if (Enum.TryParse<GameMode>(config.GetValueOrDefault("gamemode", ""), true, out var mode))
         {
-            GameMode = mode;
+            gameMode = mode;
         }
         if (Enum.TryParse<JudgementType>(config.GetValueOrDefault("judgement_type", ""), true, out var type))
         {
-            JudgementType = type;
+            judgementType = type;
         }
 
         // Visual Setting
+        if (Enum.TryParse<SortType>(config.GetValueOrDefault("music_sort_type", ""), true, out var sortType))
+        {
+            musicSortType = sortType;
+        }
+        if (Enum.TryParse<MusicSortMethod>(config.GetValueOrDefault("music_sort_method", ""), true, out var sortMethod))
+        {
+            musicSortMethod = sortMethod;
+        }
         if (bool.TryParse(config.GetValueOrDefault("show_judgement_state", "false"), out var visibility))
         {
             ShowJudgementState = visibility;
@@ -181,11 +190,11 @@ public class GameOptions : MonoBehaviour
         // Auto Play Setting
         if (bool.TryParse(config.GetValueOrDefault("auto_play", "false"), out var auto))
         {
-            AutoPlay = auto;
+            autoPlay = auto;
         }
         if (bool.TryParse(config.GetValueOrDefault("clap_sound", "false"), out auto))
         {
-            AutoClap = auto;
+            autoClap = auto;
         }
     }
 
@@ -221,6 +230,8 @@ public class GameOptions : MonoBehaviour
             $"judgement_type={JudgementType}",
             "",
             "# Visual",
+            $"music_sort_type={MusicSortType}",
+            $"music_sort_method={MusicSortMethod}",
             $"show_judgement_state={ShowJudgementState}",
             "",
             "# Game Volume",

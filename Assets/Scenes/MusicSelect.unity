@@ -132,7 +132,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_Text
-      value: "\uC774\uB984\uC21C"
+      value: "\uC81C\uBAA9"
       objectReference: {fileID: 0}
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_FontData.m_FontSize
@@ -148,7 +148,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5499622844135788344, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_Name
-      value: SortByName
+      value: SortByTitle
       objectReference: {fileID: 0}
     - target: {fileID: 5499622844135788344, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_IsActive
@@ -2729,7 +2729,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_Text
-      value: "\uC791\uACE1\uAC00\uC21C"
+      value: "\uC791\uACE1\uAC00"
       objectReference: {fileID: 0}
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_FontData.m_FontSize
@@ -3057,7 +3057,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_Text
-      value: "\uC624\uB984\uCC28\uC21C"
+      value: "\uC624\uB984\uCC28"
       objectReference: {fileID: 0}
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_FontData.m_FontSize
@@ -4225,7 +4225,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_Text
-      value: "\uC810\uC218\uC21C"
+      value: "\uC810\uC218"
       objectReference: {fileID: 0}
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_FontData.m_FontSize
@@ -7234,7 +7234,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_Text
-      value: "\uB0B4\uB9BC\uCC28\uC21C"
+      value: "\uB0B4\uB9BC\uCC28"
       objectReference: {fileID: 0}
     - target: {fileID: 5499622844081799036, guid: 8eb62d6f64a2c0d418e8d612e6d1e79b, type: 3}
       propertyPath: m_FontData.m_FontSize

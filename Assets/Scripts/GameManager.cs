@@ -151,7 +151,7 @@ public class GameManager : MonoBehaviour
         CurrentMusic = music;
         var uiManager = UIManager.Instance;
         uiManager.GetUIObject<Text>("SelectedMusicTitle").text = music.Title;
-        uiManager.GetUIObject<Text>("SelectedMusicArtist").text = music.Author;
+        uiManager.GetUIObject<Text>("SelectedMusicArtist").text = music.Artist;
         uiManager.GetUIObject<Image>("SelectedMusicJacket").sprite = music.Jacket;
         previewCoroutine = StartCoroutine(PlayMusicPreview());
         for (var index = 0; index < 3; ++index)
