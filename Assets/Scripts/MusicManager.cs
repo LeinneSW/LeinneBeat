@@ -163,7 +163,6 @@ public class MusicManager : MonoBehaviour
                 if (!success) --totalCount;
                 if (totalCount > MusicList.Count) return;
 
-                Sort();
                 foreach (var (musicName, difficultyTable) in scoreDataList)
                 {
                     var music = MusicList.Find(music =>
@@ -181,6 +180,7 @@ public class MusicManager : MonoBehaviour
                         music.SetMusicBarScore(difficulty, scoreData.musicBar);
                     }
                 }
+                Sort();
             }));
         }
     }
