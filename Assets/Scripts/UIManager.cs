@@ -186,7 +186,7 @@ public class UIManager : MonoBehaviour
                 jacket.sprite = currentMusic.Jacket;
                 jacket.GetComponent<Button>().onClick.AddListener(() =>
                 {
-                    if (Time.time - beforeTime <= 1)
+                    if (Time.time - beforeTime <= .8f)
                     {
                         GameManager.Instance.QuitGame();
                         return;
