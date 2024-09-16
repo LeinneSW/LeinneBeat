@@ -211,11 +211,10 @@ public class Marker : MonoBehaviour
     {
         if (GameOptions.Instance.AutoPlay)
         {
-            OnTouch(StartTime);
-            /*if (Time.time >= StartTime + 29 / 60d - Time.deltaTime)
+            if (Time.time >= StartTime + 29 / 60d - Time.deltaTime)
             { // 프레임타임 기준으로 판단하도록 개선
                 OnTouch(StartTime + 29 / 60d);
-            }*/
+            }
             return;
         }
 
