@@ -397,8 +397,6 @@ public class GameManager : MonoBehaviour
 
         comboText.fontSize = 200;
         comboText.text = $"Cleared\n{rating}";
-        CurrentMusic.SetScore(CurrentDifficulty, totalScore);
-        CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
 
         for (int i = 0, limit = (int) JudgeState.Miss; i <= limit; ++i)
         {
@@ -407,6 +405,9 @@ public class GameManager : MonoBehaviour
                 $"{judge.ToString().ToUpper()}|\t{earlyJudgeList[i] + rateJudgeList[i]}";
         }
 
+        if (GameOptions.Instance.AutoPlay) yield break;
+        CurrentMusic.SetScore(CurrentDifficulty, totalScore);
+        CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
         _ = MusicManager.Instance.SaveMusicScore(CurrentDifficulty, CurrentMusic);
     }
 

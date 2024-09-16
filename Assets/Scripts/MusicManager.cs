@@ -408,7 +408,7 @@ public class Music{
 
     public void SetScore(Difficulty difficulty, int score)
     {
-        if ((!GameOptions.Instance.AutoPlay || !GameManager.Instance.IsStarted) && ScoreList[difficulty] < score)
+        if (ScoreList[difficulty] < score)
         {
             ScoreList[difficulty] = score;
         }
@@ -416,10 +416,6 @@ public class Music{
 
     public void SetMusicBarScore(Difficulty difficulty, List<int> score)
     {
-        if (GameOptions.Instance.AutoPlay && GameManager.Instance.IsStarted)
-        {
-            return;
-        }
         for (int i = 0, length = Math.Min(score.Count, 120); i < length; ++i)
         {
             MusicBarScoreList[difficulty][i] = Math.Max(MusicBarScoreList[difficulty][i], score[i]);
