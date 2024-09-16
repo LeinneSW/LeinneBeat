@@ -360,6 +360,7 @@ public class GameManager : MonoBehaviour
         {
             yield return new WaitForSeconds(CurrentMusic.StartOffset);
         }
+        yield return null;
 
         var lastIndex = 0;
         var divide = BackgroundSource.clip.length / 120;
