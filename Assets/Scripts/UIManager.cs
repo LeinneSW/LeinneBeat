@@ -118,10 +118,10 @@ public class UIManager : MonoBehaviour
         randomDropdown.onValueChanged.AddListener(value => GameOptions.Instance.GameMode = (GameMode)value);
 
         var autoButton = GetUIObject<Button>("AutoPlay");
-        autoButton.GetComponentInChildren<Text>().text = GameOptions.Instance.AutoPlay ? "켜짐" : "꺼짐";
+        autoButton.GetComponentInChildren<Text>().text = $"자동: {(GameOptions.Instance.AutoPlay ? "켜짐" : "꺼짐")}";
         autoButton.onClick.AddListener(() => GameOptions.Instance.AutoPlay = !GameOptions.Instance.AutoPlay);
         var clapButton = GetUIObject<Button>("AutoClap");
-        clapButton.GetComponentInChildren<Text>().text = GameOptions.Instance.AutoClap ? "켜짐" : "꺼짐";
+        clapButton.GetComponentInChildren<Text>().text = $"박수: {(GameOptions.Instance.AutoClap ? "켜짐" : "꺼짐")}";
         clapButton.onClick.AddListener(() => GameOptions.Instance.AutoClap = !GameOptions.Instance.AutoClap);
     }
 
