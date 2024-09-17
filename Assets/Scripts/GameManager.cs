@@ -425,10 +425,8 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator ShowMarker(Note note)
     {
-        //var text = GameObject.Find("Measure").GetComponent<Text>();
         yield return new WaitForSeconds((float)note.StartTime);
         MarkerManager.Instance.ShowMarker(note);
-        //text.text = note.MeasureIndex + "";
     }
 
     private IEnumerator PlayClapForAuto(float delay)
