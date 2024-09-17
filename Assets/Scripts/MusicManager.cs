@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -235,21 +234,40 @@ public class MusicManager : MonoBehaviour
             }
         }
 
+        var success = false;
         music ??= new(clip, dirPath, dirName, sprite);
-        foreach (var difficulty in Enum.GetValues(typeof(Difficulty)))
+        for (int i = 0, limit = (int)Difficulty.Extreme; i <= limit; ++i)
         {
-            var chart = Chart.Parse(music, (Difficulty) difficulty);
-            if (chart != null)
-            {
-                music.AddChart(chart);
-            }
+            var difficulty = (Difficulty) i;
+            var chart = Chart.Parse(music, difficulty);
+            if (chart == null) continue;
+            success = true;
+            music.AddChart(chart);
         }
 
         if (music.IsValid)
         {
             MusicList.Add(music);
         }
-        afterFunction(music.IsValid);
+
+        var ver2Files = Directory.GetFiles(dirPath, "*_2.txt");
+        if (ver2Files.Length > 0)
+        {
+            var music2 = music.Clone();
+            for (int i = 0, limit = (int)Difficulty.Extreme; i <= limit; ++i)
+            {
+                var difficulty = (Difficulty)i;
+                var chart = Chart.Parse(music2, difficulty, true);
+                if (chart == null) continue;
+                success = true;
+                music2.AddChart(chart);
+            }
+            if (music2.IsValid)
+            {
+                MusicList.Add(music2);
+            }
+        }
+        afterFunction(success);
     }
 }
 
@@ -312,6 +330,19 @@ public class Music{
         {
             Duration = info.duration;
         }
+    }
+
+    public Music Clone()
+    {
+        MusicInfo info = new()
+        {
+            title = Title,
+            artist = Artist,
+            offset = Offset,
+            preview = Preview,
+            duration = Duration
+        };
+        return new(Clip, MusicPath, info, Jacket);
     }
 
     public void AddChart(Chart chart)
@@ -501,10 +532,10 @@ public class Chart
         return lower.StartsWith("bpm") || lower.StartsWith("t=") || lower.StartsWith("#t=");
     }
 
-    public static Chart Parse(Music music, Difficulty difficulty)
+    public static Chart Parse(Music music, Difficulty difficulty, bool ver2 = false)
     {
         var diffStr = difficulty.ToString().ToLower();
-        var filePath = Path.Combine(music.MusicPath, $"{diffStr}.txt");
+        var filePath = Path.Combine(music.MusicPath, $"{diffStr}{(ver2 ? "_2" : "")}.txt");
         if (!File.Exists(filePath))
         {
             return null;
@@ -621,6 +652,15 @@ public class ChartRandomHelper
         this.noteList = noteList;
     }
 
+    private void ShuffleList(List<int> list)
+    {
+        for (var i = list.Count - 1; i > 0; i--)
+        {
+            var j = UnityEngine.Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+    }
+
     private List<Note> Random()
     {
         List<int> row = new();
@@ -654,6 +694,34 @@ public class ChartRandomHelper
             {
                 position.Add(random);
             }
+        }
+        return noteList.Select(note => note.Random(position)).ToList();
+    }
+
+    private List<Note> HalfRandom()
+    {
+        // 왼쪽 영역과 오른쪽 영역의 위치를 각각 담을 리스트를 생성합니다.
+        List<int> leftPositions = new();
+        List<int> rightPositions = new();
+
+        // 16개의 위치를 순회하며 영역에 따라 분류합니다.
+        for (var i = 0; i < 16; i++)
+        {
+            var column = i % 4;
+            if (column <= 1)
+                leftPositions.Add(i); // 컬럼 0, 1: 왼쪽 영역
+            else
+                rightPositions.Add(i); // 컬럼 2, 3: 오른쪽 영역
+        }
+        ShuffleList(leftPositions);
+        ShuffleList(rightPositions);
+
+        var col = 0;
+        var row = 0;
+        List<int> position = new();
+        for (var i = 0; i < 16; i++)
+        {
+            position.Add(i % 4 <= 1 ? leftPositions[col++] : rightPositions[row++]);
         }
         return noteList.Select(note => note.Random(position)).ToList();
     }
@@ -743,7 +811,7 @@ public class ChartRandomHelper
             GameMode.FullRandom => FullRandom(),
             GameMode.Random => Random(),
             GameMode.RandomPlus => RandomPlus(),
-            GameMode.HalfRandom => noteList,
+            GameMode.HalfRandom => HalfRandom(),
             _ => noteList
         };
     }
