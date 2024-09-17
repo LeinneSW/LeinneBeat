@@ -454,6 +454,7 @@ public class Chart
             return Math.Abs(max - min) < 0.01 ? min + "" : $"{min}-{max}";
         }
     }
+    public string LevelString => Level >= 9 ? Level.ToString("F1") : Level + "";
     public List<Note> NoteList
     {
         get
@@ -505,7 +506,7 @@ public class Chart
     private Chart(Music music, double level, Difficulty difficulty)
     {
         Music = music;
-        Level = level;
+        Level = level > 8 ? (int) (level * 10) / 10d : (int) level;
         Difficulty = difficulty;
     }
 

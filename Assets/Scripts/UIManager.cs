@@ -180,7 +180,7 @@ public class UIManager : MonoBehaviour
                 var chart = GameManager.Instance.CurrentChart;
                 GetUIObject<Text>("MusicTitle").text = music.Title;
                 GetUIObject<Text>("MusicArtist").text = music.Artist;
-                GetUIObject<Text>("MusicLevel").text = chart.Level + "";
+                GetUIObject<Text>("MusicLevel").text = chart.LevelString;
                 var jacket = GetUIObject<Image>("MusicJacket");
                 jacket.sprite = music.Jacket;
                 jacket.GetComponent<Button>().onClick.AddListener(() =>

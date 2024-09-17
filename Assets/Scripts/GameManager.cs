@@ -162,7 +162,7 @@ public class GameManager : MonoBehaviour
         uiManager.DrawMusicBar();
         if (CurrentChart != null)
         {
-            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
+            uiManager.GetUIObject<Text>("SelectedMusicLevel").text = CurrentChart.LevelString;
             uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
         }
         else
@@ -184,7 +184,7 @@ public class GameManager : MonoBehaviour
         var uiManager = UIManager.Instance;
         uiManager.UpdateDifficulty();
         if (CurrentMusic == null || !CurrentMusic.CanPlay(difficulty)) return;
-        uiManager.GetUIObject<Text>("SelectedMusicLevel").text = "" + CurrentChart.Level;
+        uiManager.GetUIObject<Text>("SelectedMusicLevel").text = CurrentChart.LevelString;
         uiManager.GetUIObject<Text>("SelectedMusicScore").text = "" + CurrentChart.Score;
     }
 
