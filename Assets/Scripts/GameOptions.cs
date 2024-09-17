@@ -11,7 +11,7 @@ public enum GameMode
     Degree180,
     Degree270,
     Random,
-    Random2,
+    RandomPlus,
     HalfRandom,
     FullRandom // 무리배치(겹노트) 해결해야함
 }

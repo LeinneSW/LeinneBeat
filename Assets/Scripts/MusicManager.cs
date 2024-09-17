@@ -42,7 +42,6 @@ public class MusicManager : MonoBehaviour
     public Sprite DefaultJacket;
 
     public List<Music> MusicList { get; } = new();
-    public Dictionary<string, float> MusicOffsetList { get; } = new();
 
     private AudioType GetAudioType(string extension)
     {
@@ -123,24 +122,6 @@ public class MusicManager : MonoBehaviour
     {
         // TODO: info.json의 offset값으로 싱크 조절
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
-        var syncPath = Path.Combine(basePath, "sync.txt");
-        if (File.Exists(syncPath))
-        {
-            var lines = File.ReadAllLines(syncPath);
-            foreach (var line in lines)
-            {
-                var split = line.Trim().Split(":");
-                if (split.Length < 2)
-                {
-                    continue;
-                }
-                if (float.TryParse(split[1].Trim(), out var value))
-                {
-                    MusicOffsetList[split[0].Trim()] = value;
-                }
-            }
-        }
-
         Dictionary<string, Dictionary<string, MusicScoreData>> scoreDataList;
         var scorePath = Path.Combine(basePath, "score.json");
         if (File.Exists(scorePath))
@@ -181,6 +162,14 @@ public class MusicManager : MonoBehaviour
                     }
                 }
                 Sort();
+                /*foreach (var music in MusicList)
+                {
+                    SaveInfo(music);
+                    if (music.Jacket == DefaultJacket)
+                    {
+                        Debug.Log($"자켓이 없는 곡: {music.Title}");
+                    }
+                }*/
             }));
         }
     }
@@ -246,8 +235,7 @@ public class MusicManager : MonoBehaviour
             }
         }
 
-        music ??= new(DownloadHandlerAudioClip.GetContent(www), dirPath, dirName, "작곡가", sprite);
-        _ = music.StartOffset; // TODO: remove HACK
+        music ??= new(clip, dirPath, dirName, sprite);
         foreach (var difficulty in Enum.GetValues(typeof(Difficulty)))
         {
             var chart = Chart.Parse(music, (Difficulty) difficulty);
@@ -263,83 +251,21 @@ public class MusicManager : MonoBehaviour
         }
         afterFunction(music.IsValid);
     }
-
-    public void SetMusicOffset(string title, float offset)
-    {
-        MusicOffsetList[title] = offset;
-    }
-
-    public float GetMusicOffset(string title)
-    {
-        MusicOffsetList.TryAdd(title, 0);
-        return MusicOffsetList[title];
-    }
-
-    public async Task SaveMusicScore(Music music, Difficulty difficulty)
-    {
-        Dictionary<string, Dictionary<string, MusicScoreData>> json;
-        var scorePath = Path.Combine(Application.dataPath, "..", "Songs", "score.json");
-        if (File.Exists(scorePath))
-        {
-            var text = await File.ReadAllTextAsync(scorePath);
-            json = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, MusicScoreData>>>(text);
-        }
-        else
-        {
-            json = new();
-        }
-
-        var title = $"{music.Title}{(music.IsLong ? " [HOLD]" : "")}";
-        json.TryAdd(title, new());
-        json[title][difficulty.ToString()] = new()
-        {
-            score = music.GetScore(difficulty),
-            musicBar = music.GetMusicBarScore(difficulty)
-        };
-
-        var jsonStr = JsonConvert.SerializeObject(json);
-        await File.WriteAllTextAsync(scorePath, jsonStr);
-    }
-
-    public async Task SaveMusicOffset(string name)
-    {
-        var startOffset = GetMusicOffset(name);
-        var path = Path.Combine(Application.dataPath, "..", "Songs", "sync.txt");
-        List<string> lines;
-        if (File.Exists(path))
-        {
-            lines = new(await File.ReadAllLinesAsync(path));
-        }
-        else
-        {
-            lines = new();
-        }
-
-        var find = false;
-        for (var i = lines.Count - 1; i >= 0; --i)
-        {
-            var line = lines[i];
-            if (!lines[i].StartsWith($"{name}:")) continue;
-            lines[i] = $"{name}:{startOffset}";
-            if (line == lines[i]) return; // 동일할경우 저장하지 않음
-            find = true;
-            break;
-        }
-        if (!find)
-        {
-            lines.Add($"{name}:{startOffset}");
-        }
-        await File.WriteAllLinesAsync(path, lines);
-    }
 }
 
 public class Music{
     public readonly string Title;
-    public readonly string Artist;
+    public readonly string Artist = "작곡가";
     public readonly float Preview = 35f;
     public readonly float Duration = 10f;
+    /**
+    * 음악이 시작되는 시간
+    * 값이 작아지면: 노래가 빨리재생됨(노래가 느릴때 이쪽으로)
+    * 값이 커지면: 노래가 늦게재생됨(노래가 빠를때 이쪽으로)
+    */
+    public float Offset { get; set; }
 
-    public readonly string Path;
+    public readonly string MusicPath;
     public readonly AudioClip Clip;
     public readonly Sprite Jacket;
     public readonly Dictionary<Difficulty, int> ScoreList = new()
@@ -355,40 +281,29 @@ public class Music{
         { Difficulty.Extreme, new(new int[120]) }
     };
 
-    /**
-    * 음악이 시작되는 시간 
-    * 값이 작아지면: 노래가 빨리재생됨(노래가 느릴때 이쪽으로)
-    * 값이 커지면: 노래가 늦게재생됨(노래가 빠를때 이쪽으로)
-    */
-    public float StartOffset
-    {
-        get => MusicManager.Instance.GetMusicOffset(Title);
-        set => MusicManager.Instance.SetMusicOffset(Title, value);
-    }
-
     public bool IsValid => chartList.Count > 0;
 
     public bool IsLong { get; private set; }
 
     private readonly Dictionary<Difficulty, Chart> chartList = new();
 
-    public Music(AudioClip clip, string path, string title, string artist, Sprite jacket = null)
+    public Music(AudioClip clip, string musicPath, string title, Sprite jacket)
     {
         Clip = clip;
-        Path = path;
+        MusicPath = musicPath;
         Title = title;
-        Artist = artist;
         Jacket = jacket;
     }
 
-    public Music(AudioClip clip, string path, MusicInfo info, Sprite jacket = null)
+    public Music(AudioClip clip, string musicPath, MusicInfo info, Sprite jacket)
     {
         Clip = clip;
-        Path = path;
+        MusicPath = musicPath;
         Jacket = jacket;
 
         Title = info.title;
         Artist = info.artist;
+        Offset = info.offset;
         if (0 <= info.preview && info.preview < clip.length)
         {
             Preview = info.preview;
@@ -441,6 +356,46 @@ public class Music{
         {
             MusicBarScoreList[difficulty][i] = Math.Max(MusicBarScoreList[difficulty][i], score[i]);
         }
+    }
+
+    public async void SaveInfo()
+    {
+        var filePath = Path.Combine(MusicPath, "info.json");
+        Dictionary<string, object> json = new()
+        {
+            {"title", Title},
+            {"artist", Artist},
+            {"offset", Offset},
+            {"preview", Preview},
+            {"duration", Duration},
+        };
+        var jsonStr = JsonConvert.SerializeObject(json, Formatting.Indented);
+        await File.WriteAllTextAsync(filePath, jsonStr);
+    }
+
+    public async void SaveScore(Difficulty difficulty)
+    {
+        Dictionary<string, Dictionary<string, MusicScoreData>> json;
+        var scorePath = Path.Combine(Application.dataPath, "..", "Songs", "score.json");
+        if (File.Exists(scorePath))
+        {
+            var text = await File.ReadAllTextAsync(scorePath);
+            json = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, MusicScoreData>>>(text);
+        }
+        else
+        {
+            json = new();
+        }
+
+        var title = $"{Title}{(IsLong ? " [HOLD]" : "")}";
+        json.TryAdd(title, new());
+        json[title][difficulty.ToString()] = new()
+        {
+            score = GetScore(difficulty),
+            musicBar = GetMusicBarScore(difficulty)
+        };
+        var jsonStr = JsonConvert.SerializeObject(json);
+        await File.WriteAllTextAsync(scorePath, jsonStr);
     }
 }
 
@@ -549,7 +504,7 @@ public class Chart
     public static Chart Parse(Music music, Difficulty difficulty)
     {
         var diffStr = difficulty.ToString().ToLower();
-        var filePath = Path.Combine(music.Path, $"{diffStr}.txt");
+        var filePath = Path.Combine(music.MusicPath, $"{diffStr}.txt");
         if (!File.Exists(filePath))
         {
             return null;
@@ -666,6 +621,43 @@ public class ChartRandomHelper
         this.noteList = noteList;
     }
 
+    private List<Note> Random()
+    {
+        List<int> row = new();
+        List<int> column = new();
+        while (row.Count < 4)
+        {
+            var random = UnityEngine.Random.Range(0, 4);
+            if (!row.Contains(random))
+            {
+                row.Add(random);
+            }
+        }
+        while (column.Count < 4)
+        {
+            var random = UnityEngine.Random.Range(0, 4);
+            if (!column.Contains(random))
+            {
+                column.Add(random);
+            }
+        }
+        return noteList.Select(note => note.Random(row, column)).ToList();
+    }
+
+    private List<Note> RandomPlus()
+    {
+        List<int> position = new();
+        while (position.Count < 16)
+        {
+            var random = UnityEngine.Random.Range(0, 16);
+            if (!position.Contains(random))
+            {
+                position.Add(random);
+            }
+        }
+        return noteList.Select(note => note.Random(position)).ToList();
+    }
+
     private List<Note> FullRandom()
     {
         List<Note> result = new();
@@ -691,7 +683,7 @@ public class ChartRandomHelper
                     return FullRandom(); // 재시도
                 }
 
-                var chosenPosition = validPositions[Random.Range(0, validPositions.Count)];
+                var chosenPosition = validPositions[UnityEngine.Random.Range(0, validPositions.Count)];
                 var barRow = -1;
                 var barColumn = -1;
                 var row = chosenPosition.Item1;
@@ -717,21 +709,21 @@ public class ChartRandomHelper
 
                     if (validPositions.Count > 0) // 유효한 위치가 있는 경우
                     {
-                        chosenPosition = validPositions[Random.Range(0, validPositions.Count)];
+                        chosenPosition = validPositions[UnityEngine.Random.Range(0, validPositions.Count)];
                         barRow = chosenPosition.Item1;
                         barColumn = chosenPosition.Item2;
                     }
                     else
                     {
-                        if (Random.Range(0, 2) == 0) // 50% 확률로 Row와 일치할지, Column과 일치할지 결정
+                        if (UnityEngine.Random.Range(0, 2) == 0) // 50% 확률로 Row와 일치할지, Column과 일치할지 결정
                         {
                             barRow = row;
-                            barColumn = Random.Range(0, 4);
+                            barColumn = UnityEngine.Random.Range(0, 4);
                         }
                         else
                         {
                             barRow = column;
-                            barColumn = Random.Range(0, 4);
+                            barColumn = UnityEngine.Random.Range(0, 4);
                         }
                     }
                     AddArrowTime(barRow, barColumn, startTime);
@@ -749,11 +741,8 @@ public class ChartRandomHelper
         return GameOptions.Instance.GameMode switch
         {
             GameMode.FullRandom => FullRandom(),
-            GameMode.Degree90 => noteList,
-            GameMode.Degree180 => noteList,
-            GameMode.Degree270 => noteList,
-            GameMode.Random => noteList,
-            GameMode.Random2 => noteList,
+            GameMode.Random => Random(),
+            GameMode.RandomPlus => RandomPlus(),
             GameMode.HalfRandom => noteList,
             _ => noteList
         };

@@ -27,7 +27,7 @@ public class ComboShutter : MonoBehaviour
         }
 
         var music = GameManager.Instance.CurrentMusic;
-        var remainTime = music.Clip.length + Mathf.Max(0, music.StartOffset);
+        var remainTime = music.Clip.length + Mathf.Max(0, music.Offset);
         while (remainTime > 0)
         {
             remainTime -= Time.deltaTime;

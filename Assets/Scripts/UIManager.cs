@@ -64,10 +64,7 @@ public class UIManager : MonoBehaviour
         button.GetComponent<Button>().onClick.AddListener(() => GameManager.Instance.SelectMusic(music));
         button.transform.GetChild(0).GetComponent<Text>().text = $"{music.Title}{(music.IsLong ? " (홀드)" : "")}";
         button.transform.GetChild(1).GetComponent<Text>().text = music.Artist;
-        if (music.Jacket != null)
-        {
-            button.transform.GetChild(2).GetComponent<Image>().sprite = music.Jacket;
-        }
+        button.transform.GetChild(2).GetComponent<Image>().sprite = music.Jacket;
     }
 
     public void ResetMusicList()
@@ -197,12 +194,12 @@ public class UIManager : MonoBehaviour
                 });
 
                 var offsetText = GetUIObject<InputField>("MusicOffset");
-                offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
+                offsetText.text = "" + GameManager.Instance.CurrentMusic.Offset;
                 offsetText.onValueChanged.AddListener((value) =>
                 {
                     if (float.TryParse(value, out var offset))
                     {
-                        GameManager.Instance.CurrentMusic.StartOffset = offset;
+                        GameManager.Instance.CurrentMusic.Offset = offset;
                     }
                 });
                 for (var i = 1; i < 4; ++i)
@@ -211,15 +208,15 @@ public class UIManager : MonoBehaviour
                     var plusButton = GetUIObject<Button>("+" + number);
                     plusButton.onClick.AddListener(() =>
                     {
-                        GameManager.Instance.CurrentMusic.StartOffset += (float) number;
-                        offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
+                        GameManager.Instance.CurrentMusic.Offset += (float) number;
+                        offsetText.text = "" + GameManager.Instance.CurrentMusic.Offset;
                     });
 
                     var minusButton = GetUIObject<Button>("-" + number);
                     minusButton.onClick.AddListener(() =>
                     {
-                        GameManager.Instance.CurrentMusic.StartOffset -= (float) number;
-                        offsetText.text = "" + GameManager.Instance.CurrentMusic.StartOffset;
+                        GameManager.Instance.CurrentMusic.Offset -= (float) number;
+                        offsetText.text = "" + GameManager.Instance.CurrentMusic.Offset;
                     });
                 }
                 break;

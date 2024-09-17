@@ -267,38 +267,7 @@ public class GameManager : MonoBehaviour
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(270)).ToList();
                 break;
             case GameMode.Random:
-                List<int> row = new();
-                List<int> column = new();
-                while (row.Count < 4)
-                {
-                    var random = Random.Range(0, 4);
-                    if (!row.Contains(random))
-                    {
-                        row.Add(random);
-                    }
-                }
-                while (column.Count < 4)
-                {
-                    var random = Random.Range(0, 4);
-                    if (!column.Contains(random))
-                    {
-                        column.Add(random);
-                    }
-                }
-                noteList = CurrentChart.NoteList.Select(note => note.Random(row, column)).ToList();
-                break;
-            case GameMode.Random2:
-                List<int> position = new();
-                while (position.Count < 16)
-                {
-                    var random = Random.Range(0, 16);
-                    if (!position.Contains(random))
-                    {
-                        position.Add(random);
-                    }
-                }
-                noteList = CurrentChart.NoteList.Select(note => note.Random(position)).ToList();
-                break;
+            case GameMode.RandomPlus:
             case GameMode.HalfRandom:
             case GameMode.FullRandom:
                 noteList = new ChartRandomHelper(CurrentChart.NoteList).Shuffle(GameOptions.Instance.GameMode);
@@ -321,14 +290,14 @@ public class GameManager : MonoBehaviour
         comboText.text = "";
         comboText.fontSize = 300;
 
-        if (CurrentMusic.StartOffset < 0)
+        if (CurrentMusic.Offset < 0)
         {
             StartMusicClip();
-            yield return new WaitForSeconds(-CurrentMusic.StartOffset);
+            yield return new WaitForSeconds(-CurrentMusic.Offset);
         }
         else
         {
-            Invoke(nameof(StartMusicClip), CurrentMusic.StartOffset);
+            Invoke(nameof(StartMusicClip), CurrentMusic.Offset);
         }
 
         StartTime = Time.time;
@@ -345,9 +314,9 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if (CurrentMusic.StartOffset > 0)
+        if (CurrentMusic.Offset > 0)
         {
-            yield return new WaitForSeconds(CurrentMusic.StartOffset);
+            yield return new WaitForSeconds(CurrentMusic.Offset);
         }
         yield return null;
 
@@ -358,7 +327,7 @@ public class GameManager : MonoBehaviour
             var index = Mathf.FloorToInt(BackgroundSource.time / divide);
             if (index > 0 && index != lastIndex)
             {
-                UIManager.Instance.UpdateMusicBar(lastIndex, 23 / 30f);
+                UIManager.Instance.UpdateMusicBar(lastIndex, 17 / 60f);
                 lastIndex = index;
             }
             yield return null;
@@ -408,7 +377,7 @@ public class GameManager : MonoBehaviour
         if (GameOptions.Instance.AutoPlay) yield break;
         CurrentMusic.SetScore(CurrentDifficulty, totalScore);
         CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
-        _ = MusicManager.Instance.SaveMusicScore(CurrentMusic, CurrentDifficulty);
+        CurrentMusic.SaveScore(CurrentDifficulty);
     }
 
     public void QuitGame()
@@ -419,7 +388,7 @@ public class GameManager : MonoBehaviour
         }
         BackgroundSource.Stop();
         StopAllCoroutines();
-        _ = MusicManager.Instance.SaveMusicOffset(CurrentMusic.Title);
+        CurrentMusic.SaveInfo();
         SceneManager.LoadScene(SceneMusicSelect);
     }
 
