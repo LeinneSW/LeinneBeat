@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
-using Random = UnityEngine.Random;
 
 public enum Difficulty
 {
@@ -22,9 +21,10 @@ public enum Difficulty
 public class MusicInfo
 {
     public string title;
-    public string author;
+    public string artist;
     public float offset;
     public float preview;
+    public float duration;
 }
 
 [Serializable]
@@ -187,12 +187,11 @@ public class MusicManager : MonoBehaviour
 
     private IEnumerator LoadMusic(string dirPath, Action<bool> afterFunction)
     {
-        var title = Path.GetFileName(dirPath);
-        var author = "작곡가";
+        var dirName = Path.GetFileName(dirPath);
         var songFiles = Directory.GetFiles(dirPath, "song.*");
         if (songFiles.Length < 1)
         {
-            Debug.Log($"'{title}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            Debug.Log($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
             afterFunction(false);
             yield break;
         }
@@ -201,7 +200,7 @@ public class MusicManager : MonoBehaviour
         var audioType = GetAudioType(Path.GetExtension(musicPath));
         if (audioType == AudioType.UNKNOWN)
         {
-            Debug.Log($"'{title}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            Debug.Log($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
             afterFunction(false);
             yield break;
         }
@@ -228,23 +227,26 @@ public class MusicManager : MonoBehaviour
             }
         }
 
+        Music music = null;
+        var clip = DownloadHandlerAudioClip.GetContent(www);
         var jsonPath = Path.Combine(dirPath, "info.json");
         if (File.Exists(jsonPath))
         {
             try
             {
                 var json = File.ReadAllText(jsonPath);
-                var jsonData = JsonUtility.FromJson<MusicInfo>(json);
-                title = jsonData.title ?? title;
-                author = jsonData.author ?? author;
+                var musicInfo = JsonUtility.FromJson<MusicInfo>(json);
+                musicInfo.title ??= dirName;
+                musicInfo.artist ??= "작곡가";
+                music = new(clip, dirPath, musicInfo, sprite);
             }
             catch
             {
-                Debug.Log($"곡 이름: {title}");
+                Debug.Log($"{dirName} 폴더 내의 info.json 파일이 잘못되었습니다.");
             }
         }
 
-        Music music = new(DownloadHandlerAudioClip.GetContent(www), dirPath, title, author, sprite);
+        music ??= new(DownloadHandlerAudioClip.GetContent(www), dirPath, dirName, "작곡가", sprite);
         _ = music.StartOffset; // TODO: remove HACK
         foreach (var difficulty in Enum.GetValues(typeof(Difficulty)))
         {
@@ -273,7 +275,7 @@ public class MusicManager : MonoBehaviour
         return MusicOffsetList[title];
     }
 
-    public async Task SaveMusicScore(Difficulty difficulty, Music music)
+    public async Task SaveMusicScore(Music music, Difficulty difficulty)
     {
         Dictionary<string, Dictionary<string, MusicScoreData>> json;
         var scorePath = Path.Combine(Application.dataPath, "..", "Songs", "score.json");
@@ -335,6 +337,7 @@ public class Music{
     public readonly string Title;
     public readonly string Artist;
     public readonly float Preview = 35f;
+    public readonly float Duration = 10f;
 
     public readonly string Path;
     public readonly AudioClip Clip;
@@ -376,6 +379,24 @@ public class Music{
         Title = title;
         Artist = artist;
         Jacket = jacket;
+    }
+
+    public Music(AudioClip clip, string path, MusicInfo info, Sprite jacket = null)
+    {
+        Clip = clip;
+        Path = path;
+        Jacket = jacket;
+
+        Title = info.title;
+        Artist = info.artist;
+        if (0 <= info.preview && info.preview < clip.length)
+        {
+            Preview = info.preview;
+        }
+        if (0 <= info.duration && Preview + info.duration <= clip.length)
+        {
+            Duration = info.duration;
+        }
     }
 
     public void AddChart(Chart chart)

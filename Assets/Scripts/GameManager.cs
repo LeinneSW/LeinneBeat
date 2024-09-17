@@ -201,10 +201,10 @@ public class GameManager : MonoBehaviour
         BackgroundSource.clip = CurrentMusic.Clip;
         while (true)
         {
-            var maxVolume = GameOptions.Instance.MusicVolume;
+            var maxVolume = GameOptions.Instance.MusicVolume * .85f; // 최대 음량보다 소폭 작게
             BackgroundSource.volume = 0;
             BackgroundSource.Play();
-            BackgroundSource.time = 30f;
+            BackgroundSource.time = CurrentMusic.Preview;
 
             while (BackgroundSource.volume < maxVolume) // 페이드 인
             {
@@ -213,7 +213,7 @@ public class GameManager : MonoBehaviour
             }
             BackgroundSource.volume = maxVolume;
 
-            yield return new WaitForSeconds(12); // 12초 동안 재생
+            yield return new WaitForSeconds(CurrentMusic.Duration);
 
             var startVolume = maxVolume;
             while (BackgroundSource.volume > 0) // 페이드 아웃
@@ -408,7 +408,7 @@ public class GameManager : MonoBehaviour
         if (GameOptions.Instance.AutoPlay) yield break;
         CurrentMusic.SetScore(CurrentDifficulty, totalScore);
         CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
-        _ = MusicManager.Instance.SaveMusicScore(CurrentDifficulty, CurrentMusic);
+        _ = MusicManager.Instance.SaveMusicScore(CurrentMusic, CurrentDifficulty);
     }
 
     public void QuitGame()
