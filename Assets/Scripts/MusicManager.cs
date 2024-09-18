@@ -267,6 +267,11 @@ public class MusicManager : MonoBehaviour
                 MusicList.Add(music2);
             }
         }
+
+        if (!success)
+        {
+            Debug.Log($"{music.Title}({music.Artist})에는 채보가 존재하지 않습니다.");
+        }
         afterFunction(success);
     }
 }
@@ -568,9 +573,9 @@ public class Chart
             }
             else if (IsNoteText(line))
             {
+                var j = -1;
                 try
                 {
-                    var j = -1;
                     var chartPart = new ChartPart(startOffset, chart);
                     while (lines.Length > i + ++j)
                     {
@@ -599,7 +604,9 @@ public class Chart
                 }
                 catch (Exception e)
                 {
-                    Debug.LogException(e);
+                    Debug.Log($"{music.Title}({music.Artist})의 {difficulty}채보 분석중 오류가 발생했습니다.");
+                    Debug.Log($"문제 구간: {i + 1}줄, 인식까지 진행된 줄수: {j + 1}줄 내용: {lines[i]}");
+                    //Debug.LogException(e);
                     return null;
                 }
             }
