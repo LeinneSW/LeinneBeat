@@ -552,7 +552,7 @@ public class Chart
         foreach (var text in lines)
         {
             var line = RemoveComment(text).ToLower();
-            if (line.StartsWith("lev") && TryParseDoubleInText(line, out level))
+            if ((line.StartsWith("#lev") || line.StartsWith("lev")) && TryParseDoubleInText(line, out level))
             {
                 break;
             }
