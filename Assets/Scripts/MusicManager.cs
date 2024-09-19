@@ -574,6 +574,7 @@ public class Chart
             else if (IsNoteText(line))
             {
                 var j = -1;
+                var count = 0;
                 try
                 {
                     var chartPart = new ChartPart(startOffset, chart);
@@ -591,6 +592,7 @@ public class Chart
                             break;
                         }
 
+                        ++count;
                         var gridPart = noteAndTiming[..4];
                         chartPart.AddNotePositionText(gridPart);
 
@@ -598,9 +600,9 @@ public class Chart
                         if (timingSplit.Length <= 1) continue;
                         chartPart.NoteTimings.Add(timingSplit[1].Trim());
                     }
-                    if((j + 1) % 4 != 0)
+                    if(count % 4 != 0)
                     {
-                        Debug.Log($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n진행 시작 구간: {i + 1}줄, 진행된 줄수: {j + 1}(4의 배수가 아님)");
+                        Debug.Log($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n진행 시작 구간: {i + 1}줄, 진행된 줄수: {count}(4의 배수가 아님)");
                         return null;
                     }
                     chartPart.Convert();
