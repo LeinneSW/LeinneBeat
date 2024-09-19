@@ -113,28 +113,6 @@ public class GameManager : MonoBehaviour
         ShutterPoint = Mathf.Max(Mathf.Min(1024, ShutterPoint), 0);
     }
 
-    // HACK: GameObject.OnClick등록을 위해 정의
-    public void SetJudgement(int judgement)
-    {
-        SetJudgement((JudgementType) judgement);
-    }
-
-    public void SetJudgement(JudgementType judgement)
-    {
-        GameOptions.Instance.JudgementType = judgement;
-    }
-
-    // HACK: GameObject.OnClick등록을 위해 정의
-    public void SetGameMode(int gameMode)
-    {
-        SetGameMode((GameMode) gameMode);
-    }
-
-    public void SetGameMode(GameMode gameMode)
-    {
-        GameOptions.Instance.GameMode = gameMode;
-    }
-
     public void SelectMusic(Music music)
     {
         if (CurrentMusic == music)
