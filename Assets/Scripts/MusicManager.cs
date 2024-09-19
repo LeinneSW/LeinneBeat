@@ -119,7 +119,6 @@ public class MusicManager : MonoBehaviour
 
     public void LoadMusicDir()
     {
-        // TODO: info.json의 offset값으로 싱크 조절
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
         Dictionary<string, Dictionary<string, MusicScoreData>> scoreDataList;
         var scorePath = Path.Combine(basePath, "score.json");
@@ -134,15 +133,15 @@ public class MusicManager : MonoBehaviour
         }
 
         var allFiles = Directory.GetDirectories(basePath);
+        var currentCount = 0;
         var totalCount = allFiles.Length;
         UIManager.Instance.ResetMusicList();
         foreach (var dirPath in allFiles)
         {
-            StartCoroutine(LoadMusic(dirPath, success =>
+            StartCoroutine(LoadMusic(dirPath, () =>
             {
-                if (!success) --totalCount;
-                if (totalCount > MusicList.Count) return;
-
+                ++currentCount;
+                if (totalCount > currentCount) return;
                 foreach (var (musicName, difficultyTable) in scoreDataList)
                 {
                     var music = MusicList.Find(music =>
@@ -161,26 +160,39 @@ public class MusicManager : MonoBehaviour
                     }
                 }
                 Sort();
-                /*foreach (var music in MusicList)
+                foreach (var music in MusicList)
                 {
-                    SaveInfo(music);
+                    List<string> notExists = new();
+                    if (music.Artist == "작곡가")
+                    {
+                        notExists.Add("작곡가");
+                    }
                     if (music.Jacket == DefaultJacket)
                     {
-                        Debug.Log($"자켓이 없는 곡: {music.Title}");
+                        notExists.Add("자켓");
                     }
-                }*/
+                    if (music.Offset == 0)
+                    {
+                        notExists.Add("싱크 조절");
+                    }
+
+                    if (notExists.Count > 0)
+                    {
+                        Debug.Log($"{music.Title}({music.Artist})에 없는것: [{string.Join(", ", notExists)}]");
+                    }
+                }
             }));
         }
     }
 
-    private IEnumerator LoadMusic(string dirPath, Action<bool> afterFunction)
+    private IEnumerator LoadMusic(string dirPath, Action afterFunction)
     {
         var dirName = Path.GetFileName(dirPath);
         var songFiles = Directory.GetFiles(dirPath, "song.*");
         if (songFiles.Length < 1)
         {
-            Debug.Log($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
-            afterFunction(false);
+            Debug.LogWarning($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            afterFunction();
             yield break;
         }
 
@@ -188,8 +200,8 @@ public class MusicManager : MonoBehaviour
         var audioType = GetAudioType(Path.GetExtension(musicPath));
         if (audioType == AudioType.UNKNOWN)
         {
-            Debug.Log($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
-            afterFunction(false);
+            Debug.LogWarning($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
+            afterFunction();
             yield break;
         }
 
@@ -198,8 +210,8 @@ public class MusicManager : MonoBehaviour
 
         if (www.result != UnityWebRequest.Result.Success)
         {
-            Debug.Log($"폴더: {musicPath}, 오류: {www.error}");
-            afterFunction(false);
+            Debug.LogWarning($"폴더: {musicPath}, 오류: {www.error}");
+            afterFunction();
             yield break;
         }
 
@@ -230,7 +242,7 @@ public class MusicManager : MonoBehaviour
             }
             catch
             {
-                Debug.Log($"{dirName} 폴더 내의 info.json 파일이 잘못되었습니다.");
+                Debug.LogError($"{dirName} 폴더 내의 info.json 파일이 잘못되었습니다.");
             }
         }
 
@@ -269,10 +281,10 @@ public class MusicManager : MonoBehaviour
         }
 
         if (!success)
-        {
-            Debug.Log($"{music.Title}({music.Artist})에는 채보가 존재하지 않습니다.");
+        {   
+            Debug.LogWarning($"{music.Title}({music.Artist})에는 채보가 존재하지 않습니다.");
         }
-        afterFunction(success);
+        afterFunction();
     }
 }
 
@@ -602,7 +614,7 @@ public class Chart
                     }
                     if(count % 4 != 0)
                     {
-                        Debug.Log($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n진행 시작 구간: {i + 1}줄, 진행된 줄수: {count}(4의 배수가 아님)");
+                        Debug.LogError($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n진행 시작 구간: {i + 1}줄, 진행된 줄수: {count}(4의 배수가 아님)");
                         return null;
                     }
                     chartPart.Convert();
@@ -611,8 +623,7 @@ public class Chart
                 }
                 catch (Exception e)
                 {
-                    Debug.Log($"{music.Title}({music.Artist})의 {difficulty}채보 분석중 오류가 발생했습니다.");
-                    Debug.Log($"진행 시작 구간: {i + 1}줄, 인식까지 진행된 줄수: {j + 1}줄, 내용: {lines[i]}");
+                    Debug.LogError($"{music.Title}({music.Artist})의 {difficulty}채보 분석중 오류가 발생했습니다.\n진행 시작 구간: {i + 1}줄, 인식까지 진행된 줄수: {j + 1}줄, 내용: {lines[i]}");
                     return null;
                 }
             }
