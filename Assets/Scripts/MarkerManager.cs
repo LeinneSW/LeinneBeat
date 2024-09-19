@@ -73,12 +73,11 @@ public class MarkerManager : MonoBehaviour
                 clap.loop = false;
                 clap.clip = clapSound;
                 clap.playOnAwake = false;
-                clap.volume = GameOptions.Instance.AutoClap ? .5f : 0;
+                clap.volume = GameOptions.Instance.ClapVolume;
                 ClapList.Add(clap);
             };
         }
 
-        // TODO: 다양한 마커 대응
         var markerDir = new[] { "normal", "perfect", "great", "good", "poor" };
         foreach (var dir in markerDir)
         {

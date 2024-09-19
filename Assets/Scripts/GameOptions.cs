@@ -13,7 +13,7 @@ public enum GameMode
     Random,
     RandomPlus,
     HalfRandom,
-    FullRandom // 무리배치(겹노트) 해결해야함
+    FullRandom
 }
 
 public enum JudgementType
@@ -96,6 +96,11 @@ public class GameOptions : MonoBehaviour
     }
 
     public float MusicVolume { get; set; } = .35f;
+    public float ClapVolume
+    {
+        get => autoPlay ? clapVolume : 0;
+        set => clapVolume = value;
+    }
 
     public bool AutoPlay
     {
@@ -126,6 +131,7 @@ public class GameOptions : MonoBehaviour
 
     private bool autoPlay;
     private bool autoClap;
+    private float clapVolume = .5f;
     private GameMode gameMode = GameMode.Normal;
     private SortType musicSortType = SortType.Ascending;
     private JudgementType judgementType = JudgementType.Normal;
@@ -186,6 +192,10 @@ public class GameOptions : MonoBehaviour
         {
             MusicVolume = Mathf.Clamp01(volume);
         }
+        if (float.TryParse(config.GetValueOrDefault("clap_volume", ""), out volume))
+        {
+            ClapVolume = Mathf.Clamp01(volume);
+        }
 
         // Auto Play Setting
         if (bool.TryParse(config.GetValueOrDefault("auto_play", "false"), out var auto))
@@ -237,6 +247,7 @@ public class GameOptions : MonoBehaviour
             "# Game Volume",
             $"master_volume={AudioListener.volume}",
             $"music_volume={MusicVolume}",
+            $"clap_volume={ClapVolume}",
             "",
             "# Auto Play",
             $"auto_play={AutoPlay}",
