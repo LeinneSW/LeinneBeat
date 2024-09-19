@@ -198,10 +198,17 @@ public class MarkerManager : MonoBehaviour
             var touchState = Input.GetTouch(i);
             if (touchState.phase == TouchPhase.Ended) continue;
 
-            var pos = touchState.position;
+            Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touchState.position);
+            // row 320 ~ -1480
+            // col -800 ~ 800
+            touchPosition += new Vector2(800, -320);
+            touchPosition /= 400;
+            var row = Mathf.FloorToInt(-touchPosition.y);
+            var column = Mathf.FloorToInt(touchPosition.x);
+            /*var pos = touchState.position;
             var row = Mathf.FloorToInt((1600 - pos.y) / gridSize);
             var column = Mathf.FloorToInt(pos.x / gridSize);
-            if (row is < 0 or >= 4 || column is < 0 or >= 4) continue;
+            if (row is < 0 or >= 4 || column is < 0 or >= 4) continue;*/
             touchData[column + row * 4] = true;
         }
 
