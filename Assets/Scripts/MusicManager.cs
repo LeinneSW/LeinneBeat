@@ -598,6 +598,11 @@ public class Chart
                         if (timingSplit.Length <= 1) continue;
                         chartPart.NoteTimings.Add(timingSplit[1].Trim());
                     }
+                    if((j + 1) % 4 != 0)
+                    {
+                        Debug.Log($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n진행 시작 구간: {i + 1}줄, 진행된 줄수: {j + 1}(4의 배수가 아님)");
+                        return null;
+                    }
                     chartPart.Convert();
                     i += j;
                     startOffset = chartPart.StartOffset;
@@ -605,8 +610,7 @@ public class Chart
                 catch (Exception e)
                 {
                     Debug.Log($"{music.Title}({music.Artist})의 {difficulty}채보 분석중 오류가 발생했습니다.");
-                    Debug.Log($"문제 구간: {i + 1}줄, 인식까지 진행된 줄수: {j + 1}줄 내용: {lines[i]}");
-                    //Debug.LogException(e);
+                    Debug.Log($"진행 시작 구간: {i + 1}줄, 인식까지 진행된 줄수: {j + 1}줄, 내용: {lines[i]}");
                     return null;
                 }
             }
