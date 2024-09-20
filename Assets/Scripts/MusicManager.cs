@@ -449,7 +449,8 @@ public class Music{
 
 public class Chart
 {
-    public static readonly Regex NoteRegex = new(@"^([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}|([口□①-⑳┼｜┃━―∨∧^>＞＜<ＶＡ-Ｚ]{4}\|.+(\|)?))$", RegexOptions.Compiled);
+    public static readonly Regex NoteTimingRegex = new(@"^[口□①-⑳┼｜┃━―∨V∧^>＞＜<Ａ-Ｚ]{4}\|.+(\|)?$", RegexOptions.Compiled);
+    public static readonly Regex NoteRegex = new(@"^[口□①-⑳┼｜┃━―∨V∧^>＞＜<Ａ-Ｚ]{4}$", RegexOptions.Compiled);
 
     public readonly Music Music;
     public readonly double Level;
@@ -541,7 +542,7 @@ public class Chart
 
     public static bool IsNoteText(string text)
     {
-        return NoteRegex.IsMatch(text);
+        return NoteRegex.IsMatch(text) || NoteTimingRegex.IsMatch(text);
     }
 
     public static bool IsBpmText(string text)
@@ -569,8 +570,8 @@ public class Chart
                 break;
             }
         }
-        Chart chart = new(music, level, difficulty);
         var startOffset = 0.0;
+        Chart chart = new(music, level, difficulty);
         for (var i = 0; i < lines.Length; ++i)
         {
             var line = RemoveComment(lines[i]);
@@ -587,45 +588,53 @@ public class Chart
             {
                 var j = -1;
                 var count = 0;
-                try
+                var chartPart = new ChartPart(startOffset, chart);
+                while (lines.Length > i + ++j)
                 {
-                    var chartPart = new ChartPart(startOffset, chart);
-                    while (lines.Length > i + ++j)
+                    var noteLine = RemoveComment(lines[i + j]);
+                    if (noteLine.Length < 1)
                     {
-                        var noteAndTiming = RemoveComment(lines[i + j]);
-                        if (noteAndTiming.Length < 1)
+                        continue;
+                    }
+
+                    var isNoteText = NoteRegex.IsMatch(noteLine);
+                    var isNoteTimingText = NoteTimingRegex.IsMatch(noteLine);
+                    if (!isNoteText && !isNoteTimingText) // BPM 혹은 (명시된) 다음 마디가 나온경우
+                    {
+                        if (IsBpmText(noteLine) && TryParseDoubleInText(noteLine, out var bpmValue)) // BPM 변경은 아직 마디가 종료되지 않았다고 판단함
                         {
+                            chart.BpmList.Add(bpmValue);
                             continue;
                         }
-
-                        if (!IsNoteText(noteAndTiming))
+                        else if (count % 4 == 0)
                         {
                             --j;
-                            break;
+                            break;   
                         }
-
-                        ++count;
-                        var gridPart = noteAndTiming[..4];
-                        chartPart.AddNotePositionText(gridPart);
-
-                        var timingSplit = noteAndTiming[4..].Trim().Split("|");
-                        if (timingSplit.Length <= 1) continue;
-                        chartPart.NoteTimings.Add(timingSplit[1].Trim());
+                        else
+                        {
+                            Debug.LogError($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n{i + j + 1}줄의 내용: {noteLine}");
+                            return null;
+                        }
                     }
-                    if(count % 4 != 0)
+
+                    if (count % 4 == 0 && isNoteTimingText) // 4칸을 읽은뒤 ㅁㅁㅁㅁ|----| 형태가 나온다면 마디구분이 없더라도 새 마디로 취급
                     {
-                        Debug.LogError($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n진행 시작 구간: {i + 1}줄, 진행된 줄수: {count}(4의 배수가 아님)");
-                        return null;
+                        --j;
+                        break;
                     }
-                    chartPart.Convert();
-                    i += j;
-                    startOffset = chartPart.StartOffset;
+
+                    ++count;
+                    var gridPart = noteLine[..4];
+                    chartPart.AddNotePositionText(gridPart);
+
+                    var timingSplit = noteLine[4..].Trim().Split("|");
+                    if (timingSplit.Length <= 1) continue;
+                    chartPart.NoteTimings.Add(timingSplit[1].Trim());
                 }
-                catch (Exception e)
-                {
-                    Debug.LogError($"{music.Title}({music.Artist})의 {difficulty}채보 분석중 오류가 발생했습니다.\n진행 시작 구간: {i + 1}줄, 인식까지 진행된 줄수: {j + 1}줄, 내용: {lines[i]}");
-                    return null;
-                }
+                chartPart.Convert();
+                i += j;
+                startOffset = chartPart.StartOffset;
             }
         }
         return chart.NoteCount < 1 ? null : chart;
