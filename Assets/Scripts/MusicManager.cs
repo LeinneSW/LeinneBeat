@@ -298,7 +298,18 @@ public class Music{
     * 값이 작아지면: 노래가 빨리재생됨(노래가 느릴때 이쪽으로)
     * 값이 커지면: 노래가 늦게재생됨(노래가 빠를때 이쪽으로)
     */
-    public float Offset { get; set; }
+    public float Offset
+    {
+        get => offset;
+        set
+        {
+            offset = value;
+            foreach (var item in chartList)
+            {
+                item.Value.CreateMusicBar();
+            }
+        }
+    }
 
     public readonly string MusicPath;
     public readonly AudioClip Clip;
@@ -320,6 +331,7 @@ public class Music{
 
     public bool IsLong { get; private set; }
 
+    private float offset = 0;
     private readonly Dictionary<Difficulty, Chart> chartList = new();
 
     public Music(AudioClip clip, string musicPath, string title, Sprite jacket)
@@ -491,32 +503,7 @@ public class Chart
     private readonly Dictionary<int, List<Note>> gridNoteList = new();
 
     private List<int> musicBar;
-    public List<int> MusicBar
-    {
-        get
-        {
-            if (musicBar != null)
-            {
-                return musicBar;
-            }
-            musicBar = new(new int[120]);
-            var limit = musicBar.Count;
-            var divide = Music.Clip.length / limit;
-            const double offset = 29 / 60d;
-            foreach (var note in NoteList)
-            {
-                var startBarIndex = (int) Math.Floor((note.StartTime + offset) / divide);
-                musicBar[startBarIndex]++;
-                note.MusicBarIndex = startBarIndex;
-
-                if (!(note.FinishTime > 0)) continue;
-                var finishBarIndex = (int)Math.Floor((note.FinishTime + offset) / divide);
-                musicBar[finishBarIndex]++;
-                note.MusicBarLongIndex = finishBarIndex;
-            }
-            return musicBar;
-        }
-    }
+    public List<int> MusicBar => musicBar == null ? CreateMusicBar() : musicBar;
 
     public int Score => Music.GetScore(Difficulty);
     public List<int> MusicBarScore => Music.GetMusicBarScore(Difficulty);
@@ -672,6 +659,26 @@ public class Chart
         }
         ++NoteCount;
         ClapTimings.Add(newNote.StartTime);
+    }
+
+    public List<int> CreateMusicBar()
+    {
+        musicBar = new(new int[120]);
+        var limit = musicBar.Count;
+        var divide = Music.Clip.length / limit;
+        var offset = 29 / 60d - Music.Offset;
+        foreach (var note in NoteList)
+        {
+            var startBarIndex = (int) Math.Floor((note.StartTime + offset) / divide);
+            musicBar[startBarIndex]++;
+            note.MusicBarIndex = startBarIndex;
+
+            if (!(note.FinishTime > 0)) continue;
+            var finishBarIndex = (int)Math.Floor((note.FinishTime + offset) / divide);
+            musicBar[finishBarIndex]++;
+            note.MusicBarLongIndex = finishBarIndex;
+        }
+        return musicBar;
     }
 }
 
