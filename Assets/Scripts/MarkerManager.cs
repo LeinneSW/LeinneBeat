@@ -191,7 +191,6 @@ public class MarkerManager : MonoBehaviour
         }
 
         var touchTime = Time.timeAsDouble;
-        var gridSize = Screen.width / 4.0f;
         Dictionary<int, bool> touchData = new();
         for (var i = 0; i < Input.touchCount; i++)
         {
@@ -205,14 +204,10 @@ public class MarkerManager : MonoBehaviour
             touchPosition /= 400;
             var row = Mathf.FloorToInt(-touchPosition.y);
             var column = Mathf.FloorToInt(touchPosition.x);
-            /*var pos = touchState.position;
-            var row = Mathf.FloorToInt((1600 - pos.y) / gridSize);
-            var column = Mathf.FloorToInt(pos.x / gridSize);
-            if (row is < 0 or >= 4 || column is < 0 or >= 4) continue;*/
             touchData[column + row * 4] = true;
         }
 
-        if (Input.touchCount < 1 && Input.GetMouseButton(0))
+        /*if (Input.touchCount < 1 && Input.GetMouseButton(0))
         {
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePosition += new Vector2(800, -320);
@@ -223,7 +218,7 @@ public class MarkerManager : MonoBehaviour
             {
                 touchData[column + row * 4] = true;
             }
-        }
+        }*/
 
         for (var row = 0; row < 4; ++row)
         {
