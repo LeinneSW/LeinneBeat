@@ -503,7 +503,7 @@ public class Chart
     private readonly Dictionary<int, List<Note>> gridNoteList = new();
 
     private List<int> musicBar;
-    public List<int> MusicBar => musicBar == null ? CreateMusicBar() : musicBar;
+    public List<int> MusicBar => musicBar ?? CreateMusicBar();
 
     public int Score => Music.GetScore(Difficulty);
     public List<int> MusicBarScore => Music.GetMusicBarScore(Difficulty);
