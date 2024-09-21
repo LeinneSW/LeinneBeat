@@ -588,24 +588,16 @@ public class Chart
                     var isNoteTimingText = NoteTimingRegex.IsMatch(noteLine);
                     if (!isNoteText && !isNoteTimingText) // BPM 혹은 (명시된) 다음 마디가 나온경우
                     {
-                        if (IsBpmText(noteLine) && TryParseDoubleInText(noteLine, out var bpmValue)) // BPM 변경은 아직 마디가 종료되지 않았다고 판단함
-                        {
-                            chart.BpmList.Add(bpmValue);
-                            continue;
-                        }
-                        else if (count % 4 == 0)
+                        if (count % 4 == 0) // 잘 종료되었음
                         {
                             --j;
                             break;   
                         }
-                        else
-                        {
-                            Debug.LogError($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n{i + j + 1}줄의 내용: {noteLine}");
-                            return null;
-                        }
+                        Debug.LogError($"{music.Title}({music.Artist})의 {difficulty} 채보 형식이 잘못되었습니다.\n{i + j + 1}줄의 내용: {noteLine}");
+                        return null;
                     }
 
-                    if (count % 4 == 0 && isNoteTimingText) // 4칸을 읽은뒤 ㅁㅁㅁㅁ|----| 형태가 나온다면 마디구분이 없더라도 새 마디로 취급
+                    if (count > 0 && count % 4 == 0 && isNoteTimingText) // 4칸을 읽은뒤 ㅁㅁㅁㅁ|----| 형태가 나온다면 마디구분이 없더라도 새 마디로 취급
                     {
                         --j;
                         break;
