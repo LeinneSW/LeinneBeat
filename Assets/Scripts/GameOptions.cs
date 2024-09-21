@@ -23,13 +23,6 @@ public enum JudgementType
     Extreme
 }
 
-public enum JudgementVisibilityType
-{
-    None,
-    Text,
-    Number
-}
-
 public enum MusicSortMethod
 {
     Title,
@@ -95,10 +88,10 @@ public class GameOptions : MonoBehaviour
         }
     }
 
-    public float MusicVolume { get; set; } = .35f;
+    public float MusicVolume { get; set; } = .4f;
     public float ClapVolume
     {
-        get => autoPlay ? clapVolume : 0;
+        get => autoClap ? clapVolume : 0;
         set => clapVolume = value;
     }
 
@@ -194,7 +187,7 @@ public class GameOptions : MonoBehaviour
         }
         if (float.TryParse(config.GetValueOrDefault("clap_volume", ""), out volume))
         {
-            ClapVolume = Mathf.Clamp01(volume);
+            clapVolume = Mathf.Clamp01(volume);
         }
 
         // Auto Play Setting
@@ -247,7 +240,7 @@ public class GameOptions : MonoBehaviour
             "# Game Volume",
             $"master_volume={AudioListener.volume}",
             $"music_volume={MusicVolume}",
-            $"clap_volume={ClapVolume}",
+            $"clap_volume={clapVolume}",
             "",
             "# Auto Play",
             $"auto_play={AutoPlay}",
