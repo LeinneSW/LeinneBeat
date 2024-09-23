@@ -1,13 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
@@ -20,6 +17,7 @@ public class GameManager : MonoBehaviour
     private readonly List<int> earlyJudgeList = new() { 0, 0, 0, 0, 0 };
     private readonly List<int> rateJudgeList = new() { 0, 0, 0, 0, 0 };
 
+    public GameObject startHere;
     public AudioSource GoSound;
     public AudioSource ReadySound;
     public AudioSource ResultSound;
@@ -256,6 +254,15 @@ public class GameManager : MonoBehaviour
             default:
                 noteList = CurrentChart.NoteList;
                 break;
+        }
+
+        var guideOffset = Math.Abs(CurrentMusic.Offset) + (float)noteList[0].StartTime + 3;
+        var startNotes = noteList
+            .TakeWhile(note => !(Math.Abs(noteList[0].StartTime - note.StartTime) > double.Epsilon))
+            .Select(note => Instantiate(startHere, note.Position, Quaternion.identity));
+        foreach (var obj in startNotes)
+        {
+            Destroy(obj, guideOffset);
         }
 
         // TODO: Ready, GO 연출을 좀더 맛깔나게
