@@ -4282,6 +4282,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6a179672234c6c4f92cb66c0cbf538f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  startHere: {fileID: 1964747659276763729, guid: a22682d1c1f877042a54f149c90a79b5, type: 3}
   GoSound: {fileID: 1049151500}
   ReadySound: {fileID: 1049151499}
   ResultSound: {fileID: 1049151498}
