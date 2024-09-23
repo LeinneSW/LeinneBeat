@@ -140,6 +140,7 @@ public class MarkerManager : MonoBehaviour
         {
             return;
         }
+        // TODO: GREAT 이하의 경우만 나오도록 설정하는 기능 추가
         StartCoroutine(ShowJudgeText(judgeText[row * 4 + column], (int)Math.Round(judgeTime * 1000)));
     }
 

@@ -206,36 +206,35 @@ public class GameOptions : MonoBehaviour
     {
         var filePath = Path.Combine(Application.dataPath, "..", "data", "config.properties");
         Dictionary<string, string> properties = new();
-        if (!File.Exists(filePath))
-        {
-            return properties;
-        }
+        if (!File.Exists(filePath)) return properties;
 
-        // 파일에서 한 줄씩 읽어들임
         foreach (var line in File.ReadAllLines(filePath))
         {
-            // 주석 처리 (#)이거나 빈 줄은 무시
             if (line.StartsWith("#") || string.IsNullOrWhiteSpace(line)) continue;
             var keyValue = line.Split("=", 2);
             if (keyValue.Length < 2) continue;
-            properties[keyValue[0].Trim()] = keyValue[1].Trim();
+            var key = keyValue[0].Trim();
+            var value = keyValue[1].Trim();
+            if(string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
+            properties[key] = value;
         }
-
         return properties;
     }
 
     private void SaveConfig()
     {
-        var filePath = Path.Combine(Application.dataPath, "..", "data", "config.properties");
+        var settingPath = Path.Combine(Application.dataPath, "..", "data", "config.properties");
         var textList = new[]
         {
             "# Game Style",
             $"gamemode={GameMode}",
             $"judgement_type={JudgementType}",
             "",
-            "# Visual",
+            "# Sort",
             $"music_sort_type={MusicSortType}",
             $"music_sort_method={MusicSortMethod}",
+            "",
+            "# Visual",
             $"show_judgement_state={ShowJudgementState}",
             "",
             "# Game Volume",
@@ -243,11 +242,11 @@ public class GameOptions : MonoBehaviour
             $"music_volume={MusicVolume}",
             $"clap_volume={clapVolume}",
             "",
-            "# Auto Play",
+            "# Auto",
             $"auto_play={AutoPlay}",
             $"clap_sound={AutoClap}",
         };
-        File.WriteAllLines(filePath, textList);
+        File.WriteAllLines(settingPath, textList);
     }
 
     private void OnApplicationQuit()
