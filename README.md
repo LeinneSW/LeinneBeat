@@ -1,48 +1,45 @@
 # LeinneBeat
 Welcome to the world of beats ruled by Leinne
 
-## 띵즈 투 체크 비포 러닝
-`LeinneBeat\Songs\` 와 `LeinneBeat\Theme\marker` 폴더 체크 이즈 이그지스트  
-더 스트럭트 오브 더 `LeinneBeat\Theme\marker` 아래와 라이크하게 세팅 되어야함
-```
-marker
-ㄴ normal
-  ㄴ png...
-ㄴ perfect
-  ㄴ png...
-ㄴ great
-  ㄴ png...
-ㄴ good
-  ㄴ png...
-ㄴ poor
-  ㄴ png...
-```
-마커는 한장 = 1프레임, 리프레시 레이트는 30fps  
-Image Names 규칙 딱히 없음. `어센딩`하게 읽어오니 걱정 노노  
-해당 폴더 낫 이그지스트 할시 \<Error/>  
+## 실행 전 주의사항
+하단의 경로가 존재하는지 확인해야합니다.
+존재하지 않는다면 오류가 발생할 수 있습니다.
+* `LeinneBeat\Songs\`
+* `LeinneBeat\Theme\`
 
-## 하우 투 레지스터 어 송
-경로: `LeinneBeat\Songs\` 에 `곡 폴더` 삽입  
-곡 폴더에는 다음과 같은 항목이 폴더에 있어야함(**Files in bold are required**)
-* basic.txt
-* advanced.txt
-* extreme.txt
-* info.json
-* jacket.\[png|jpg|jpeg|...]
-* **song.\[ogg|wav|mp3]**
+## 마커 설정 방법
+마커는 `LeinneBeat\Theme\marker\` 폴더에서 이미지를 가져오도록 되어있습니다.  
+마커의 폴더 구조는 다음과 같습니다.
+* **marker**
+  * normal
+    * png files...
+  * perfect
+    * png files...
+  * great
+    * png files...
+  * good
+    * png files...
+  * poor
+    * png files...
+
+마커의 sample rate는 30fps 이며 이미지 해상도는 `400x400`이상을 추천합니다.  
+이미지의 이름 규칙은 따로 없으며 오름차순으로 읽어옵니다.
+
+## 곡 추가 방법
+경로: `LeinneBeat\Songs\` 에 아래의 조건을 충족하는 `곡 폴더`를 추가해주세요. (**굵은 글씨는 필수 파일입니다**)  
+
+* LeinneBeat\Songs
+  * **Example** `곡 폴더`
+    * basic.txt
+    * advanced.txt
+    * extreme.txt
+    * **info.json**
+    * jacket.\[png|jpg|jpeg|...]
+    * **song.\[ogg|wav|mp3]**
 
 ### txt 파일
-지원 형식은 memo 형태의 타입  
-
-`LEVEL`은 다음중 하나
-* `lev=10.9`
-* `#lev=10.9`
-* `Level: 10.9`
-
-`BPM`은 다음중 하나
-* `t=100`
-* `#t=100`
-* `BPM: 200`
+채보 파일은 4x4 형태의 memo 형식을 기본적으로 지원합니다.  
+채보 형식은 다음과 같습니다.  
 ```
 LEVEL
 BPM
@@ -57,10 +54,21 @@ BPM
 口口口口 |－－－－|
 ...
 ```
+`LEVEL`은 아래와 같이 작성 가능합니다.
+* `lev=10.9`
+* `#lev=10.9`
+* `Level: 10.9`
+
+`BPM`은 아래와 같이 작성 가능합니다.
+* `t=100`
+* `#t=100`
+* `BPM: 100`
+* 
+#### 채보 추가 지원
+[memon](https://memon-spec.readthedocs.io/en/latest/) 지원을 준비중에있습니다.
 
 ### info.json
-해당파일은 없어도 자동으로 생성됨  
-형태는 아래와 같음
+곡의 기본정보가 작성돼있는 파일입니다.
 ```json
 {
   "title": "title",
