@@ -244,6 +244,9 @@ public class GameManager : MonoBehaviour
             case GameMode.Degree270:
                 noteList = CurrentChart.NoteList.Select(note => note.Rotate(270)).ToList();
                 break;
+            case GameMode.Mirror:
+                noteList = CurrentChart.NoteList.Select(note => note.Mirror()).ToList();
+                break;
             case GameMode.Random:
             case GameMode.RandomPlus:
             case GameMode.HalfRandom:

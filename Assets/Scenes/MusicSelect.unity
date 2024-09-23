@@ -388,6 +388,8 @@ MonoBehaviour:
       m_Image: {fileID: 0}
     - m_Text: "\uD558\uD504\uB79C\uB364"
       m_Image: {fileID: 0}
+    - m_Text: "\uBBF8\uB7EC"
+      m_Image: {fileID: 0}
     - m_Text: "\uD480 \uB79C\uB364"
       m_Image: {fileID: 0}
   m_OnValueChanged:

@@ -13,6 +13,7 @@ public enum GameMode
     Random,
     RandomPlus,
     HalfRandom,
+    Mirror,
     FullRandom
 }
 

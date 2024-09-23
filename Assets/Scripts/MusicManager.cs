@@ -962,6 +962,13 @@ public class Note
         return note;
     }
 
+    public Note Mirror()
+    {
+        var note = Clone();
+        note.Column = 3 - note.Column;
+        return note;
+    }
+
     public Note Rotate(int degree)
     {
         var note = Clone();
