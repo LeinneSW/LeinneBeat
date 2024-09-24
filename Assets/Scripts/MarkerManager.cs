@@ -78,20 +78,30 @@ public class MarkerManager : MonoBehaviour
             };
         }
 
-        var markerDir = new[] { "normal", "perfect", "great", "good", "poor" };
-        foreach (var dir in markerDir)
+        var markerType = new[] { "normal", "perfect", "great", "good", "poor" };
+        foreach (var dir in markerType)
         {
-            var files = Directory.GetFiles(Path.Combine(Application.dataPath, "..", "Theme", "marker", dir), "*.png"); // png 파일만 로드
-            var markerList = new List<Sprite>();
-            foreach (var file in files)
+            var markerDirPath = Path.Combine(Application.dataPath, "..", "Theme", "marker", dir);
+            if (Directory.Exists(markerDirPath))
             {
-                var bytes = File.ReadAllBytes(file);
-                var texture = new Texture2D(2, 2);
-                texture.LoadImage(bytes);
-                var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
-                markerList.Add(sprite);
+                var files = Directory.GetFiles(markerDirPath, "*.png");
+                if (files.Length > 0)
+                {
+                    var markerList = new List<Sprite>();
+                    foreach (var file in files)
+                    {
+                        var bytes = File.ReadAllBytes(file);
+                        var texture = new Texture2D(2, 2);
+                        texture.LoadImage(bytes);
+                        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
+                        markerList.Add(sprite);
+                    }
+                    CurrentMarkerSprites.Add(markerList);
+                    continue;
+                }
             }
-            CurrentMarkerSprites.Add(markerList);
+            Debug.LogWarning($"{markerType} 폴더가 존재하지 않습니다.");
+            CurrentMarkerSprites.Add(new List<Sprite>() { null });
         }
     }
 

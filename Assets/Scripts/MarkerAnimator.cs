@@ -6,7 +6,7 @@ public class MarkerAnimator : MonoBehaviour
     public float StartTime;
     public List<Sprite> SpriteList = new();
 
-    private const float TimePerFrame = 1 / 30f;
+    private const float TimePerFrame = 1 / 30f; // TODO: configuration
     private SpriteRenderer spriteRenderer;
     
     private void Start()
@@ -25,10 +25,15 @@ public class MarkerAnimator : MonoBehaviour
 
         var elapsedTime = Time.time - StartTime;
         var frame = Mathf.FloorToInt(elapsedTime / TimePerFrame);
-        if (frame < 0 || frame >= count)
+        if (frame < 0)
+        {
+            spriteRenderer.sprite = null;
+            return;
+        }
+        else if (frame >= count)
         {
             return;
         }
-        spriteRenderer.sprite = SpriteList[frame];
+        spriteRenderer.sprite = SpriteList[Mathf.Min(frame, count)];
     }
 }
