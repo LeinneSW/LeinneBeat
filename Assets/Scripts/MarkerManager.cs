@@ -191,6 +191,20 @@ public class MarkerManager : MonoBehaviour
             return;
         }
 
+        #if UNITY_EDITOR
+        if (Input.GetMouseButton(0))
+        {
+            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePosition += new Vector2(800, -320);
+            mousePosition /= 400;
+            var row = Mathf.FloorToInt(-mousePosition.y);
+            var column = Mathf.FloorToInt(mousePosition.x);
+            if (row is >= 0 and < 4 && column is >= 0 and < 4)
+            {
+                touchData[column + row * 4] = true;
+            }
+        }
+        #else
         var touchTime = Time.timeAsDouble;
         Dictionary<int, bool> touchData = new();
         for (var i = 0; i < Input.touchCount; i++)
@@ -207,19 +221,7 @@ public class MarkerManager : MonoBehaviour
             var column = Mathf.FloorToInt(touchPosition.x);
             touchData[column + row * 4] = true;
         }
-
-        /*if (Input.touchCount < 1 && Input.GetMouseButton(0))
-        {
-            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mousePosition += new Vector2(800, -320);
-            mousePosition /= 400;
-            var row = Mathf.FloorToInt(-mousePosition.y);
-            var column = Mathf.FloorToInt(mousePosition.x);
-            if (row is >= 0 and < 4 && column is >= 0 and < 4)
-            {
-                touchData[column + row * 4] = true;
-            }
-        }*/
+        #endif
 
         for (var row = 0; row < 4; ++row)
         {
