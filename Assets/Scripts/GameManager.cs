@@ -17,7 +17,6 @@ public class GameManager : MonoBehaviour
     private readonly List<int> earlyJudgeList = new() { 0, 0, 0, 0, 0 };
     private readonly List<int> rateJudgeList = new() { 0, 0, 0, 0, 0 };
 
-    public GameObject startHere;
     public AudioSource GoSound;
     public AudioSource ReadySound;
     public AudioSource ResultSound;
@@ -259,7 +258,7 @@ public class GameManager : MonoBehaviour
         var guideOffset = Math.Abs(CurrentMusic.Offset) + (float)noteList[0].StartTime + 3;
         var startNotes = noteList
             .TakeWhile(note => !(Math.Abs(noteList[0].StartTime - note.StartTime) > double.Epsilon))
-            .Select(note => Instantiate(startHere, note.Position, Quaternion.identity));
+            .Select(note => Instantiate(MarkerManager.Instance.startHerePrefab, note.Position, Quaternion.identity));
         foreach (var obj in startNotes)
         {
             Destroy(obj, guideOffset);
@@ -278,8 +277,10 @@ public class GameManager : MonoBehaviour
         comboText.text = "";
         comboText.fontSize = 300;
 
+        StartTime = Time.time;
         if (CurrentMusic.Offset < 0)
         {
+            StartTime -= CurrentMusic.Offset;
             StartMusicClip();
             yield return new WaitForSeconds(-CurrentMusic.Offset);
         }
@@ -288,7 +289,6 @@ public class GameManager : MonoBehaviour
             Invoke(nameof(StartMusicClip), CurrentMusic.Offset);
         }
 
-        StartTime = Time.time;
         foreach (var note in noteList)
         {
             StartCoroutine(ShowMarker(note));

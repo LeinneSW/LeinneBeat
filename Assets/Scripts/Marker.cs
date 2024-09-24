@@ -204,7 +204,7 @@ public class Marker : MonoBehaviour
 
         var animator = judgeObject.GetComponent<MarkerAnimator>();
         animator.StartTime = Time.time;
-        animator.SpriteList = MarkerManager.Instance.CurrentMarkerSprites[(int)judge + 1];
+        animator.SpriteList = MarkerManager.CurrentMarkerSprites[(int)judge + 1];
     }
 
     private void Update()

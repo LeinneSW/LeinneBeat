@@ -8,14 +8,15 @@ using UnityEngine.UI;
 public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; }
+    public static readonly List<List<Sprite>> CurrentMarkerSprites = new();
 
     public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
 
     public readonly List<AudioSource> ClapList = new();
-    public readonly List<List<Sprite>> CurrentMarkerSprites = new();
 
     public GameObject judgePrefab;
     public GameObject markerPrefab;
+    public GameObject startHerePrefab;
 
     public Sprite clickSprite;
     public Sprite arrowSprite;
@@ -40,7 +41,7 @@ public class MarkerManager : MonoBehaviour
         set => clapIndex = value > 15 ? 0 : value;
     }
 
-    private void Start()
+    private void Awake()
     {
         if (Instance != null)
         {
@@ -49,6 +50,36 @@ public class MarkerManager : MonoBehaviour
         }
 
         Instance = this;
+        if (CurrentMarkerSprites.Count > 0) return;
+        var markerTypes = new[] { "normal", "perfect", "great", "good", "poor" };
+        foreach (var markerType in markerTypes)
+        {
+            var markerDirPath = Path.Combine(Application.dataPath, "..", "Theme", "marker", markerType);
+            if (Directory.Exists(markerDirPath))
+            {
+                var files = Directory.GetFiles(markerDirPath, "*.png");
+                if (files.Length > 0)
+                {
+                    List<Sprite> markerList = new();
+                    foreach (var file in files)
+                    {
+                        var bytes = File.ReadAllBytes(file);
+                        var texture = new Texture2D(2, 2);
+                        texture.LoadImage(bytes);
+                        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
+                        markerList.Add(sprite);
+                    }
+                    CurrentMarkerSprites.Add(markerList);
+                    continue;
+                }
+            }
+            Debug.LogWarning($"마커 폴더 내에 `{markerType}` 마커 파일이 존재하지 않습니다.");
+            CurrentMarkerSprites.Add(new() { null });
+        }
+    }
+
+    private void Start()
+    {
         var canvas = GameObject.Find("JudgeCanvas");
         for (var row = 0; row < 4; ++row)
         {
@@ -78,31 +109,6 @@ public class MarkerManager : MonoBehaviour
             };
         }
 
-        var markerType = new[] { "normal", "perfect", "great", "good", "poor" };
-        foreach (var dir in markerType)
-        {
-            var markerDirPath = Path.Combine(Application.dataPath, "..", "Theme", "marker", dir);
-            if (Directory.Exists(markerDirPath))
-            {
-                var files = Directory.GetFiles(markerDirPath, "*.png");
-                if (files.Length > 0)
-                {
-                    List<Sprite> markerList = new();
-                    foreach (var file in files)
-                    {
-                        var bytes = File.ReadAllBytes(file);
-                        var texture = new Texture2D(2, 2);
-                        texture.LoadImage(bytes);
-                        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
-                        markerList.Add(sprite);
-                    }
-                    CurrentMarkerSprites.Add(markerList);
-                    continue;
-                }
-            }
-            Debug.LogWarning($"{markerType} 폴더가 존재하지 않습니다.");
-            CurrentMarkerSprites.Add(new List<Sprite>() { null });
-        }
     }
 
     public Vector3 ConvertPosition(int row, int column)
@@ -196,7 +202,7 @@ public class MarkerManager : MonoBehaviour
 
     private void Update()
     {
-        if (GameOptions.Instance.AutoPlay)
+        if (!GameManager.Instance.IsStarted || GameOptions.Instance.AutoPlay)
         {
             return;
         }

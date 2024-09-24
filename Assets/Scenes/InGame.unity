@@ -3394,6 +3394,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   judgePrefab: {fileID: 4486026548744450340, guid: fa20e56317ce1754585a6da70d8d1b39, type: 3}
   markerPrefab: {fileID: 4486026548744450340, guid: 102370c915cdb9b41956a1ca6fcd854d, type: 3}
+  startHerePrefab: {fileID: 1964747659276763729, guid: a22682d1c1f877042a54f149c90a79b5, type: 3}
   clickSprite: {fileID: 21300000, guid: b2e18b9733e6bd543b4ee4dea23a8d01, type: 3}
   arrowSprite: {fileID: 21300000, guid: 94d8d04fe57a02342af796fdc902531e, type: 3}
   clapSound: {fileID: 8300000, guid: a11308eebb3fc74489e34f075bb30cbf, type: 3}
