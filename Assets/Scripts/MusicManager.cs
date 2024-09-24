@@ -120,8 +120,13 @@ public class MusicManager : MonoBehaviour
     public void LoadMusicDir()
     {
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
-        Dictionary<string, Dictionary<string, MusicScoreData>> scoreDataList;
+        if (!Dictionary.Exists(basePath))
+        {
+            return;
+        }
+
         var scorePath = Path.Combine(Application.dataPath, "..", "data", "score.json");
+        Dictionary<string, Dictionary<string, MusicScoreData>> scoreDataList;
         if (File.Exists(scorePath))
         {
             var text = File.ReadAllText(scorePath);
