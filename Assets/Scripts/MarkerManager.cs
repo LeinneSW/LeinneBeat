@@ -201,7 +201,9 @@ public class MarkerManager : MonoBehaviour
             return;
         }
 
-        #if UNITY_EDITOR
+        var touchTime = Time.timeAsDouble;
+        Dictionary<int, bool> touchData = new();
+#if UNITY_EDITOR
         if (Input.GetMouseButton(0))
         {
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -214,9 +216,7 @@ public class MarkerManager : MonoBehaviour
                 touchData[column + row * 4] = true;
             }
         }
-        #else
-        var touchTime = Time.timeAsDouble;
-        Dictionary<int, bool> touchData = new();
+#else
         for (var i = 0; i < Input.touchCount; i++)
         {
             var touchState = Input.GetTouch(i);
@@ -231,7 +231,7 @@ public class MarkerManager : MonoBehaviour
             var column = Mathf.FloorToInt(touchPosition.x);
             touchData[column + row * 4] = true;
         }
-        #endif
+#endif
 
         for (var row = 0; row < 4; ++row)
         {

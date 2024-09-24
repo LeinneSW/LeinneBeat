@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -120,7 +121,7 @@ public class MusicManager : MonoBehaviour
     public void LoadMusicDir()
     {
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
-        if (!Dictionary.Exists(basePath))
+        if (!Directory.Exists(basePath))
         {
             return;
         }
