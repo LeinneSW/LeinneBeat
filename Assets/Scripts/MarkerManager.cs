@@ -87,7 +87,7 @@ public class MarkerManager : MonoBehaviour
                 var files = Directory.GetFiles(markerDirPath, "*.png");
                 if (files.Length > 0)
                 {
-                    var markerList = new List<Sprite>();
+                    List<Sprite> markerList = new();
                     foreach (var file in files)
                     {
                         var bytes = File.ReadAllBytes(file);
