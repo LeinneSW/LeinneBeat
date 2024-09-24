@@ -223,7 +223,7 @@ public class GameOptions : MonoBehaviour
 
     private void SaveConfig()
     {
-        var settingPath = Path.Combine(Application.dataPath, "..", "data", "config.properties");
+        var configPath = Path.Combine(Application.dataPath, "..", "data", "config.properties");
         var textList = new[]
         {
             "# Game Style",
@@ -246,7 +246,12 @@ public class GameOptions : MonoBehaviour
             $"auto_play={AutoPlay}",
             $"clap_sound={AutoClap}",
         };
-        File.WriteAllLines(settingPath, textList);
+        var configDir = Path.GetDirectoryName(configPath);
+        if (!Directory.Exists(configDir))
+        {
+            Directory.CreateDirectory(configDir);
+        }
+        File.WriteAllLines(configPath, textList);
     }
 
     private void OnApplicationQuit()

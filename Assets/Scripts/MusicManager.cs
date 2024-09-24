@@ -121,7 +121,7 @@ public class MusicManager : MonoBehaviour
     {
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
         Dictionary<string, Dictionary<string, MusicScoreData>> scoreDataList;
-        var scorePath = Path.Combine(basePath, "score.json");
+        var scorePath = Path.Combine(Application.dataPath, "..", "data", "score.json");
         if (File.Exists(scorePath))
         {
             var text = File.ReadAllText(scorePath);
@@ -436,7 +436,7 @@ public class Music{
     public async void SaveScore(Difficulty difficulty)
     {
         Dictionary<string, Dictionary<string, MusicScoreData>> json;
-        var scorePath = Path.Combine(Application.dataPath, "..", "Songs", "score.json");
+        var scorePath = Path.Combine(Application.dataPath, "..", "data", "score.json");
         if (File.Exists(scorePath))
         {
             var text = await File.ReadAllTextAsync(scorePath);
@@ -445,6 +445,7 @@ public class Music{
         else
         {
             json = new();
+            await Task.Run(() => Directory.CreateDirectory(Path.GetDirectoryName(scorePath)));
         }
 
         var title = $"{Title}{(IsLong ? " [HOLD]" : "")}";
