@@ -24,6 +24,13 @@ public enum JudgementType
     Extreme
 }
 
+public enum JudgementDisplay
+{
+    None,
+    Great,
+    All
+}
+
 public enum MusicSortMethod
 {
     Title,
@@ -67,7 +74,16 @@ public class GameOptions : MonoBehaviour
         }
     }
 
-    public bool ShowJudgementState { get; set; } = true;
+    public JudgementDisplay JudgementDisplay
+    {
+        get => judgementDisplay;
+        set
+        {
+            judgementDisplay = value;
+            // TODO: Update UI
+        }
+    }
+
     public MusicSortMethod MusicSortMethod
     {
         get => musicSortMethod;
@@ -129,6 +145,7 @@ public class GameOptions : MonoBehaviour
     private GameMode gameMode = GameMode.Normal;
     private SortType musicSortType = SortType.Ascending;
     private JudgementType judgementType = JudgementType.Normal;
+    private JudgementDisplay judgementDisplay = JudgementType.None;
     private MusicSortMethod musicSortMethod = MusicSortMethod.Title;
 
     private void Awake()
@@ -163,7 +180,7 @@ public class GameOptions : MonoBehaviour
             judgementType = type;
         }
 
-        // Visual Setting
+        // Sort Setting
         if (Enum.TryParse<SortType>(config.GetValueOrDefault("music_sort_type", ""), true, out var sortType))
         {
             musicSortType = sortType;
@@ -172,9 +189,11 @@ public class GameOptions : MonoBehaviour
         {
             musicSortMethod = sortMethod;
         }
-        if (bool.TryParse(config.GetValueOrDefault("show_judgement_state", "false"), out var visibility))
+
+        // Visual Setting
+        if (Enum.TryParse<JudgementDisplay>(config.GetValueOrDefault("judgement_display", ""), true, out var judgeDisplay))
         {
-            ShowJudgementState = visibility;
+            judgementDisplay = judgeDisplay;
         }
 
         // Volume Setting
@@ -235,7 +254,7 @@ public class GameOptions : MonoBehaviour
             $"music_sort_method={MusicSortMethod}",
             "",
             "# Visual",
-            $"show_judgement_state={ShowJudgementState}",
+            $"judgement_display={judgementDisplay}",
             "",
             "# Game Volume",
             $"master_volume={AudioListener.volume}",

@@ -145,7 +145,7 @@ public class Marker : MonoBehaviour
         }
         CreateJudgeEffect(judge);
         GameManager.Instance.AddScore(judge, Note.MusicBarIndex, judgeTime > 0);
-        MarkerManager.Instance.ShowJudgeText(Note.Row, Note.Column, judgeTime);
+        MarkerManager.Instance.ShowJudgeText(Note.Row, Note.Column, judge, judgeTime);
         return judge;
     }
 

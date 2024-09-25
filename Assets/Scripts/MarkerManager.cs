@@ -149,13 +149,16 @@ public class MarkerManager : MonoBehaviour
         text.text = "";
     }
 
-    public void ShowJudgeText(int row, int column, double judgeTime)
+    public void ShowJudgeText(int row, int column, JudgeState judge, double judgeTime)
     {
-        if (!GameOptions.Instance.ShowJudgementState)
+        switch (GameOptions.Instance.JudgementDisplay)
         {
-            return;
+            case JudgementDisplay.None:
+                return;
+            case JudgementDisplay.Great:
+                if(judge == JudgeState.Perfect) return;
+                break;
         }
-        // TODO: GREAT 이하의 경우만 나오도록 설정하는 기능 추가
         StartCoroutine(ShowJudgeText(judgeText[row * 4 + column], (int)Math.Round(judgeTime * 1000)));
     }
 
