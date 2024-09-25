@@ -12,8 +12,6 @@ public class MarkerManager : MonoBehaviour
 
     public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
 
-    public readonly List<AudioSource> ClapList = new();
-
     public GameObject judgePrefab;
     public GameObject markerPrefab;
     public GameObject startHerePrefab;
@@ -25,6 +23,7 @@ public class MarkerManager : MonoBehaviour
     public GameObject judgeTextPrefab;
 
     private readonly List<Text> judgeText = new();
+    private readonly List<AudioSource> clapList = new();
     private readonly List<GameObject> touchedList = new();
     private readonly Dictionary<int, List<Marker>> markers = new();
     private readonly Dictionary<JudgementType, double[]> judgementTables = new()
@@ -105,7 +104,7 @@ public class MarkerManager : MonoBehaviour
                 clap.clip = clapSound;
                 clap.playOnAwake = false;
                 clap.volume = GameOptions.Instance.ClapVolume;
-                ClapList.Add(clap);
+                clapList.Add(clap);
             };
         }
 
@@ -130,7 +129,7 @@ public class MarkerManager : MonoBehaviour
 
     public void PlayClap()
     {
-        ClapList[ClapIndex++].Play();
+        clapList[ClapIndex++].Play();
     }
 
     private IEnumerator ShowJudgeText(Text text, int judge)
