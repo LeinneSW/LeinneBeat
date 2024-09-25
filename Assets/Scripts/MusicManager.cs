@@ -468,8 +468,9 @@ public class Music{
 
 public class Chart
 {
-    public static readonly Regex NoteTimingRegex = new(@"^[口□①-⑳┼｜┃━―∨V∧^>＞＜<Ａ-Ｚ]{4}\|.+(\|)?$", RegexOptions.Compiled);
-    public static readonly Regex NoteRegex = new(@"^[口□①-⑳┼｜┃━―∨V∧^>＞＜<Ａ-Ｚ]{4}$", RegexOptions.Compiled);
+    //口 or □ 빈칸, ① ~ ⑳(０ ~ ９)Ａ ~ Ｚ 노트 위치
+    public static readonly Regex NoteRegex = new(@"^[口□①-⑳┼｜┃━―←↑↓→＜∧∨＞<^V>０-９Ａ-Ｚ]{4}$", RegexOptions.Compiled);
+    public static readonly Regex NoteTimingRegex = new(@"^[口□①-⑳┼｜┃━―←↑↓→＜∧∨＞<^V>０-９Ａ-Ｚ]{4}\|.+(\|)?$", RegexOptions.Compiled);
 
     public readonly Music Music;
     public readonly double Level;
@@ -1022,6 +1023,23 @@ public class ChartPart
     private readonly Chart chart;
     private readonly Dictionary<int, List<Note>> noteMap = new();
 
+    private static int ConvertTimingChar(char timingChar)
+    {
+        if (timingChar is >= '０' and <= '９')
+        {
+            return timingChar - '０';
+        }
+        else if (timingChar is >= '①' and <= '⑳')
+        {
+            return timingChar - '①';
+        }
+        else if (timingChar is >= 'Ａ' and <= 'Ｚ')
+        {
+            return timingChar - 'Ａ' + 20;
+        }
+        return timingChar;
+    }
+
     public ChartPart(double startOffset, Chart chart)
     {
         this.chart = chart;
@@ -1067,7 +1085,7 @@ public class ChartPart
             foreach (var timingChar in timings)
             {
                 //int currentBeat = 60 / (currentBpm * timings.Length); // 현재 박자의 길이, 16분음표 등등
-                timingMap[timingChar] = StartOffset;
+                timingMap[ConvertTimingChar(timingChar)] = StartOffset;
                 StartOffset += 60 / (currentBpm * length);
             }
         }
@@ -1079,6 +1097,7 @@ public class ChartPart
                 for (var xIndex = 0; xIndex < noteGrid[yIndex].Length; ++xIndex)
                 {
                     var note = noteGrid[yIndex][xIndex];
+                    if (timingMap.ContainsKey(ConvertTimingChar(note))) continue; // A ~ Z 에 의해 타이밍 값인지 먼저 판단
                     switch (note)
                     {
                         case '^':
@@ -1087,7 +1106,7 @@ public class ChartPart
                             for (var newY = yIndex - 1; newY >= 0; --newY)
                             {
                                 var index = newY * 4 + xIndex;
-                                var longNoteChar = noteGrid[newY][xIndex];
+                                var longNoteChar = ConvertTimingChar(noteGrid[newY][xIndex]);
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(newY * 4 + xIndex);
@@ -1096,13 +1115,14 @@ public class ChartPart
                             }
                             break;
                         }
+                        case 'V':
                         case '∨':
                         case 'Ｖ':
                         {
                             for (var newY = yIndex + 1; newY < 4; ++newY)
                             {
                                 var index = newY * 4 + xIndex;
-                                var longNoteChar = noteGrid[newY][xIndex];
+                                var longNoteChar = ConvertTimingChar(noteGrid[newY][xIndex]);
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(newY * 4 + xIndex);
@@ -1117,7 +1137,7 @@ public class ChartPart
                             for (var newX = xIndex + 1; newX < noteGrid[yIndex].Length; ++newX)
                             {
                                 var index = yIndex * 4 + newX;
-                                var longNoteChar = noteGrid[yIndex][newX];
+                                var longNoteChar = ConvertTimingChar(noteGrid[yIndex][newX]);
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(yIndex * 4 + newX);
@@ -1132,7 +1152,7 @@ public class ChartPart
                             for (var newX = xIndex - 1; newX >= 0; --newX)
                             {
                                 var index = yIndex * 4 + newX;
-                                var longNoteChar = noteGrid[yIndex][newX];
+                                var longNoteChar = ConvertTimingChar(noteGrid[yIndex][newX]);
                                 if (longNoteList.Contains(index) || !timingMap.TryGetValue(longNoteChar, out var value))
                                     continue;
                                 longNoteList.Add(yIndex * 4 + newX);
@@ -1149,8 +1169,10 @@ public class ChartPart
             {
                 for (var xIndex = 0; xIndex < noteGrid[yIndex].Length; ++xIndex)
                 {
-                    var noteChar = noteGrid[yIndex][xIndex];
-                    if (!longNoteList.Contains(yIndex * 4 + xIndex) && timingMap.TryGetValue(noteChar, out var value))
+                    if (
+                        !longNoteList.Contains(yIndex * 4 + xIndex) &&
+                        timingMap.TryGetValue(ConvertTimingChar(noteGrid[yIndex][xIndex]), out var value)
+                    )
                     {
                         AddNote(new(yIndex, xIndex, value));
                     }
