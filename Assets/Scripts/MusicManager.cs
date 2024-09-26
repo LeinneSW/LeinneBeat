@@ -974,6 +974,7 @@ public class Note
     {
         var note = Clone();
         note.Column = 3 - note.Column;
+        if (IsLong) note.BarColumn = 3 - note.BarColumn;
         return note;
     }
 
