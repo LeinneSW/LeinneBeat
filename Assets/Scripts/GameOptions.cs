@@ -145,7 +145,7 @@ public class GameOptions : MonoBehaviour
     private GameMode gameMode = GameMode.Normal;
     private SortType musicSortType = SortType.Ascending;
     private JudgementType judgementType = JudgementType.Normal;
-    private JudgementDisplay judgementDisplay = JudgementType.None;
+    private JudgementDisplay judgementDisplay = JudgementDisplay.None;
     private MusicSortMethod musicSortMethod = MusicSortMethod.Title;
 
     private void Awake()
