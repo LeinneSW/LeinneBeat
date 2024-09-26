@@ -1082,12 +1082,13 @@ public class ChartPart
         foreach (var timings in NoteTimings)
         {
             var length = Math.Max(4, timings.Length);
-            foreach (var timingChar in timings)
+            var denominator = currentBpm * length;
+            for (var index = 0; index < timings.Length; ++index)
             {
-                //int currentBeat = 60 / (currentBpm * timings.Length); // 현재 박자의 길이, 16분음표 등등
-                timingMap[ConvertTimingChar(timingChar)] = StartOffset;
-                StartOffset += 60 / (currentBpm * length);
+                var timingChar = timings[index];
+                timingMap[ConvertTimingChar(timingChar)] = StartOffset + index * 60 / denominator;
             }
+            StartOffset += timings.Length * 60 / denominator;
         }
         foreach (var noteGrid in NotePositions)
         {
