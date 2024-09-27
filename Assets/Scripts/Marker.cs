@@ -17,13 +17,21 @@ public class Marker : MonoBehaviour
     private Animator animator; // hold
     private HoldArrow arrowObject; // hold
     private GameObject judgeObject;
-    private double remainTime = 23 / 30f;
+    private const double remainTime = 23 / 30f; // 마커의 이미지는 총 23장
 
     public Note Note;
 
     public GameObject ArrowGuide { get; private set; }
-    public float StartTime { get; private set; }
-    public float FinishTime { get; private set; }
+    /**
+     * 노트의 소환시간을 나타냅니다
+     * 노트의 정확한 perfect 타이밍은 StartTime + 29 / 60(14.5fps)입니다.
+     */
+    public double StartTime { get; private set; }
+    /**
+     * 노트의 종료시간을 나타냅니다
+     * 노트가 완전히 종료되어 사라지게 되는 시간입니다.
+     */
+    public double FinishTime { get; private set; }
 
     private void Awake()
     {
@@ -42,7 +50,7 @@ public class Marker : MonoBehaviour
 
     private void Start()
     {
-        StartTime = (float)(Note.StartTime + GameManager.Instance.StartTime);
+        StartTime = Note.StartTime + GameManager.Instance.StartTime;
         CreateArrow();
     }
 
@@ -75,8 +83,7 @@ public class Marker : MonoBehaviour
         arrowObject = Instantiate(MarkerManager.Instance.arrowPrefab, Note.BarPosition, rotation).GetComponent<HoldArrow>();
         arrowObject.gameObject.transform.SetParent(transform);
 
-        FinishTime = (float)(Note.FinishTime + GameManager.Instance.StartTime);
-        arrowObject.Duration = FinishTime + 29 / 60f;
+        arrowObject.Duration = FinishTime = Note.FinishTime + GameManager.Instance.StartTime + 29 / 60d;
 
         ArrowGuide.SetActive(true);
         ArrowGuide.transform.rotation = rotation;
@@ -101,34 +108,8 @@ public class Marker : MonoBehaviour
         }
 
         touched = true;
-        var judge = CalculateJudgement(touchTime);
-        if (arrowObject == null)
-        {
-            remainTime = 0.2f;
-            Invoke(nameof(Destroy), 0.06f);
-        }
-        else // 롱노트의 경우
-        {
-            if (judge != JudgeState.Poor)
-            {
-                arrowObject.Duration -= Time.timeAsDouble;
-                remainTime = arrowObject.Duration + 0.166;
-                arrowObject.EnableArrow();
-                Invoke(nameof(EnableHoldAnimation), 16f / 30f);
-            }
-            else
-            {
-                remainTime = 0.2f;
-                Invoke(nameof(Destroy), 0.06f);
-                GameManager.Instance.AddScore(JudgeState.Poor, Note.MusicBarLongIndex); // 과연 롱노트의 올바른 판정값은 무엇인가
-            }
-        }
-    }
-
-    public JudgeState CalculateJudgement(double touchTime)
-    {
-        var judge = JudgeState.Poor;
-        var judgeTime = StartTime + 29 / 60d - touchTime; // + 빠르게침, - 느리게침
+        var judge = JudgeState.Poor; // 입력이 들어갔으면 최소한 poor
+        var judgeTime = StartTime - touchTime + 29 / 60d; // 빠르게(+), 느리게(-)
         var judgeAbs = Math.Abs(judgeTime);
         var judgeTable = MarkerManager.Instance.CurrentJudgementTable;
         if (judgeAbs <= judgeTable[0])
@@ -146,29 +127,44 @@ public class Marker : MonoBehaviour
         CreateJudgeEffect(judge, touchTime);
         GameManager.Instance.AddScore(judge, Note.MusicBarIndex, judgeTime > 0);
         MarkerManager.Instance.ShowJudgeText(Note.Row, Note.Column, judge, judgeTime);
-        return judge;
+        if (arrowObject == null)
+        { // 롱노트가 아닌 경우
+            remainTime = 0.2f;
+            Invoke(nameof(Destroy), 0.06f);
+        }
+        else
+        {
+            if (judge != JudgeState.Poor)
+            {
+                arrowObject.Duration -= Time.timeAsDouble;
+                remainTime = arrowObject.Duration + 0.166;
+                arrowObject.EnableArrow();
+                Invoke(nameof(EnableHoldAnimation), 16f / 30f); // 판정 이펙트 종료 후 시작
+            }
+            else
+            { // TODO: poor 판정의 롱노트 방식이 어떻게 되는지 파악하지 못함
+                remainTime = 0.2f;
+                Invoke(nameof(Destroy), 0.06f);
+                GameManager.Instance.AddScore(JudgeState.Poor, Note.MusicBarLongIndex);
+            }
+        }
     }
 
     public void OnRelease()
     {
-        OnRelease(FinishTime + 1);
+        OnRelease(FinishTime);
     }
 
     public void OnRelease(double releaseTime)
     {
-        if (!touched || arrowObject == null || !arrowObject.IsStarted) // 롱노트를 누르기 전이거나 롱노트가 아닌 경우는 무시
-        {
+        if (!touched || arrowObject == null)
+        { // 노트를 누르지 않았거나 롱노트가 아닌 경우는 무시
             return;
         }
-        CalculateJudgementRelease(releaseTime);
-    }
-
-    private void CalculateJudgementRelease(double releaseTime)
-    {
-        var judge = JudgeState.Poor;
-        var judgeTime = Math.Max(0, FinishTime + 29 / 60d - releaseTime); // + 빠르게침, - 판정은 없음
+        var judge = JudgeState.Poor; // 입력이 들어갔으면 최소한 poor
+        var judgeTime = Math.Max(0, FinishTime - releaseTime); // 롱노트에는 빠름(+) 판정만 존재함
         var judgeTable = MarkerManager.Instance.CurrentJudgementTable;
-        // TODO: 롱노트는 판정 산정 방식이 다르나 아직 파악하지 못함
+        // TODO: 롱노트의 판정을 아직 파악하지 못함
         if (judgeTime <= judgeTable[0])
         {
             judge = JudgeState.Perfect;
