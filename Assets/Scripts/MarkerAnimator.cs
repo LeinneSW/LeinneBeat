@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class MarkerAnimator : MonoBehaviour
 {
-    public float StartTime;
+    public double StartTime;
     public List<Sprite> SpriteList = new();
 
-    private const float TimePerFrame = 1 / 30f; // TODO: configuration
+    private int SampleRate = 30f; // TODO: Modifiable by configuration.
     private SpriteRenderer spriteRenderer;
     
     private void Start()
@@ -23,8 +23,8 @@ public class MarkerAnimator : MonoBehaviour
             return;
         }
 
-        var elapsedTime = Time.time - StartTime;
-        var frame = Mathf.FloorToInt(elapsedTime / TimePerFrame);
+        var elapsedTime = Time.timeAsDouble - StartTime;
+        var frame = Mathf.FloorToInt(elapsedTime * SampleRate);
         if (frame < 0)
         {
             spriteRenderer.sprite = null;

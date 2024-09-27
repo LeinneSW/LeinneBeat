@@ -143,7 +143,7 @@ public class Marker : MonoBehaviour
         {
             judge = JudgeState.Good;
         }
-        CreateJudgeEffect(judge);
+        CreateJudgeEffect(judge, touchTime);
         GameManager.Instance.AddScore(judge, Note.MusicBarIndex, judgeTime > 0);
         MarkerManager.Instance.ShowJudgeText(Note.Row, Note.Column, judge, judgeTime);
         return judge;
@@ -181,14 +181,14 @@ public class Marker : MonoBehaviour
         {
             judge = JudgeState.Good;
         }
-        CreateJudgeEffect(judge);
+        CreateJudgeEffect(judge, releaseTime);
         GameManager.Instance.AddScore(judge, Note.MusicBarLongIndex, judgeTime > 0);
 
         Destroy(arrowObject.gameObject);
         Destroy(gameObject);
     }
 
-    private void CreateJudgeEffect(JudgeState judge)
+    private void CreateJudgeEffect(JudgeState judge, double touchTime)
     {
         if (judge == JudgeState.Miss)
         {
@@ -203,7 +203,7 @@ public class Marker : MonoBehaviour
         Destroy(judgeObject, 0.5333f);
 
         var animator = judgeObject.GetComponent<MarkerAnimator>();
-        animator.StartTime = Time.time;
+        animator.StartTime = touchTime;
         animator.SpriteList = MarkerManager.CurrentMarkerSprites[(int)judge + 1];
     }
 

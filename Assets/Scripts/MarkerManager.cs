@@ -124,7 +124,7 @@ public class MarkerManager : MonoBehaviour
 
         var markerAnimation = markerObj.GetComponent<MarkerAnimator>();
         markerAnimation.SpriteList = CurrentMarkerSprites[0];
-        markerAnimation.StartTime = (float)(note.StartTime + GameManager.Instance.StartTime);
+        markerAnimation.StartTime = note.StartTime + GameManager.Instance.StartTime;
     }
 
     public void PlayClap()
