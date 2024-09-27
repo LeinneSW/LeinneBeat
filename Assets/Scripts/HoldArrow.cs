@@ -6,8 +6,6 @@ public class HoldArrow : MonoBehaviour
     private Marker marker;
     private Animator animator;
     private LineRenderer lineRenderer;
-
-    public bool IsStarted { get; private set; }
     public double Duration { get; set; } = 0;
 
     private Vector3 Offset =>
@@ -39,7 +37,6 @@ public class HoldArrow : MonoBehaviour
 
     public void EnableArrow()
     {
-        IsStarted = true;
         StartCoroutine(FollowTargetForDuration());
     }
 
