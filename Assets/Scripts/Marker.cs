@@ -17,7 +17,7 @@ public class Marker : MonoBehaviour
     private Animator animator; // hold
     private HoldArrow arrowObject; // hold
     private GameObject judgeObject;
-    private const double remainTime = 23 / 30f; // 마커의 이미지는 총 23장
+    private double remainTime = 23 / 30f; // 마커의 이미지는 총 23장
 
     public Note Note;
 

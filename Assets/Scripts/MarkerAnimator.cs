@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ public class MarkerAnimator : MonoBehaviour
     public double StartTime;
     public List<Sprite> SpriteList = new();
 
-    private int SampleRate = 30f; // TODO: Modifiable by configuration.
+    private int SampleRate = 30; // TODO: Modifiable by configuration.
     private SpriteRenderer spriteRenderer;
     
     private void Start()
@@ -24,7 +25,7 @@ public class MarkerAnimator : MonoBehaviour
         }
 
         var elapsedTime = Time.timeAsDouble - StartTime;
-        var frame = Mathf.FloorToInt(elapsedTime * SampleRate);
+        var frame = (int) Math.Floor(elapsedTime * SampleRate);
         if (frame < 0)
         {
             spriteRenderer.sprite = null;
