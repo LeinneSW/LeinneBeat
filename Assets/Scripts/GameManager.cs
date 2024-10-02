@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
     public const string SceneMusicSelect = "MusicSelect";
     public const string SceneInGame = "InGame";
 
+    private int displayScore = 0;
+
     private Coroutine previewCoroutine;
     private readonly List<int> earlyJudgeList = new() { 0, 0, 0, 0, 0 };
     private readonly List<int> rateJudgeList = new() { 0, 0, 0, 0, 0 };
@@ -80,7 +82,6 @@ public class GameManager : MonoBehaviour
         {
             ++rateJudgeList[judge];
         }
-        GameObject.Find("Score").GetComponent<Text>().text = $"{Score}";
 
         if (musicBarIndex is >= 0 and < 120)
         {
@@ -366,6 +367,19 @@ public class GameManager : MonoBehaviour
         CurrentMusic.SetScore(CurrentDifficulty, totalScore);
         CurrentMusic.SetMusicBarScore(CurrentDifficulty, CurrentMusicBarScore);
         CurrentMusic.SaveScore(CurrentDifficulty);
+    }
+
+    private void Update()
+    {
+        if (!IsStarted)
+        {
+            return;
+        }
+
+        const float smoothing = 12f; // 애니메이션 보간 상수
+        var newScore = (int) Mathf.Lerp(displayScore, Score, smoothing * Time.deltaTime);
+        if (newScore <= displayScore) return;
+        UIManager.Instance.GetUIObject<Text>("Score").text = "" + (displayScore = Math.Abs(Score - newScore) <= 30 ? Score : newScore);
     }
 
     public void QuitGame()
