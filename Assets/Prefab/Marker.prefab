@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 2009689388028649680}
   - component: {fileID: 5880126048751712093}
   - component: {fileID: 5618800153276154215}
-  - component: {fileID: -1173047710492537986}
   m_Layer: 0
   m_Name: Marker
   m_TagString: Untagged
@@ -111,26 +110,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0fc7f1a89817fe4b98f5bf269875654, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Loop: 0
   StartTime: 0
   SpriteList: []
---- !u!95 &-1173047710492537986
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4486026548744450340}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b3125884d4e620d489e5a580482fa44e, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0

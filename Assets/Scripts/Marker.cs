@@ -14,8 +14,9 @@ public class Marker : MonoBehaviour
 {
     private bool touched;
 
-    private Animator animator; // hold
     private HoldArrow arrowObject; // hold
+    private MarkerAnimator holdAnimator; // hold
+
     private GameObject judgeObject;
     private double remainTime = 23 / 30f; // 마커의 이미지는 총 23장
 
@@ -33,21 +34,6 @@ public class Marker : MonoBehaviour
      */
     public double FinishTime { get; private set; }
 
-    private void Awake()
-    {
-        animator = GetComponent<Animator>();
-        animator.enabled = false;
-
-        ArrowGuide = new GameObject("ArrowGuide");
-        ArrowGuide.transform.SetParent(transform);
-        ArrowGuide.transform.position = transform.position;
-        ArrowGuide.SetActive(false);
-
-        var arrowRenderer = ArrowGuide.AddComponent<SpriteRenderer>();
-        arrowRenderer.sprite = MarkerManager.Instance.arrowSprite;
-        arrowRenderer.sortingOrder = 6;
-    }
-
     private void Start()
     {
         StartTime = Note.StartTime + GameManager.Instance.StartTime;
@@ -60,6 +46,27 @@ public class Marker : MonoBehaviour
         {
             return;
         }
+
+        ArrowGuide = new GameObject("ArrowGuide");
+        ArrowGuide.transform.SetParent(transform);
+        ArrowGuide.transform.position = transform.position;
+        ArrowGuide.SetActive(false);
+
+        var arrowRenderer = ArrowGuide.AddComponent<SpriteRenderer>();
+        arrowRenderer.sprite = MarkerManager.Instance.arrowSprite;
+        arrowRenderer.sortingOrder = 6;
+
+        var holdAnimation = new GameObject("HoldAnimation");
+        holdAnimation.transform.SetParent(transform);
+        holdAnimation.transform.position = transform.position;
+        holdAnimation.SetActive(false);
+
+        var holdRenderer = holdAnimation.AddComponent<SpriteRenderer>();
+        holdRenderer.sortingOrder = 4;
+
+        holdAnimator = holdAnimation.AddComponent<MarkerAnimator>();
+        holdAnimator.Loop = true;
+        holdAnimator.SpriteList = MarkerManager.HoldSprites;
 
         var rotate = 0;
         var colDiff = Note.BarColumn - Note.Column;
@@ -96,8 +103,8 @@ public class Marker : MonoBehaviour
 
     private void EnableHoldAnimation()
     {
-        animator.enabled = true;
-        animator.SetBool("Hold", true);
+        holdAnimator.StartTime = Time.timeAsDouble;
+        holdAnimator.gameObject.SetActive(true);
     }
 
     public void OnTouch(double touchTime)

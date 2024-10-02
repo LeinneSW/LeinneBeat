@@ -2,12 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; }
+    public static readonly List<Sprite> HoldSprites = new();
     public static readonly List<List<Sprite>> CurrentMarkerSprites = new();
 
     public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
@@ -50,13 +52,14 @@ public class MarkerManager : MonoBehaviour
 
         Instance = this;
         if (CurrentMarkerSprites.Count > 0) return;
+        var basePath = Path.Combine(Application.dataPath, "..", "Theme", "marker");
         var markerTypes = new[] { "normal", "perfect", "great", "good", "poor" };
         foreach (var markerType in markerTypes)
         {
-            var markerDirPath = Path.Combine(Application.dataPath, "..", "Theme", "marker", markerType);
+            var markerDirPath = Path.Combine(basePath, markerType);
             if (Directory.Exists(markerDirPath))
             {
-                var files = Directory.GetFiles(markerDirPath, "*.png");
+                var files = Directory.GetFiles(markerDirPath, "*.png").OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase).ToArray();
                 if (files.Length > 0)
                 {
                     List<Sprite> markerList = new();
@@ -72,9 +75,30 @@ public class MarkerManager : MonoBehaviour
                     continue;
                 }
             }
-            Debug.LogWarning($"마커 폴더 내에 `{markerType}` 마커 파일이 존재하지 않습니다.");
+            Debug.LogWarning($"마커(`{markerType}`)내의 폴더 혹은 폴더 내 파일이 존재하지 않습니다.");
             CurrentMarkerSprites.Add(new() { null });
         }
+
+        var holdPath = Path.Combine(basePath, "hold");
+        if (Directory.Exists(holdPath))
+        {
+            var files = Directory.GetFiles(holdPath, "*.png").OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase).ToArray();
+            if (files.Length > 0)
+            {
+                foreach (var file in files)
+                {
+                    Debug.Log($"fileName: {Path.GetFileName(file)}");
+                    var bytes = File.ReadAllBytes(file);
+                    var texture = new Texture2D(2, 2);
+                    texture.LoadImage(bytes);
+                    var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
+                    HoldSprites.Add(sprite);
+                }
+                return;
+            }
+        }
+        Debug.LogWarning("마커(`hold`)내의 폴더 혹은 폴더 내 파일이 존재하지 않습니다.");
+        HoldSprites.Add(null);
     }
 
     private void Start()
