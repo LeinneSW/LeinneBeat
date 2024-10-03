@@ -87,7 +87,6 @@ public class MarkerManager : MonoBehaviour
             {
                 foreach (var file in files)
                 {
-                    Debug.Log($"fileName: {Path.GetFileName(file)}");
                     var bytes = File.ReadAllBytes(file);
                     var texture = new Texture2D(2, 2);
                     texture.LoadImage(bytes);
