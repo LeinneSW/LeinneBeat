@@ -3149,7 +3149,7 @@ GameObject:
   - component: {fileID: 817091034}
   - component: {fileID: 817091033}
   m_Layer: 5
-  m_Name: Loading
+  m_Name: LoadingPane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4917,7 +4917,7 @@ RectTransform:
   m_GameObject: {fileID: 1326598708}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.3, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 342566206}
@@ -5957,7 +5957,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\uACE1 \uBD88\uB7EC\uC624\uB294\uC911...\n30 / 100"
+  m_Text: "\uACE1 \uBD88\uB7EC\uC624\uB294\uC911..."
 --- !u!222 &1580902716
 CanvasRenderer:
   m_ObjectHideFlags: 0
