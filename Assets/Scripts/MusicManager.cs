@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public enum Difficulty
 {
@@ -68,7 +69,7 @@ public class MusicManager : MonoBehaviour
 
     private void Start()
     {
-        LoadMusicDir();
+        StartCoroutine(LoadMusicDir());
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -118,12 +119,12 @@ public class MusicManager : MonoBehaviour
         }
     }
 
-    public void LoadMusicDir()
+    public IEnumerator LoadMusicDir()
     {
         var basePath = Path.Combine(Application.dataPath, "..", "Songs");
         if (!Directory.Exists(basePath))
         {
-            return;
+            yield break;
         }
 
         var scorePath = Path.Combine(Application.dataPath, "..", "data", "score.json");
@@ -138,159 +139,155 @@ public class MusicManager : MonoBehaviour
             scoreDataList = new();
         }
 
+        float loadCount = 0;
         var allFiles = Directory.GetDirectories(basePath);
-        var currentCount = 0;
-        var totalCount = allFiles.Length;
-        UIManager.Instance.ResetMusicList();
+        var loadingText = UIManager.Instance.GetUIObject<Text>("LoadingTitle");
+        var progressBar = UIManager.Instance.GetUIObject<Image>("ProgressBar").rectTransform;
+        loadingText.text = $"곡 불러오는중...\n0 / {allFiles}";
+        yield return null;
+
         foreach (var dirPath in allFiles)
         {
-            StartCoroutine(LoadMusic(dirPath, () =>
+            loadingText.text = $"곡 불러오는중...\n{++loadCount} / {allFiles.Length}";
+            progressBar.localScale = new(loadCount / allFiles.Length, 1, 1);
+            yield return null;
+
+            var dirName = Path.GetFileName(dirPath);
+            var songFiles = Directory.GetFiles(dirPath, "song.*");
+            if (songFiles.Length < 1)
             {
-                ++currentCount;
-                if (totalCount > currentCount) return;
-                foreach (var (musicName, difficultyTable) in scoreDataList)
+                Debug.LogWarning($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
+                continue;
+            }
+
+            var musicPath = songFiles[0];
+            var audioType = GetAudioType(Path.GetExtension(musicPath));
+            if (audioType == AudioType.UNKNOWN)
+            {
+                Debug.LogWarning($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
+                continue;
+            }
+
+            using var www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, audioType);
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogWarning($"폴더: {musicPath}, 오류: {www.error}");
+                continue;
+            }
+
+            var sprite = DefaultJacket;
+            var jacketFiles = Directory.GetFiles(dirPath, "jacket.*");
+            if (jacketFiles.Length > 0)
+            {
+                var fileData = File.ReadAllBytes(jacketFiles[0]);
+                Texture2D texture = new(2, 2);
+                if (texture.LoadImage(fileData))
                 {
-                    var music = MusicList.Find(music =>
-                    {
-                        var nameSplit = musicName.Split(" [HOLD]");
-                        var isLongData = nameSplit.Length > 1;
-                        if ((isLongData && !music.IsLong) || (!isLongData && music.IsLong)) return false;
-                        return music.Title == nameSplit[0];
-                    });
-                    if (music == null) continue;
-                    foreach (var (difficultyStr, scoreData) in difficultyTable)
-                    {
-                        if (!Enum.TryParse(difficultyStr, true, out Difficulty difficulty)) continue;
-                        music.SetScore(difficulty, scoreData.score);
-                        music.SetMusicBarScore(difficulty, scoreData.musicBar);
-                    }
+                    sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
                 }
-                Sort();
-                foreach (var music in MusicList)
+            }
+
+            Music music = null;
+            var clip = DownloadHandlerAudioClip.GetContent(www);
+            var jsonPath = Path.Combine(dirPath, "info.json");
+            if (File.Exists(jsonPath))
+            {
+                try
                 {
-                    List<string> notExists = new();
-                    if (music.Artist == "작곡가")
-                    {
-                        notExists.Add("작곡가");
-                    }
-                    if (music.Jacket == DefaultJacket)
-                    {
-                        notExists.Add("자켓");
-                    }
-                    if (music.Offset == 0)
-                    {
-                        notExists.Add("싱크 조절");
-                    }
-
-                    if (notExists.Count > 0)
-                    {
-                        Debug.Log($"{music.Title}({music.Artist})에 없는것: [{string.Join(", ", notExists)}]");
-                    }
+                    var json = File.ReadAllText(jsonPath);
+                    var musicInfo = JsonUtility.FromJson<MusicInfo>(json);
+                    musicInfo.title ??= dirName;
+                    musicInfo.artist ??= "작곡가";
+                    music = new(clip, dirPath, musicInfo, sprite);
                 }
-            }));
-        }
-    }
-
-    private IEnumerator LoadMusic(string dirPath, Action afterFunction)
-    {
-        var dirName = Path.GetFileName(dirPath);
-        var songFiles = Directory.GetFiles(dirPath, "song.*");
-        if (songFiles.Length < 1)
-        {
-            Debug.LogWarning($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
-            afterFunction();
-            yield break;
-        }
-
-        var musicPath = songFiles[0];
-        var audioType = GetAudioType(Path.GetExtension(musicPath));
-        if (audioType == AudioType.UNKNOWN)
-        {
-            Debug.LogWarning($"'{dirName}' 폴더엔 음악 파일이 존재하지 않습니다.");
-            afterFunction();
-            yield break;
-        }
-
-        using var www = UnityWebRequestMultimedia.GetAudioClip("file://" + musicPath, audioType);
-        yield return www.SendWebRequest();
-
-        if (www.result != UnityWebRequest.Result.Success)
-        {
-            Debug.LogWarning($"폴더: {musicPath}, 오류: {www.error}");
-            afterFunction();
-            yield break;
-        }
-
-        var sprite = DefaultJacket;
-        var jacketFiles = Directory.GetFiles(dirPath, "jacket.*");
-        if (jacketFiles.Length > 0)
-        {
-            var fileData = File.ReadAllBytes(jacketFiles[0]);
-            Texture2D texture = new(2, 2);
-            if (texture.LoadImage(fileData))
-            {
-                sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                catch
+                {
+                    Debug.LogError($"{dirName} 폴더 내의 info.json 파일이 잘못되었습니다.");
+                }
             }
-        }
 
-        Music music = null;
-        var clip = DownloadHandlerAudioClip.GetContent(www);
-        var jsonPath = Path.Combine(dirPath, "info.json");
-        if (File.Exists(jsonPath))
-        {
-            try
-            {
-                var json = File.ReadAllText(jsonPath);
-                var musicInfo = JsonUtility.FromJson<MusicInfo>(json);
-                musicInfo.title ??= dirName;
-                musicInfo.artist ??= "작곡가";
-                music = new(clip, dirPath, musicInfo, sprite);
-            }
-            catch
-            {
-                Debug.LogError($"{dirName} 폴더 내의 info.json 파일이 잘못되었습니다.");
-            }
-        }
-
-        var success = false;
-        music ??= new(clip, dirPath, dirName, sprite);
-        for (int i = 0, limit = (int)Difficulty.Extreme; i <= limit; ++i)
-        {
-            var difficulty = (Difficulty) i;
-            var chart = Chart.Parse(music, difficulty);
-            if (chart == null) continue;
-            success = true;
-            music.AddChart(chart);
-        }
-
-        if (music.IsValid)
-        {
-            MusicList.Add(music);
-        }
-
-        var ver2Files = Directory.GetFiles(dirPath, "*_2.txt");
-        if (ver2Files.Length > 0)
-        {
-            var music2 = music.Clone();
+            var success = false;
+            music ??= new(clip, dirPath, dirName, sprite);
             for (int i = 0, limit = (int)Difficulty.Extreme; i <= limit; ++i)
             {
-                var difficulty = (Difficulty)i;
-                var chart = Chart.Parse(music2, difficulty, true);
+                var difficulty = (Difficulty) i;
+                var chart = Chart.Parse(music, difficulty);
                 if (chart == null) continue;
                 success = true;
-                music2.AddChart(chart);
+                music.AddChart(chart);
             }
-            if (music2.IsValid)
+
+            if (music.IsValid)
             {
-                MusicList.Add(music2);
+                MusicList.Add(music);
+            }
+
+            var ver2Files = Directory.GetFiles(dirPath, "*_2.txt");
+            if (ver2Files.Length > 0)
+            {
+                var music2 = music.Clone();
+                for (int i = 0, limit = (int)Difficulty.Extreme; i <= limit; ++i)
+                {
+                    var difficulty = (Difficulty)i;
+                    var chart = Chart.Parse(music2, difficulty, true);
+                    if (chart == null) continue;
+                    success = true;
+                    music2.AddChart(chart);
+                }
+                if (music2.IsValid)
+                {
+                    MusicList.Add(music2);
+                }
+            }
+
+            if (!success)
+            {
+                Debug.LogWarning($"{music.Title}({music.Artist})에는 채보가 존재하지 않습니다.");
             }
         }
 
-        if (!success)
-        {   
-            Debug.LogWarning($"{music.Title}({music.Artist})에는 채보가 존재하지 않습니다.");
+        foreach (var (musicName, difficultyTable) in scoreDataList)
+        {
+            var music = MusicList.Find(music =>
+            {
+                var nameSplit = musicName.Split(" [HOLD]");
+                var isLongData = nameSplit.Length > 1;
+                if ((isLongData && !music.IsLong) || (!isLongData && music.IsLong)) return false;
+                return music.Title == nameSplit[0];
+            });
+            if (music == null) continue;
+            foreach (var (difficultyStr, scoreData) in difficultyTable)
+            {
+                if (!Enum.TryParse(difficultyStr, true, out Difficulty difficulty)) continue;
+                music.SetScore(difficulty, scoreData.score);
+                music.SetMusicBarScore(difficulty, scoreData.musicBar);
+            }
         }
-        afterFunction();
+        Sort();
+        foreach (var music in MusicList)
+        {
+            List<string> notExists = new();
+            if (music.Artist == "작곡가")
+            {
+                notExists.Add("작곡가");
+            }
+            if (music.Jacket == DefaultJacket)
+            {
+                notExists.Add("자켓");
+            }
+            if (music.Offset == 0)
+            {
+                notExists.Add("싱크 조절");
+            }
+
+            if (notExists.Count > 0)
+            {
+                Debug.Log($"{music.Title}({music.Artist})에 없는것: [{string.Join(", ", notExists)}]");
+            }
+        }
+        Destroy(GameObject.Find("LoadingPane"));
     }
 }
 
