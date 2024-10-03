@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.Experimental.Rendering.Universal.PixelPerfectCamera;
 
 public class MarkerAnimator : MonoBehaviour
 {
@@ -9,7 +8,6 @@ public class MarkerAnimator : MonoBehaviour
     public double StartTime;
     public List<Sprite> SpriteList = new();
 
-    private int beforeFrame = -1;
     private double sampleRate = 30.0; // TODO: Modifiable by configuration.
     private SpriteRenderer spriteRenderer;
     
@@ -44,11 +42,6 @@ public class MarkerAnimator : MonoBehaviour
             spriteRenderer.sprite = null;
             return;
         }
-        /*if (Loop && frame != beforeFrame)
-        {
-            beforeFrame = frame;
-            Debug.Log($"now: {frame}");
-        }*/
         spriteRenderer.sprite = SpriteList[frame];
     }
 }
