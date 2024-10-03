@@ -245,6 +245,26 @@ public class MusicManager : MonoBehaviour
             if (!success)
             {
                 Debug.LogWarning($"{music.Title}({music.Artist})에는 채보가 존재하지 않습니다.");
+                continue;
+            }
+
+            List<string> notExists = new();
+            if (music.Artist == "작곡가")
+            {
+                notExists.Add("작곡가");
+            }
+            if (music.Jacket == DefaultJacket)
+            {
+                notExists.Add("자켓");
+            }
+            if (music.Offset == 0)
+            {
+                notExists.Add("싱크 조절");
+            }
+
+            if (notExists.Count > 0)
+            {
+                Debug.Log($"{music.Title}({music.Artist})엔 현재 [{string.Join(", ", notExists)}] 들이 누락돼있습니다.");
             }
         }
 
@@ -266,27 +286,6 @@ public class MusicManager : MonoBehaviour
             }
         }
         Sort();
-        foreach (var music in MusicList)
-        {
-            List<string> notExists = new();
-            if (music.Artist == "작곡가")
-            {
-                notExists.Add("작곡가");
-            }
-            if (music.Jacket == DefaultJacket)
-            {
-                notExists.Add("자켓");
-            }
-            if (music.Offset == 0)
-            {
-                notExists.Add("싱크 조절");
-            }
-
-            if (notExists.Count > 0)
-            {
-                Debug.Log($"{music.Title}({music.Artist})에 없는것: [{string.Join(", ", notExists)}]");
-            }
-        }
         Destroy(GameObject.Find("LoadingPane"));
     }
 }
@@ -1023,19 +1022,13 @@ public class ChartPart
 
     private static int ConvertTimingChar(char timingChar)
     {
-        if (timingChar is >= '０' and <= '９')
+        return timingChar switch
         {
-            return timingChar - '０';
-        }
-        else if (timingChar is >= '①' and <= '⑳')
-        {
-            return timingChar - '①';
-        }
-        else if (timingChar is >= 'Ａ' and <= 'Ｚ')
-        {
-            return timingChar - 'Ａ' + 20;
-        }
-        return timingChar;
+            >= '０' and <= '９' => timingChar - '０',
+            >= '①' and <= '⑳' => timingChar - '①',
+            >= 'Ａ' and <= 'Ｚ' => timingChar - 'Ａ' + 20,
+            _ => timingChar
+        };
     }
 
     public ChartPart(double startOffset, Chart chart)
