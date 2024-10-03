@@ -142,14 +142,16 @@ public class MusicManager : MonoBehaviour
         float loadCount = 0;
         var allFiles = Directory.GetDirectories(basePath);
         var loadingText = UIManager.Instance.GetUIObject<Text>("LoadingTitle");
-        var progressBar = UIManager.Instance.GetUIObject<Image>("ProgressBar").rectTransform;
+        var progressBarRect = UIManager.Instance.GetUIObject<Image>("ProgressBar").rectTransform;
+        var loadingPaneRect = UIManager.Instance.GetUIObject<Image>("LoadingPane").rectTransform;
+        loadingPaneRect.localScale = new(1, 1);
         loadingText.text = $"곡 불러오는중...\n0 / {allFiles}";
         yield return null;
 
         foreach (var dirPath in allFiles)
         {
             loadingText.text = $"곡 불러오는중...\n{++loadCount} / {allFiles.Length}";
-            progressBar.localScale = new(loadCount / allFiles.Length, 1, 1);
+            progressBarRect.localScale = new(loadCount / allFiles.Length, 1);
             yield return null;
 
             var dirName = Path.GetFileName(dirPath);
@@ -286,7 +288,7 @@ public class MusicManager : MonoBehaviour
             }
         }
         Sort();
-        Destroy(GameObject.Find("LoadingPane"));
+        Destroy(loadingPaneRect.gameObject);
     }
 }
 
