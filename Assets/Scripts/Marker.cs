@@ -18,7 +18,7 @@ public class Marker : MonoBehaviour
     private MarkerAnimator holdAnimator; // hold
 
     private GameObject judgeObject;
-    private double remainTime = 23 / 30f; // 마커의 이미지는 총 23장
+    private double remainTime = 23 / 30f; // 마커의 기본 유지시간, (23 frame)
 
     public Note Note;
 

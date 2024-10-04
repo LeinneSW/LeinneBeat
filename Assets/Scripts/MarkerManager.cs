@@ -75,7 +75,7 @@ public class MarkerManager : MonoBehaviour
                     continue;
                 }
             }
-            Debug.LogWarning($"마커(`{markerType}`)내의 폴더 혹은 폴더 내 파일이 존재하지 않습니다.");
+            Debug.LogWarning($"마커 폴더(`marker/{markerType}`)가 존재하지 않거나 비어있습니다.");
             CurrentMarkerSprites.Add(new() { null });
         }
 
@@ -96,7 +96,7 @@ public class MarkerManager : MonoBehaviour
                 return;
             }
         }
-        Debug.LogWarning("마커(`hold`)내의 폴더 혹은 폴더 내 파일이 존재하지 않습니다.");
+        Debug.LogWarning($"홀드 애니메이션 폴더(`marker/hold`)가 존재하지 않거나 비어있습니다.");
         HoldSprites.Add(null);
     }
 
