@@ -6,11 +6,23 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
+public class MarkerAnimation
+{
+    public readonly double SampleRate;
+    public readonly List<Sprite> SpriteList = new();
+
+    public MarkerAnimation(List<Sprite> spriteList, int sampleRate = 30)
+    {
+        SpriteList = spriteList;
+        SampleRate = sampleRate;
+    }
+}
+
 public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; }
-    public static readonly List<Sprite> HoldSprites = new();
-    public static readonly List<List<Sprite>> CurrentMarkerSprites = new();
+    public static MarkerAnimation HoldAnimation { get; private set; };
+    public static readonly Dictionary<string, MarkerAnimation> MarkerAnimationList = new();
 
     public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
 
@@ -42,6 +54,31 @@ public class MarkerManager : MonoBehaviour
         set => clapIndex = value > 15 ? 0 : value;
     }
 
+    private static MarkerAnimation LoadMarkerAnimation(string basePath, string markerType)
+    {
+        // TODO: read sample rate
+        var markerDirPath = Path.Combine(basePath, markerType);
+        if (Directory.Exists(markerDirPath))
+        {
+            var files = Directory.GetFiles(markerDirPath, "*.png").OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase).ToArray();
+            if (files.Length > 0)
+            {
+                List<Sprite> spriteList = new();
+                foreach (var file in files)
+                {
+                    var bytes = File.ReadAllBytes(file);
+                    var texture = new Texture2D(2, 2);
+                    texture.LoadImage(bytes);
+                    var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
+                    spriteList.Add(sprite);
+                }
+                return new MarkerAnimation(spriteList);
+            }
+        }
+        Debug.LogWarning($"마커 애니메이션 폴더(`marker/{markerType}`)가 비어있거나 존재하지 않습니다.");
+        return new MarkerAnimation(new());
+    }
+
     private void Awake()
     {
         if (Instance != null)
@@ -51,53 +88,15 @@ public class MarkerManager : MonoBehaviour
         }
 
         Instance = this;
-        if (CurrentMarkerSprites.Count > 0) return;
-        var basePath = Path.Combine(Application.dataPath, "..", "Theme", "marker");
-        var markerTypes = new[] { "normal", "perfect", "great", "good", "poor" };
-        foreach (var markerType in markerTypes)
-        {
-            var markerDirPath = Path.Combine(basePath, markerType);
-            if (Directory.Exists(markerDirPath))
-            {
-                var files = Directory.GetFiles(markerDirPath, "*.png").OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase).ToArray();
-                if (files.Length > 0)
-                {
-                    List<Sprite> markerList = new();
-                    foreach (var file in files)
-                    {
-                        var bytes = File.ReadAllBytes(file);
-                        var texture = new Texture2D(2, 2);
-                        texture.LoadImage(bytes);
-                        var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
-                        markerList.Add(sprite);
-                    }
-                    CurrentMarkerSprites.Add(markerList);
-                    continue;
-                }
-            }
-            Debug.LogWarning($"마커 폴더(`marker/{markerType}`)가 존재하지 않거나 비어있습니다.");
-            CurrentMarkerSprites.Add(new() { null });
-        }
+        if (MarkerAnimationList.Count > 0) return;
 
-        var holdPath = Path.Combine(basePath, "hold");
-        if (Directory.Exists(holdPath))
-        {
-            var files = Directory.GetFiles(holdPath, "*.png").OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase).ToArray();
-            if (files.Length > 0)
-            {
-                foreach (var file in files)
-                {
-                    var bytes = File.ReadAllBytes(file);
-                    var texture = new Texture2D(2, 2);
-                    texture.LoadImage(bytes);
-                    var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), texture.width / 400f);
-                    HoldSprites.Add(sprite);
-                }
-                return;
-            }
+        var basePath = Path.Combine(Application.dataPath, "..", "Theme", "marker");
+        MarkerAnimationList["normal"] = LoadMarkerAnimation(basePath, "normal");
+        for(var i = 0; i < (int) JudgeState.Miss; ++i){
+            var judge = (JudgeState) i;
+            MarkerAnimationList[markerType] = LoadMarkerAnimation(basePath, judge.ToString());
         }
-        Debug.LogWarning($"홀드 애니메이션 폴더(`marker/hold`)가 존재하지 않거나 비어있습니다.");
-        HoldSprites.Add(null);
+        HoldAnimation = LoadMarkerAnimation(basePath, "hold");
     }
 
     private void Start()
@@ -145,9 +144,9 @@ public class MarkerManager : MonoBehaviour
         marker.Note = note;
         markers[note.Row * 4 + note.Column].Add(marker);
 
-        var markerAnimation = markerObj.GetComponent<MarkerAnimator>();
-        markerAnimation.SpriteList = CurrentMarkerSprites[0];
-        markerAnimation.StartTime = note.StartTime + GameManager.Instance.StartTime;
+        var markerAnimator = markerObj.GetComponent<MarkerAnimator>();
+        markerAnimator.Animation = MarkerAnimationList["normal"];
+        markerAnimator.StartTime = note.StartTime + GameManager.Instance.StartTime;
     }
 
     public void PlayClap()

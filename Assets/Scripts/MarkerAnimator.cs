@@ -6,11 +6,10 @@ public class MarkerAnimator : MonoBehaviour
 {
     public bool Loop = false;
     public double StartTime;
-    public List<Sprite> SpriteList = new();
+    public MarkerAnimation Animation = new MarkerAnimation(new());
 
-    private double sampleRate = 30.0; // TODO: Modifiable by configuration.
     private SpriteRenderer spriteRenderer;
-    
+
     private void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -18,10 +17,9 @@ public class MarkerAnimator : MonoBehaviour
 
     private void Update()
     {
-        var count = SpriteList.Count;
+        var count = Animation.SpriteList.Count;
         if (count < 1)
         {
-            Destroy(gameObject);
             return;
         }
 
@@ -32,7 +30,7 @@ public class MarkerAnimator : MonoBehaviour
             return;
         }
 
-        var frame = (int)Math.Floor(elapsedTime * sampleRate);
+        var frame = (int) Math.Floor(elapsedTime * Animation.SampleRate);
         if (Loop)
         {
             frame %= count;
@@ -42,6 +40,6 @@ public class MarkerAnimator : MonoBehaviour
             spriteRenderer.sprite = null;
             return;
         }
-        spriteRenderer.sprite = SpriteList[frame];
+        spriteRenderer.sprite = Animation.SpriteList[frame];
     }
 }

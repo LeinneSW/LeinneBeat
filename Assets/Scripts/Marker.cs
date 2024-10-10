@@ -66,7 +66,7 @@ public class Marker : MonoBehaviour
 
         holdAnimator = holdAnimation.AddComponent<MarkerAnimator>();
         holdAnimator.Loop = true;
-        holdAnimator.SpriteList = MarkerManager.HoldSprites;
+        holdAnimator.Animation = MarkerManager.HoldAnimation;
 
         var rotate = 0;
         var colDiff = Note.BarColumn - Note.Column;
@@ -205,7 +205,7 @@ public class Marker : MonoBehaviour
 
         var animator = judgeObject.GetComponent<MarkerAnimator>();
         animator.StartTime = touchTime;
-        animator.SpriteList = MarkerManager.CurrentMarkerSprites[(int)judge + 1];
+        animator.Animation = MarkerManager.MarkerAnimationList[judge.ToString()];
     }
 
     private void Update()
