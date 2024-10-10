@@ -256,14 +256,15 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        var guideOffset = Math.Abs(CurrentMusic.Offset) + (float)noteList[0].StartTime + 3;
+        var destroyTime = note.StartTime - Math.Max(0, CurrentMusic.Offset) + 3;
         var startNotes = noteList
             .TakeWhile(note => !(Math.Abs(noteList[0].StartTime - note.StartTime) > double.Epsilon))
-            .Select(note => Instantiate(MarkerManager.Instance.startHerePrefab, note.Position, Quaternion.identity));
-        foreach (var obj in startNotes)
-        {
-            Destroy(obj, guideOffset);
-        }
+            .Select(note => 
+            {
+                var gameObj = Instantiate(MarkerManager.Instance.startHerePrefab, note.Position, Quaternion.identity);
+                var startHere = gameObj.GetComponent<StartHere>();
+                startHere.DestroyTime = destroyTime;
+            });
 
         // TODO: Ready, GO 연출을 좀더 맛깔나게
         var comboText = UIManager.Instance.GetUIObject<Text>("Combo");
