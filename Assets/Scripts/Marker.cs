@@ -186,8 +186,6 @@ public class Marker : MonoBehaviour
         }
         CreateJudgeEffect(judge, releaseTime);
         GameManager.Instance.AddScore(judge, Note.MusicBarLongIndex, judgeTime > 0);
-
-        Destroy(arrowObject.gameObject);
         Destroy(gameObject);
     }
 
@@ -225,7 +223,6 @@ public class Marker : MonoBehaviour
         if (remainTime > 0) return; // 입력하지 않은 경우
         if (arrowObject != null) // 롱노트는 2미스
         {
-            Destroy(arrowObject.gameObject);
             GameManager.Instance.AddScore(JudgeState.Miss, Note.MusicBarLongIndex);
         }
         GameManager.Instance.AddScore(JudgeState.Miss, Note.MusicBarIndex);
