@@ -21,7 +21,7 @@ public class MarkerAnimation
 public class MarkerManager : MonoBehaviour
 {
     public static MarkerManager Instance { get; private set; }
-    public static MarkerAnimation HoldAnimation { get; private set; };
+    public static MarkerAnimation HoldAnimation { get; private set; }
     public static readonly Dictionary<string, MarkerAnimation> MarkerAnimationList = new();
 
     public double[] CurrentJudgementTable => judgementTables[GameOptions.Instance.JudgementType];
@@ -94,7 +94,7 @@ public class MarkerManager : MonoBehaviour
         MarkerAnimationList["normal"] = LoadMarkerAnimation(basePath, "normal");
         for(var i = 0; i < (int) JudgeState.Miss; ++i){
             var judge = (JudgeState) i;
-            MarkerAnimationList[markerType] = LoadMarkerAnimation(basePath, judge.ToString());
+            MarkerAnimationList[judge.ToString()] = LoadMarkerAnimation(basePath, judge.ToString());
         }
         HoldAnimation = LoadMarkerAnimation(basePath, "hold");
     }
