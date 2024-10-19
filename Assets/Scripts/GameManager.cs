@@ -256,7 +256,7 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        var destroyTime = noteList[0].StartTime - Math.Max(0, CurrentMusic.Offset) + 3;
+        var destroyTime = Time.timeAsDouble + noteList[0].StartTime - Math.Max(0, CurrentMusic.Offset) + 3;
         var startNotes = noteList
             .TakeWhile(note => !(Math.Abs(noteList[0].StartTime - note.StartTime) > double.Epsilon));
         foreach (var note in startNotes)
